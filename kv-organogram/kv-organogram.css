@@ -1,0 +1,84 @@
+:host {
+	display: block;
+	font-family: sans-serif;
+	border: 1px solid #ccc;
+	padding: 1rem;
+	border-radius: 8px;
+	background: #fafafa;
+}
+
+:host([modal-open]) {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+}
+
+h2 {
+	margin: 0 0 0.5rem 0;
+}
+
+h3 {
+	margin: 0 0 1rem 0;
+	color: #666;
+	font-size: 1rem;
+}
+
+.actions {
+	margin-bottom: 1rem;
+}
+
+button {
+	margin-right: 0.5rem;
+}
+
+/* Modal styles */
+.kv-modal-backdrop {
+	position: fixed;
+	z-index: 10000;
+	left: 0;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.25);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.kv-modal-dialog {
+	background: #fff;
+	border-radius: 12px;
+	box-shadow: 0 4px 32px #0003;
+	padding: 2rem 2.5rem 1.5rem 2.5rem;
+	min-width: 320px;
+	max-width: 90vw;
+	position: relative;
+	animation: kvFadeIn .2s;
+}
+
+.kv-modal-dialog h3 {
+	margin-top: 0;
+}
+
+.kv-modal-close {
+	position: absolute;
+	right: 1rem;
+	top: 1rem;
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	color: #888;
+	cursor: pointer;
+}
+
+@keyframes kvFadeIn {
+	from {
+		opacity: 0;
+		transform: scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}

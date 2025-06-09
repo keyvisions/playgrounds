@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+		integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<title>Document</title>
+	<script>
+		window.addEventListener("keydown", event => {
+			if (event.shiftKey && event.key == "F12") {
+				event.preventDefault();
+				document.body.innerHTML = document.body.classList.toggle("stw") ?
+					document.body.innerHTML = `<header></header><div><aside></aside><div class="splitter"></div><main>${document.body.innerHTML}</main></div><footer></footer>` :
+					document.querySelector("main").innerHTML;
+			}
+		});
+		document.addEventListener("mousedown", function (e) {
+			const splitter = e.target.closest(".splitter");
+			if (!splitter) return;
+			const container = splitter.parentElement;
+			const aside = container.querySelector("aside");
+			const startX = e.clientX;
+			const startWidth = aside.offsetWidth;
+
+			function onMouseMove(e2) {
+				const dx = e2.clientX - startX;
+				let newWidth = startWidth + dx;
+				newWidth = Math.max(100, Math.min(window.innerWidth * 0.5, newWidth));
+				container.style.gridTemplateColumns = `${newWidth}px 5px 1fr`;
+			}
+
+			function onMouseUp() {
+				document.removeEventListener("mousemove", onMouseMove);
+				document.removeEventListener("mouseup", onMouseUp);
+			}
+
+			document.addEventListener("mousemove", onMouseMove);
+			document.addEventListener("mouseup", onMouseUp);
+		});
+
+	</script>
+	<style>
+		body {
+			color-scheme: dark light;
+		}
+
+		.stw {
+			display: grid;
+			grid-template-rows: 2rem auto 2rem;
+			min-height: 100vh;
+			overflow: hidden;
+			padding: 0;
+			margin: 0;
+		}
+
+		.stw>div {
+			display: grid;
+			grid-template-columns: 250px 10px 1fr;
+			height: 100%;
+		}
+
+		.stw>div>aside {
+			overflow: auto;
+			min-width: 100px;
+			max-width: 50vw;
+		}
+
+		.stw>div>.splitter {
+			cursor: col-resize;
+			background: CanvasText;
+			opacity: 0.2;
+			width: 5px;
+			height: 100%;
+		}
+
+		.stw>div>main {
+			overflow: auto;
+		}
+	</style>
+</head>
+
+<body>
+	Hello World!
+</body>
+
+</html>

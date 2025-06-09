@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug kv-organogram",
+            "request": "launch",
+            "type": "msedge",
+            "file": "${workspaceFolder}/kv-organogram/index.html",
+            "runtimeArgs": [
+                "--disable-web-security" // Allow CORS
+            ]
+        },
+        {
             "name": "Debug kv-gantt",
             "request": "launch",
             "type": "msedge",

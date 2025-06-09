@@ -1,4 +1,4 @@
-# jsfiddles
+# playground
 
 Collection of vanilla javascripts playable on jsfiddle
 

@@ -13,8 +13,12 @@ function kvJSONForm(jsonField, ith) {
 
 	form.addEventListener('submit', event => {
 		let invalid = form.querySelector('[form^=json]:invalid');
-		if (!invalid)
+		if (!invalid) {
+			let data = JSON.parse(form.jsonField.value || '{}');
+			form.querySelectorAll('[class*="JSONData"][readonly]').forEach(el => data[el.getAttribute('name')] = form.valueStringify(el));
+			form.jsonField.value = JSON.stringify(data);
 			return true;
+		}
 
 		event.preventDefault();
 		invalid.form.reportValidity();
@@ -72,7 +76,7 @@ function kvJSONForm(jsonField, ith) {
 		if (event.target && !event.target.classList.contains('JSONData') && !event.target.closest(".deleteRow"))
 			return;
 
-		let form = event.currentTarget;
+		let form = event.currentTarget || jsonField.form;
 
 		let data = JSON.parse(form.jsonField.value || '{}'),
 			el = table || event.target;
@@ -150,6 +154,7 @@ function kvJSONForm(jsonField, ith) {
 			el.querySelectorAll('option').forEach(option => {
 				if (option.selected) value.push(option.value)
 			});
+			value = value.join(',');
 		} else
 			value = typeof el.value != 'undefined' ? el.value : el.innerHTML;
 
@@ -194,6 +199,8 @@ function kvJSONForm(jsonField, ith) {
 	form.JSONParse = event => {
 		let form = event.target.closest('form');
 		let data;
+
+		document.querySelectorAll(`[form="json${ith}"][name^="*"]`).forEach(el => el.name = el.name.substring(1)); // Rename without starting *
 
 		try {
 			data = JSON.parse(form.jsonField.value || '{}');
@@ -353,7 +360,7 @@ function kvJSONForm(jsonField, ith) {
 
 		} else if (el.type == 'select-multiple') {
 			el.querySelectorAll('option').forEach(option => {
-				if (value.find(value => { return value == option.value }))
+				if (value.split(',').find(value => { return value == option.value }))
 					option.setAttribute('selected', '');
 			});
 

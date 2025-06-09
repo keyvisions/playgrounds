@@ -11,13 +11,11 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <script src="./kvJSONForm.js"></script>
 
-    <link rel="stylesheet" href="../stwTags/stwTags.css">
-    <script src="../stwTags/stwTags.js" defer></script>
     <script>
         async function setup() {
             kvJSONForm();
             let timeOffset = (new Date()).getTimezoneOffset() * 60000;
-            document.querySelectorAll('[Type="datetime-local"]').forEach(el => 
+            document.querySelectorAll('[Type="datetime-local"]').forEach(el =>
                 el.value = (new Date((el.value ? new Date(el.value) : new Date()) - timeOffset)).toISOString().substring(0, 16)
             );
         }
@@ -33,147 +31,98 @@
 </head>
 
 <body onload="setup()">
-    <form name="fixedTable">
-        <textarea name="fDati" data-json="json"
-            style="display:block; height: 10rem;">{"data":"","luogo":"controparte","controparte":"La controparte","interni":"michele,giancarlo.t","esterni":"Il mondo","argomenti":[{"_id":"","priorita":"media","natura":"qualita","stato":"concluso","followup":"2024-06-26","followupResponsabile":"francesca.m,fufi","privato":true,"note":"Le note","noteB":"Note interne"},{"_id":"","priorita":"alta","natura":"commerciale","stato":"attivo","followup":"","followupResponsabile":"fufi","privato":false,"note":"Vai","noteB":"Nessuna"}],"argomenti_summary":{},"trasferta":[{"_id":"","data":"","partenza":"","arrivo":"","ore":"","km":"10","mezzo":"Aziendale","vitto":true,"alloggio":false,"note":"Voilà"},{"_id":"","data":"","partenza":"","arrivo":"","ore":"","km":"","mezzo":"Aziendale","vitto":false,"alloggio":true,"note":""}],"trasferta_summary":{}}</textarea>
+    <!--kv-jsonform name="dati" value='{"text":"","number":"","color":"#000000","email":"","checkbox":[],"radio":"c","datetime-local":"","date":"","select":"red","multiple":"medium,large","aree":"504,507"}'>
+        <label><span>text</span> <input form="json" name="text" required></label>
+        <label><span>number</span> <input form="json" type="number" name="number" required></label>
+        <label><span>color</span> <input form="json" type="color" name="color" required></label>
+        <label><span>email</span> <input form="json" type="email" name="email" required></label>
+        <fieldset><span>checkbox</span>
+            <input form="json" type="checkbox" name="checkbox" value="a">
+            <input form="json" type="checkbox" name="checkbox" value="a">
+            <input form="json" type="checkbox" name="checkbox" value="a">
+        </fieldset>
+        <fieldset><span>radio</span>
+            <input form="json" type="radio" name="radio" value="a">
+            <input form="json" type="radio" name="radio" value="b">
+            <input form="json" type="radio" name="radio" value="c">
+        </fieldset>
+        <label><span>datetime-local</span> <input form="json" type="datetime-local" name="datetime-local"
+                required></label>
+        <label><span>date</span> <input form="json" type="date" name="date" required></label>
+        <label><span>select</span> <select form="json" name="*select">
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="blu">Blu</option>
+            </select></label>
+        <label><span>multiple</span> <select form="json" name="*multiple" multiple>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+            </select></label>
 
-        <div class="module MOM">
-            <label><span>Data</span> <input form="json" type="datetime-local" name="data" required></label>
-            <label><span>Luogo</span> <select form="json" name="luogo">
-                    <option value="casa">In azienda</option>
-                    <option value="controparte">Dalla controparte</option>
-                    <option value="evento">Fiera/Convegno</option>
-                    <option value="remoto">Da remoto</option>
-                </select></label>
-            <div style="display: flex; flex-wrap: wrap">
-                <label><span>Controparte</span> <div form="json" name="controparte" contenteditable="plaintext-only"></div></label>
-                <label><span>Partecipanti interni</span> <stw-tags form="json" name="interni" list="users"
-                        options="https://services.vmcitaly.com?*r=5108&txt=@value"></stw-tags></label>
-                <label><span>Partecipanti esterni</span>
-                    <div form="json" name="esterni" contenteditable="plaintext-only" x-webkit-speech></div>
-                </label>
-            </div>
-            <table form="json" name="argomenti" class="sortable" data-id="_id">
-                <caption style="text-align:center">Argomenti</caption>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Priorità</th>
-                        <th>Natura</th>
-                        <th>Stato</th>
-                        <th style="white-space: nowrap">Data follow-up</th>
-                        <th style="width:100%">Responsabile follow-up</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <template class="dataRow">
-                    <tr>
-                        <td><i class="fas fa-grip-vertical"></i><input form="json" type="hidden" name="_id"></td>
-                        <td><select form="json" name="priorita">
-                                <option value="bassa">Bassa</option>
-                                <option value="media">Media</option>
-                                <option value="alta">Alta</option>
-                            </select></td>
-                        <td><select form="json" name="natura">
-                                <option value="commerciale">Commerciale</option>
-                                <option value="progettuale">Progettuale</option>
-                                <option value="qualita">Qualitativa</option>
-                            </select></td>
-                        <td><select form="json" name="stato">
-                                <option value="attivo">Attivo</option>
-                                <option value="sospeso">Sospeso</option>
-                                <option value="concluso" selected>Concluso</option>
-                                <option value="inconcluso">Inconcluso</option>
-                            </select></td>
-                        <td><input form="json" type="date" name="followup"></td>
-                        <td><stw-tags form="json" name="followupResponsabile" list="users"></stw-tags></td>
-                        <td class="deleteRow"><i class="fas fa-fw fa-trash"></i></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td colspan="5">
-                            <div style="display: flex; flex-wrap: wrap">
-                                <label title="L'argomento non è condiviso con la controparte"><input form="json"
-                                        type="checkbox" name="privato" checked> Argomento privato</label>
-                                <label>Note <div form="json" name="note" contenteditable="plaintext-only"></div>
-                                </label>
-                                <label title="Queste note non sono mai condivise con la controparte">Note interne
-                                    <div form="json" name="noteB" contenteditable="plaintext-only"></div>
-                                </label>
-                            </div>
-                        </td>
-                        <td></td>
-                    </tr>
-                </template>
-                <tfoot>
-                    <tr>
-                        <td class="newRow" colspan="8"><i class="fas fa-fw fa-plus"></i> Aggiungi argomento</td>
-                    </tr>
-                </tfoot>
-            </table>
-            <table form="json" name="trasferta" class="sortable" data-id="_id">
-                <caption>Trasferta</caption>
-                <thead>
-                    <tr>
-                        <th></th>
-                        <th>Data</th>
-                        <th>Partenza</th>
-                        <th>Arrivo</th>
-                        <th>Ore</th>
-                        <th>Km</th>
-                        <th>Veicolo</th>
-                        <th>Vitto</th>
-                        <th>Alloggio</th>
-                        <th style="width: 100%">Note</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <template class="dataRow" onchange="complete(event)">
-                    <tr>
-                        <td><i class="fas fa-grip-vertical"></i><input form="json" type="hidden" name="_id"></td>
-                        <td><input form="json" type="date" name="data"></td>
-                        <td><input form="json" type="time" name="partenza" step="300"></td>
-                        <td><input form="json" type="time" name="arrivo" step="300"></td>
-                        <td><input form="json" type="time" name="ore" readonly></td>
-                        <td><input form="json" type="number" name="km" min="0" max="1500"></td>
-                        <td>
-                            <select form="json" name="mezzo">
-                                <optgroup label="Auto">
-                                    <option>Aziendale</option>
-                                    <option>Noleggio</option>
-                                    <option>Personale</option>
-                                </optgroup>
-                                <option>Aereo</option>
-                                <option>Treno</option>
-                                <option>Nave</option>
-                            </select>
-                        </td>
-                        <td style="text-align: center">
-                            <input form="json" type="checkbox" name="vitto">
-                        </td>
-                        <td style="text-align: center">
-                            <input form="json" type="checkbox" name="alloggio">
-                        </td>
-                        <td>
-                            <input form="json" name="note" style="width:fit-content()">
-                        </td>
-                        <td class="deleteRow"><i class="fas fa-fw fa-trash"></i></td>
-                    </tr>
-                </template>
-                <tfoot>
-                    <tr>
-                        <td class="newRow" colspan="8"><i class="fas fa-fw fa-plus"></i> Aggiungi tappa</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+        <label><span>Area</span><input type="hidden" name="aree" value="28/05/2025 15:55:15"><select form="json"
+                name="*aree" multiple="multiple"
+                size="4">
+                <option value="504">Sicurezza</option>
+                <option value="505">Ambiente - Sistemi di Gestione</option>
+                <option value="506">Prevenzione incendi</option>
+                <option value="507">Altro</option>
+            </select></label>
+    </kv-jsonform-->
 
-        <div class="stickyBottom">
-            <button type="submit">Salva</button>
-        </div>
+    <form>
+        <textarea name="dati" data-json="json"
+            style="display:block; height: 10rem;">{"text":"","number":"","color":"#000000","email":"","checkbox":[],"radio":"c","datetime-local":"","date":"","select":"red","multiple":"medium,large","aree":"504,507"}</textarea>
+
+        <label><span>text</span> <input form="json" name="text"></label>
+        <label><span>number</span> <input form="json" type="number" name="number"></label>
+        <label><span>color</span> <input form="json" type="color" name="color" required></label>
+        <label><span>email</span> <input form="json" type="email" name="email"></label>
+        <fieldset><span>checkbox</span>
+            <input form="json" type="checkbox" name="checkbox" value="a">
+            <input form="json" type="checkbox" name="checkbox" value="a">
+            <input form="json" type="checkbox" name="checkbox" value="a">
+        </fieldset>
+        <fieldset><span>radio</span>
+            <input form="json" type="radio" name="radio" value="a">
+            <input form="json" type="radio" name="radio" value="b">
+            <input form="json" type="radio" name="radio" value="c">
+        </fieldset>
+        <label><span>datetime-local</span> <input form="json" type="datetime-local" name="datetime-local"
+                required></label>
+        <label><span>date</span> <input form="json" type="date" name="date" required></label>
+        <label><span>select</span> <select form="json" name="*select">
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="blu">Blu</option>
+            </select></label>
+        <label><span>multiple</span> <select form="json" name="*multiple" multiple>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+            </select></label>
+
+        <label><span>Area</span><input type="hidden" name="aree" value="28/05/2025 15:55:15"><select form="json"
+                name="*aree" multiple="multiple" size="4">
+                <option value="504">Sicurezza</option>
+                <option value="505">Ambiente - Sistemi di Gestione</option>
+                <option value="506">Prevenzione incendi</option>
+                <option value="507">Altro</option>
+            </select></label>
+        <input form="json" name="readonly" readonly>
+
+        <button type="submit" onclick="foo(event)">Salva</button>
     </form>
-    <input  x-webkit-speech><br>
-    <textarea  x-webkit-speech></textarea>
+    <!--
+    <input x-webkit-speech><br>
+    <textarea x-webkit-speech></textarea>
+    -->
 </body>
+<script>
+    function foo(event) {
+        let el = event.target.form.querySelector("[name=readonly]");
+        el.value = 'cucu';
+    }
+</script>
 
 </html>
