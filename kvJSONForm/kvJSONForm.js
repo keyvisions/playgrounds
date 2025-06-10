@@ -1,3 +1,4 @@
+// deno-lint-ignore-file prefer-const
 function kvJSONForm(jsonField, ith) {
 	if (!(jsonField instanceof Element)) {
 		document.querySelectorAll('[data-json]').forEach((element, i) => {
@@ -86,17 +87,17 @@ function kvJSONForm(jsonField, ith) {
 			let tableName = table.getAttribute('name');
 			data[tableName] = [];
 			if (table.classList.contains('columnar')) {
-				for (let i = 0; i < table.querySelectorAll('tbody>tr:first-child .JSONData[name]').length; ++i)
+				for (let i = 0; i < table.querySelectorAll('tbody:not(.dataRow)>tr:first-child .JSONData[name]').length; ++i)
 					data[tableName].push({});
 
-				table.querySelectorAll('tbody>tr').forEach(function (row, i) {
+				table.querySelectorAll('tbody:not(.dataRow)>tr').forEach(function (row, i) {
 					row.querySelectorAll('.JSONData[name]').forEach(function (fld, i) {
 						data[tableName][i][fld.getAttribute('name')] = form.valueStringify(fld);
 					});
 				});
 
 			} else {
-				table.querySelectorAll('tbody').forEach(row => {
+				table.querySelectorAll('tbody:not(.dataRow)').forEach(row => {
 					let rowData = {};
 					row.querySelectorAll('.JSONData[name]').forEach(fld => {
 						rowData[fld.getAttribute('name')] = form.valueStringify(fld);
@@ -219,7 +220,7 @@ function kvJSONForm(jsonField, ith) {
 					el.insertAdjacentHTML('beforeend', '<tfoot></tfoot>')
 
 				if (!el.hasAttribute('data-key'))
-					el.querySelectorAll('tbody').forEach(tbody => { tbody.remove(); });
+					el.querySelectorAll('tbody:not(.dataRow)').forEach(tbody => { tbody.remove(); });
 				if (el.classList.contains('columnar')) {
 					el.querySelector('.dataRow').insertAdjacentHTML('beforebegin', '<tbody></tbody>');
 					let ths = el.querySelectorAll('.deleteColumn');
@@ -231,7 +232,7 @@ function kvJSONForm(jsonField, ith) {
 
 					data[datum].forEach(function (subdatum, c) {
 						Object.keys(subdatum).forEach(key => {
-							let subelement = el.querySelector(`tbody td:nth-child(${c + 2}) .JSONData[name="${key}"]`);
+							let subelement = el.querySelector(`tbody:not(.dataRow) td:nth-child(${c + 2}) .JSONData[name="${key}"]`);
 							if (subelement)
 								form.parseValue(subelement, subdatum[key]);
 						});
