@@ -27,7 +27,8 @@ class kvParams extends HTMLElement {
 		'decimals': { en: 'Decimals', it: 'Decimali' },
 		'save': { en: 'Save', it: 'Salva' },
 		'pair': { en: 'Pair', it: 'Accoppia' },
-		'new': { en: 'New parameter', it: 'Nuovo parametro' }
+		'new': { en: 'New parameter', it: 'Nuovo parametro' },
+		'required': { en: 'Required', 'it': 'Obbligatorio' }
 	};
 	static #Flags = [
 		{ en: 'Described', it: 'Descrittivo', icon: 'fas fa-font' },
@@ -126,7 +127,9 @@ class kvParams extends HTMLElement {
 					isNaN(parseFloat(target.form.min.value)) ? null : parseFloat(target.form.min.value),
 					isNaN(parseFloat(target.form.max.value)) ? null : parseFloat(target.form.max.value),
 					isNaN(parseInt(target.form.decimals.value)) ? null : parseInt(target.form.decimals.value),
-					target.form.flag.checked
+					Array.from(target.form.querySelectorAll('[name="flag"]')).reduce((acc, flag, i) => {
+						return acc | ((flag.checked ? 1 : 0) << i);
+					}, 0)
 				];
 				if (target.options.hasAttribute('range')) {
 					target.options.setAttribute('range', JSON.stringify(range));
@@ -342,7 +345,7 @@ class kvParams extends HTMLElement {
 				options[0] = isNaN(parseFloat(options[0])) ? '' : parseFloat(options[0]);
 				options[1] = isNaN(parseFloat(options[1])) ? '' : parseFloat(options[1]);
 				options[2] = isNaN(parseInt(options[2])) ? '' : parseInt(options[2]);
-				options[3] = options[3] || '';
+				options[3] = options[3] || 0;
 				html =
 					`<dialog id="kv-params-dialog" onkeydown="if (event.key=='Escape') this.close()" onclose="this.remove()">` +
 					`<header onclick="this.closest('dialog').close()">`;
@@ -354,7 +357,7 @@ class kvParams extends HTMLElement {
 					`<label><span>Min</span> <input type="number" name="min" step="any" value="${options[0]}"></label>` +
 					`<label><span>Max</span> <input type="number" name="max" step="any" value="${options[1]}"></label>` +
 					`<label><span>${kvParams.#Texts.decimals[this.Lang]}</span> <input type="number" name="decimals" min="0" max="5" step="1" value="${options[2]}"></label>` +
-					`<p style="margin:0.5rem 0"><label><input type="checkbox" name="flag" ${options[3] ? 'checked' : ''}> ${kvParams.#Texts.na[this.Lang]}</label></p>` +
+					`<p style="margin:0.5rem 0"><label><input type="checkbox" name="flag" ${(options[3] & 1) ? 'checked' : ''}> ${kvParams.#Texts.na[this.Lang]}</label><br><label><input type="checkbox" name="flag" ${(options[3] & 2) ? 'checked' : ''}> ${kvParams.#Texts.required[this.Lang]}</label></p>` +
 					`<button type="button" class="range" ref="${event.target.getAttribute('ref')}" id="kv-params-options" style="float:right">${kvParams.#Texts.save[this.Lang]}</button>` +
 					`</form></dialog>`;
 				break;
@@ -414,7 +417,7 @@ class kvParams extends HTMLElement {
 						html += `<tr><td title="@${param.id}">${param.label[this.Lang]} ${um} ${icons}<span>${this.#range(options[0])}</span></td>`;
 						kvParams.sizeArray(this.Data[`P${param.id}`], cols).forEach((value, k) => {
 							value = (mode == 'show' && this.UM != 'msu' && typeof ums?.convert == 'function' ? ums.convert(value).toFixed(options[3]) : value) || '';
-							html += `<td><input type="${mode == 'range' ? 'hidden' : 'number'}" ${attributes(param)} value="${value}" range="${JSON.stringify(options[k]).replaceAll('"', '&quot;')}" tabindex="${k * count + j}">`;
+							html += `<td><input type="${mode == 'range' ? 'hidden' : 'number'}" ${attributes(param)} value="${value}" range="${JSON.stringify(options[k] || []).replaceAll('"', '&quot;')}" tabindex="${k * count + j}">`;
 							if (mode == 'range')
 								html += `<i class="fas fa-sliders-h manageOptions" ref="P${param.id}" um="${param.um}" tabindex="${k * count + j}"></i>`;
 							html += '</td>';
@@ -519,7 +522,7 @@ class kvParams extends HTMLElement {
 					case 'number':
 						options = this.Data[`PR${param.id}`] || [param.options] || [[null, null, null, null]];
 						value = (mode == 'show' && this.UM != 'msu' && typeof ums?.convert == 'function' ? ums.convert(value).toFixed(options[3]) : value) || '';
-						el.insertAdjacentHTML('afterend', `<label title="@${param.id}"><span>${param.label[this.Lang]} ${um} ${icons} ${this.#range(options[0])}</span><input ${attributes(param)} value="${value}" range="${JSON.stringify(options[k]).replaceAll('"', '&quot;')}"></label>`);
+						el.insertAdjacentHTML('afterend', `<label title="@${param.id}"><span>${param.label[this.Lang]} ${um} ${icons} ${this.#range(options[0])}</span><input ${attributes(param)} value="${value}" range="${JSON.stringify(options[k] || []).replaceAll('"', '&quot;')}"></label>`);
 						break;
 
 					case 'text':

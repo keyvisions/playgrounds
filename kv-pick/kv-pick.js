@@ -4,6 +4,7 @@
 // Usage: <kv-pick src="./data.json" name-details="" name-quantity=""></kv-pick>
 class kvPick extends HTMLElement {
 	batchCode = "";
+	batchQty = NaN;
 
 	constructor() {
 		super();
@@ -16,6 +17,7 @@ class kvPick extends HTMLElement {
 
 	render(json) {
 		this.batchCode = this.getAttribute("batch");
+		this.batchQty = parseInt(this.getAttribute("batchqty"));
 
 		this.innerHTML =
 			`<input id="batches" type="hidden" name="${this.getAttribute("data-batches")}">
@@ -66,7 +68,14 @@ class kvPick extends HTMLElement {
 						let pickable = picked < requested ? requested - picked : null;
 						pickable = pickable > available ? available : pickable;
 
-						this.querySelector(".selected input").setAttribute("value", pickable);
+						const input = this.querySelector(".selected input");
+						if (this.batchQty == -1)
+							input.setAttribute("value", picked || "");
+						else if (isNaN(this.batchQty) || this.batchQty == 0)
+							input.setAttribute("value", picked ? picked + 1 : pickable);
+//							input.setAttribute("value", picked + 1);
+						else
+							input.setAttribute("value", picked + this.batchQty);
 
 						this.dispatchEvent(new Event("change"));
 					}

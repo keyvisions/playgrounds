@@ -29,26 +29,6 @@ function setBackground(svg) {
     bodyStyle.backgroundSize = '100px 100px';
 }
 
-async function openJSFiddle(form, repo = 'keyvisions/jsfiddles/') {
-    form.querySelectorAll('input').forEach(input => input.remove());
-
-    let config = await fetch(`https://raw.githubusercontent.com/${repo}/main/${form.children['jsfiddle'].value}/jsfiddle.json`);
-    config = await config.json();
-    for (let key in config) {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = key;
-        if (config[key].toString().startsWith('http')) {
-            let res = await fetch(config[key].toString());
-            config[key] = await res.text();
-        }
-        input.value = config[key];
-
-        form.insertAdjacentElement('beforeend', input);
-    }
-    return true;
-}
-
 function checkCF(CF) {
     const c = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',
         v = '010005070913151719210100050709131517192102041820110306081214161022252423';

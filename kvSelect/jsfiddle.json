@@ -1,10 +1,10 @@
 {
     "panel_html": 0,
-    "html": "https://raw.githubusercontent.com/keyvisions/jsfiddles/main/kvSelect/index.html",
+    "html": "https://raw.githubusercontent.com/keyvisions/playgroundss/main/kvSelect/index.html",
     "panel_js": 0,
-    "js": "https://raw.githubusercontent.com/keyvisions/jsfiddles/main/kvSelect/kvSelect.js",
+    "js": "https://raw.githubusercontent.com/keyvisions/playgroundss/main/kvSelect/kvSelect.js",
     "panel_css": 0,
-    "css": "https://raw.githubusercontent.com/keyvisions/jsfiddles/main/kvSelect/kvSelect.css",
+    "css": "https://raw.githubusercontent.com/keyvisions/playgroundss/main/kvSelect/kvSelect.css",
     "title": "HTML <select> revisited",
     "description": "Multiselect with search",
     "resources": "",

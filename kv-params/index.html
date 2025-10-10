@@ -53,12 +53,12 @@
 			<option value="show" selected>Show</option>
 		</select>
 		<button type="button"
-			onclick=" navigator.clipboard.writeText(document.querySelector('kv-params').save())">Save</button>
+			onclick="navigator.clipboard.writeText(document.querySelector('kv-params').save())">Save</button>
 	</p>
 	<form>
 		<input name="parameters">
 		<kv-params name="parameters" schema="./compressor.json" data="./data.json" columns="2"
-			template="Sheet"></kv-params>
+			template="xSheet"></kv-params>
 
 		<template id="Sheet">
 			<table><tbody>

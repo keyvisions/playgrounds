@@ -1,6 +1,6 @@
-# playground
+# playgrounds
 
 Collection of HTML, CSS, javascripts mini projects
 
-[Playground](https://keyvisions.github.io/playground/index.html)
+[Playgrounds](https://keyvisions.github.io/playgrounds/index.html)
 

@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
         integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="./jsfiddle.css" />
-    <script src="./jsfiddle.js"></script>
+    <link rel="stylesheet" href="./playgrounds.css" />
+    <script src="./playgrounds.js"></script>
 </head>
 
 <body onload="load()">
@@ -23,21 +23,33 @@
     <main style="display: grid; grid-template-columns: auto 1fr auto;">
         <aside class="left">
             <div>
-                This is the left collapsibble aside
+                This is the left collapsible aside
             </div>
         </aside>
         <div>
             <p>This is he main section</p>
-            <form method="post" action="https://jsfiddle.net/api/post/library/pure/" target="check">
-                <select form="none" name="jsfiddle">
-                    <option value="kvSelect">Select</option>
-                    <option value="kvImportData">Import Data</option>
-                    <option value="kvTags">Tags</option>
-                    <option value="kvJSONForm">JSON Form</option>
-                </select>
-                <button type="submit" onclick="openJSFiddle(this.form, 'keyvisions/jsfiddles/')">Open in
-                    JSFiddle</button>
-            </form>
+            <ul id="Projects">
+                <li><a href="./barcode/index.html">barcode</a></li>
+                <li><a href="./kv-budget/index.html">kv-budget</a></li>
+                <li><a href="./kv-form/index.html">kv-form</a></li>
+                <li><a href="./kv-gantt/index.html">kv-gantt</a></li>
+                <li><a href="./kv-gauge/index.html">kv-gauge</a></li>
+                <li><a href="./kv-organogram/index.html">kv-organogram</a></li>
+                <li><a href="./kv-pair/index.html">kv-pair</a></li>
+                <li><a href="./kv-params/index.html">kv-params</a></li>
+                <li><a href="./kv-pick/index.html">kv-pick</a></li>
+                <li><a href="./kv-table/index.html">kv-table</a></li>
+                <li><a href="./kv-tags/index.html">kv-tags</a></li>
+                <li><a href="./kv-timeline/index.html">kv-timeline</a></li>
+                <li><a href="./kvAutocomplete/index.html">kvAutocomplete</a></li>
+                <li><a href="./kvCart/index.html">kvCart</a></li>
+                <li><a href="./kvImportData/index.html">kvImportData</a></li>
+                <li><a href="./kvJSONForm/index.html">kvJSONForm</a></li>
+                <li><a href="./kvProductionLine/index.html">kvProductionLine</a></li>
+                <li><a href="./kvSelect/index.html">kvSelect</a></li>
+                <li><a href="./kvSelections/index.html">kvSelections</a></li>
+                <li><a href="./kvTags/index.html">kvTags</a></li>
+            </ul>
         </div>
         <aside class="right">
             <div>

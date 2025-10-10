@@ -58,7 +58,7 @@ class kvPair extends HTMLElement {
 			b.push('');
 
 		const labels = this.getAttribute('labels')?.split(',') || ["", ""];
-		this.children[0].innerHTML = `<label>${labels[0] ? labels[0] : ''}</label>` + a.map(value => `<div role="listitem" contenteditable>${value}</div>`).join('');
+		this.children[0].innerHTML = `<label>${labels[0] ? labels[0] : ''} ↻</label>` + a.map(value => `<div role="listitem" contenteditable>${value}</div>`).join('');
 		this.children[1].innerHTML = `<label>${labels[1] ? labels[1] : ''}</label>` + b.map(value => `<div role="listitem" contenteditable>${value}</div>`).join('');
 
 		if (!options[1])
@@ -68,6 +68,8 @@ class kvPair extends HTMLElement {
 	}
 
 	#sync(event) {
+		const sort = event.type === 'click' && !event.target.previousElementSibling;
+
 		if (event.key) {
 			if (['Enter', ',', 'Tab', 'ArrowDown', 'ArrowUp'].indexOf(event.key) == -1)
 				return;
@@ -123,7 +125,8 @@ class kvPair extends HTMLElement {
 				if (i && i < pairedMenu.children.length)
 					pairedMenu.children[i].className = 'selected';
 		}
-		this.#save();
+		this.#save(sort);
+
 		pairedMenu.scrollTop = menu.scrollTop;
 	}
 	#select(el) {
@@ -135,11 +138,39 @@ class kvPair extends HTMLElement {
 		sel.addRange(range);
 	}
 
-	#save() {
-		this.children[2].value = JSON.stringify([
-			[...this.children[0].querySelectorAll('[role="listitem"]')].map(div => div.innerText.replaceAll('\n', '')).join(',').replace(/,+$/g, ''),
-			[...this.children[1].querySelectorAll('[role="listitem"]')].map(div => div.innerText.replaceAll('\n', '')).join(',').replace(/,+$/g, '')
-		]);
+	#sortPairs(pairArr) {
+		const a = pairArr[0].split(',');
+		const b = pairArr[1].split(',');
+		const seen = new Set();
+		const pairs = [];
+		for (let i = 0; i < a.length; i++) {
+			if (!seen.has(a[i])) {
+				pairs.push([a[i], b[i]]);
+				seen.add(a[i]);
+			}
+		}
+		const isNumeric = !/[^0-9.,]/.test(pairArr[0]);
+		pairs.sort((x, y) =>
+			isNumeric
+				? Number(x[0]) - Number(y[0])
+				: x[0].localeCompare(y[0])
+		);
+		const sortedA = pairs.map(pair => pair[0]).join(',');
+		const sortedB = pairs.map(pair => pair[1]).join(',');
+		return [sortedA, sortedB];
+	}
+
+	#save(sort = false) {
+		const pairs = [
+			[...this.children[0].querySelectorAll('[role="listitem"]')].map(div => div.innerText.trim().replaceAll('\n', '')).join(',').replace(/,+$/g, ''),
+			[...this.children[1].querySelectorAll('[role="listitem"]')].map(div => div.innerText.trim().replaceAll('\n', '')).join(',').replace(/,+$/g, '')
+		];
+
+		if (sort) {
+			this.children[2].value = JSON.stringify(this.#sortPairs(pairs));
+			this.attributeChangedCallback('', '', this.children[2].value);
+		} else
+			this.children[2].value = JSON.stringify(pairs);
 	}
 }
 customElements.define('kv-pair', kvPair);
