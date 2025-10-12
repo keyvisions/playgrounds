@@ -3,3 +3,9 @@ package-lock.json
 .vscode/*
 !.vscode/launch.json
 kv-budget/
+
+# Build artifacts
+.lastbuild
+**/deploy/
+**/deploy_deno/
+

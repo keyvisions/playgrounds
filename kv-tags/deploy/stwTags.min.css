@@ -1,1 +1,0 @@
-.stwTags li{font-size:smaller;display:inline-block;background-color:var(--shade_color,grey);color:var(--base_color,#fff);padding:.5rem 1rem .5rem 1.75rem;border:thin solid var(--shade_color,grey);margin:1px .5rem 1px 0;cursor:default}.stwTags li::before{content:"\002A09";position:relative;left:-1rem}.stwTags li:first-child{background-color:var(--base_color,#fff);color:inherit}

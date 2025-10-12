@@ -10,23 +10,16 @@
 </head>
 
 <body>
-    <kv-pick data-batches="batches" data-quantity="qty" batch="LNBI4" batchqty="3">
+    <kv-pick data-batches="batches" data-quantity="qty" batch="DBAF5" batchqty="10">
         {
-        "code": "fufi",
-        "requested": 67,
         "batches": [
-        {"expiration": "31/12/2027", "name":"BULK_fufi", "location":"C9_0 + O0_01", "available":7.0000, "picked": 7},
-        {"expiration": "31/01/2028", "name":"LNAA4", "location":"C9_0 + O0_01", "available":4.0000, "picked": 0},
-        {"expiration": "31/03/2028", "name":"LNAC4", "location":"C9_0 + O0_01", "available":16.0000, "picked": null},
-        {"expiration": "31/05/2028", "name":"LNCE4", "location":"C9_0 + O0_01", "available":26.0000, "picked": null},
-        {"expiration": "31/05/2028", "name":"LNAE4", "location":"C9_0 + O0_01", "available":2.0000, "picked": null},
-        {"expiration": "30/06/2028", "name":"LNCF4", "location":"C9_0 + O0_01", "available":5.0000, "picked": null},
-        {"expiration": "30/06/2028", "name":"LNAF4", "location":"C9_0 + O0_01", "available":1.0000, "picked": null},
-        {"expiration": "31/07/2028", "name":"LNAG4", "location":"C9_0 + O0_01", "available":10.0000, "picked": null},
-        {"expiration": "31/08/2028", "name":"LNAH4", "location":"C9_0 + O0_01", "available":44.0000, "picked": 30},
-        {"expiration": "30/09/2028", "name":"LNBI4", "location":"C9_0 + O0_01", "available":125.0000, "picked": null},
-        {"expiration": "30/09/2028", "name":"LNAI4", "location":"C9_0 + O0_01", "available":38.0000, "picked": null}
-        ]
+        {"expiration":"2028-11-30","name":"DBAA5","location":"A5_1","available":1,"picked":1},
+        {"expiration":"2029-05-31","name":"DBAF5","location":"A5_1","available":12},
+        {"expiration":"2029-06-30","name":"DBAG5","location":"A5_1","available":1},
+        {"expiration":"2029-07-31","name":"DBBH5","location":"A5_1","available":1}
+        ],
+        "requested":12,
+        "code":"EXPO-LOVBASE"
         }
     </kv-pick>
     <label>Parcel:</label> <input tabindex="-1" name="parcel"><br>

@@ -69,7 +69,9 @@ class kvPick extends HTMLElement {
 						pickable = pickable > available ? available : pickable;
 
 						const input = this.querySelector(".selected input");
-						if (this.batchQty == -1)
+						if (pickable == null)
+							;
+						else if (this.batchQty == -1)
 							input.setAttribute("value", picked || "");
 						else if (isNaN(this.batchQty) || this.batchQty == 0)
 							input.setAttribute("value", picked ? picked + 1 : pickable);
