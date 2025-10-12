@@ -26,11 +26,11 @@ async function updateProjectsList() {
 
         // Generate the HTML list items
         const liList = folders
-            .map(folder => `<li><a href="./${folder}/index.html">${folder}</a></li>`)
+            .map(folder => `<li><a href="./${folder}/index.html" target="_blank">${folder}</a></li>`)
             .join('\n        ');
 
         // Prepare the new <ul> content
-        const newUl = `<ul id="Projects">
+        const newUl = `<h1>Projects</h1><ul id="Projects">
         ${liList}
     </ul>`;
 

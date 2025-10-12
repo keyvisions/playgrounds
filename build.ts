@@ -115,8 +115,8 @@ async function buildCSS(components: string, include = '', force = false) {
 
     const minified = minifyCSS(combinedCSS);
     
-    await ensureDir(`./${mainName}/deploy_deno`);
-    await Deno.writeTextFile(`./${mainName}/deploy_deno/${mainName}.min.css`, minified);
+    await ensureDir(`./${mainName}/deploy`);
+    await Deno.writeTextFile(`./${mainName}/deploy/${mainName}.min.css`, minified);
     console.log(`Built ${mainName}.min.css`);
 }
 
@@ -179,8 +179,8 @@ async function buildJS(components: string, include = '', force = false) {
 
     const minified = minifyJS(combinedJS);
     
-    await ensureDir(`./${mainName}/deploy_deno`);
-    await Deno.writeTextFile(`./${mainName}/deploy_deno/${mainName}.min.js`, minified);
+    await ensureDir(`./${mainName}/deploy`);
+    await Deno.writeTextFile(`./${mainName}/deploy/${mainName}.min.js`, minified);
     console.log(`Built ${mainName}.min.js`);
 }
 
@@ -203,8 +203,8 @@ async function buildHTML(name: string, force = false) {
             .replace(new RegExp(`${name}\\.js`, 'g'), `${name}.min.js`)
             .replace(new RegExp(`${name}\\.css`, 'g'), `${name}.min.css`);
         
-        await ensureDir(`./${name}/deploy_deno`);
-        await Deno.writeTextFile(`./${name}/deploy_deno/${name}.min.html`, content);
+        await ensureDir(`./${name}/deploy`);
+        await Deno.writeTextFile(`./${name}/deploy/${name}.min.html`, content);
         console.log(`Built ${name}.min.html`);
     } catch (error) {
         if (error instanceof Error) {

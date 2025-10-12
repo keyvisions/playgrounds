@@ -7,5 +7,4 @@ kv-budget/
 # Build artifacts
 .lastbuild
 **/deploy/
-**/deploy_deno/
 
