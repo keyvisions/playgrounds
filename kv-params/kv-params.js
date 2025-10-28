@@ -28,7 +28,8 @@ class kvParams extends HTMLElement {
 		'save': { en: 'Save', it: 'Salva' },
 		'pair': { en: 'Pair', it: 'Accoppia' },
 		'new': { en: 'New parameter', it: 'Nuovo parametro' },
-		'required': { en: 'Required', 'it': 'Obbligatorio' }
+		'required': { en: 'Required', it: 'Obbligatorio' },
+		'showhide': { en: 'Show all parameters', it: 'Mostra tutti i parametri' }
 	};
 	static #Flags = [
 		{ en: 'Described', it: 'Descrittivo', icon: 'fas fa-font' },
@@ -65,6 +66,13 @@ class kvParams extends HTMLElement {
 
 		this.addEventListener('mouseup', event => {
 			const target = event.target;
+
+			if (target.name === 'showhide') {
+				target.closest("kv-params").querySelectorAll('table :is(input, select, textarea):not([required])').forEach(el => 
+					el.closest('tr').style.display = target.checked ? 'none' : ''
+				);
+				return;
+			}
 
 			target.closest('kv-params tbody')?.querySelector('.selected')?.classList.remove('selected');
 			if (target.closest('kv-params tbody'))
@@ -492,7 +500,13 @@ class kvParams extends HTMLElement {
 
 		if (mode == 'show')
 			this.querySelectorAll('input, textarea, select').forEach(el => el.setAttribute('disabled', ''));
+		this.insertAdjacentHTML('afterbegin', `<label><input form="none" name="showhide" type="checkbox">${kvParams.#Texts.showhide[this.Lang]}</label>`);
 
+		const target = this.querySelector('[name="showhide"]');
+		target.closest("kv-params").querySelectorAll('table :is(input, select, textarea):not([required])').forEach(el => 
+			el.closest('tr').style.display = target.checked ? '' : 'none'
+		);
+				
 		function attributes(param) {
 			const options = param.options;
 			let range = '';

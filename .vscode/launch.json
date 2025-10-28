@@ -23,17 +23,6 @@
             ]
         },
         {
-            "args": [
-            ],
-            "name": "Gulp task",
-            "program": "${workspaceFolder}/node_modules/gulp/bin/gulp.js",
-            "request": "launch",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "type": "node"
-        },
-        {
             "name": "Debug kv-pair",
             "request": "launch",
             "type": "msedge",

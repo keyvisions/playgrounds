@@ -3,6 +3,8 @@ package-lock.json
 .vscode/*
 !.vscode/launch.json
 kv-budget/
+kv-date/
+kv-organogram/
 
 # Build artifacts
 .lastbuild
