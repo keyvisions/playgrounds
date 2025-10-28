@@ -15,44 +15,41 @@
 
 <body onload="load()">
     <header>
-        <nav><a href="index.html">Home</a></nav>
+        <nav><i class="fab fa-github"></i> <a href="https://github.com/keyvisions/playgrounds">keyvisions/playgrounds</a></nav>
         <form class="search" method="get" action="index.html"><input name="search" type="search"> <button type="submit"
                 style="border:none; background-color: transparent; color:inherit;"><i
                     class="fas fa-fw fa-search"></i></button></form>
     </header>
     <main style="display: grid; grid-template-columns: auto 1fr auto;">
         <aside class="left">
-            <div>
-                This is the left collapsible aside
-            </div>
+            <h2>Parts</h2>
+            <ol id="Parts">
+                <li><a href="./barcode/index.html" target="_blank">barcode</a></li>
+                <li><a href="./kv-form/index.html" target="_blank">kv-form</a></li>
+                <li><a href="./kv-gantt/index.html" target="_blank">kv-gantt</a></li>
+                <li><a href="./kv-gauge/index.html" target="_blank">kv-gauge</a></li>
+                <li><a href="./kv-pair/index.html" target="_blank">kv-pair</a></li>
+                <li><a href="./kv-params/index.html" target="_blank">kv-params</a></li>
+                <li><a href="./kv-pick/index.html" target="_blank">kv-pick</a></li>
+                <li><a href="./kv-table/index.html" target="_blank">kv-table</a></li>
+                <li><a href="./kv-tags/index.html" target="_blank">kv-tags</a></li>
+                <li><a href="./kv-timeline/index.html" target="_blank">kv-timeline</a></li>
+                <li><a href="./kvAutocomplete/index.html" target="_blank">kvAutocomplete</a></li>
+                <li><a href="./kvCart/index.html" target="_blank">kvCart</a></li>
+                <li><a href="./kvImportData/index.html" target="_blank">kvImportData</a></li>
+                <li><a href="./kvJSONForm/index.html" target="_blank">kvJSONForm</a></li>
+                <li><a href="./kvProductionLine/index.html" target="_blank">kvProductionLine</a></li>
+                <li><a href="./kvSelect/index.html" target="_blank">kvSelect</a></li>
+                <li><a href="./kvSelections/index.html" target="_blank">kvSelections</a></li>
+                <li><a href="./kvTags/index.html" target="_blank">kvTags</a></li>
+            </ol>
         </aside>
-        <div>
-            <p>This is he main section</p>
-            <h1>Projects</h1><ul id="Projects">
-        <li><a href="./barcode/index.html" target="_blank">barcode</a></li>
-        <li><a href="./kv-form/index.html" target="_blank">kv-form</a></li>
-        <li><a href="./kv-gantt/index.html" target="_blank">kv-gantt</a></li>
-        <li><a href="./kv-gauge/index.html" target="_blank">kv-gauge</a></li>
-        <li><a href="./kv-pair/index.html" target="_blank">kv-pair</a></li>
-        <li><a href="./kv-params/index.html" target="_blank">kv-params</a></li>
-        <li><a href="./kv-pick/index.html" target="_blank">kv-pick</a></li>
-        <li><a href="./kv-table/index.html" target="_blank">kv-table</a></li>
-        <li><a href="./kv-tags/index.html" target="_blank">kv-tags</a></li>
-        <li><a href="./kv-timeline/index.html" target="_blank">kv-timeline</a></li>
-        <li><a href="./kvAutocomplete/index.html" target="_blank">kvAutocomplete</a></li>
-        <li><a href="./kvCart/index.html" target="_blank">kvCart</a></li>
-        <li><a href="./kvImportData/index.html" target="_blank">kvImportData</a></li>
-        <li><a href="./kvJSONForm/index.html" target="_blank">kvJSONForm</a></li>
-        <li><a href="./kvProductionLine/index.html" target="_blank">kvProductionLine</a></li>
-        <li><a href="./kvSelect/index.html" target="_blank">kvSelect</a></li>
-        <li><a href="./kvSelections/index.html" target="_blank">kvSelections</a></li>
-        <li><a href="./kvTags/index.html" target="_blank">kvTags</a></li>
-    </ul>
-        </div>
+        <iframe id="Part" src="about:blank" style="border:none; padding:1rem; width:fit-content;">
+            Part
+        </iframe>
         <aside class="right">
-            <div>
-                This is the right collapsible aside
-            </div>
+            <h2>Read me</h2>
+            <div id="README"></div>
         </aside>
     </main>
     <footer>

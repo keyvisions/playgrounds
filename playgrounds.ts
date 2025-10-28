@@ -1,7 +1,7 @@
 // This script scans root-level folders for index.html and generates <li> links for index folder in each folder.
-// It then replaces the content of <ul id="Projects">...</ul> in index.html with the generated list.
+// It then replaces the content of <ul id="Parts">...</ul> in index.html with the generated list.
 
-export async function updateProjectsList() {
+export async function updatePartsList() {
     const projectRoot = Deno.cwd();
     const indexFile = `${projectRoot}/index.html`;
 
@@ -45,33 +45,33 @@ export async function updateProjectsList() {
             .join('\n        ');
 
         // Prepare the new <ul> content
-        const newUl = `<h1>Projects</h1><ul id="Projects">
+        const newUl = `<h1>Parts</h1><ul id="Parts">
         ${liList}
     </ul>`;
 
         // Read the index.html content
         const html = await Deno.readTextFile(indexFile);
 
-        // Replace the content of <ul id="Projects">...</ul>
-        // This regex matches <ul id="Projects">...</ul> including newlines and whitespace
+        // Replace the content of <ul id="Parts">...</ul>
+        // This regex matches <ul id="Parts">...</ul> including newlines and whitespace
         const updatedHtml = html.replace(
-            /<ul id="Projects">.*?<\/ul>/s,
+            /<ul id="Parts">.*?<\/ul>/s,
             newUl
         );
 
         // Write the updated HTML back to index.html
         await Deno.writeTextFile(indexFile, updatedHtml);
 
-        console.log(`Updated project list in index.html with ${folders.length} projects:`);
+        console.log(`Updated project list in index.html with ${folders.length} parts:`);
         folders.forEach(folder => console.log(`  - ${folder}`));
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error('Error updating projects list:', errorMessage);
+        console.error('Error updating parts list:', errorMessage);
         Deno.exit(1);
     }
 }
 
 if (import.meta.main) {
-    await updateProjectsList();
+    await updatePartsList();
 }

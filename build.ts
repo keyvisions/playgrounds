@@ -241,14 +241,14 @@ async function buildAll() {
     await Deno.writeTextFile('./.lastbuild', new Date().toISOString());
     console.log('Build complete!');
 
-    // Call updateProjectsList from playgrounds.ts
+    // Call updatePartsList from playgrounds.ts
     try {
         const playgrounds = await import('./playgrounds.ts');
-        if (typeof playgrounds.updateProjectsList === 'function') {
-            await playgrounds.updateProjectsList();
+        if (typeof playgrounds.updatePartsList === 'function') {
+            await playgrounds.updatePartsList();
             console.log('Project list updated.');
         } else {
-            console.warn('updateProjectsList not found in playgrounds.ts');
+            console.warn('updatePartsList not found in playgrounds.ts');
         }
     } catch (err) {
         console.error('Failed to update project list:', err);

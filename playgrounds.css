@@ -1,3 +1,22 @@
+.dark-mode a {
+    color: #66aaff;
+}
+.dark-mode a:visited {
+    color: #b388ff;
+}
+.dark-mode a:hover, .dark-mode a:focus {
+    color: #ffd166;
+}
+
+.light-mode a {
+    color: #0074d9;
+}
+.light-mode a:visited {
+    color: #005fa3;
+}
+.light-mode a:hover, .light-mode a:focus {
+    color: #ff851b;
+}
 :root {
     --special: rgb(127, 127, 127);
     --special_light: rgba(127, 127, 127, 0.25);
