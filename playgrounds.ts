@@ -19,6 +19,7 @@ export async function updatePartsList() {
                 }
             }
         });
+    // deno-lint-ignore no-empty
     } catch {}
 
     try {
@@ -36,34 +37,22 @@ export async function updatePartsList() {
             }
         }
 
-        // Sort folders alphabetically
         folders.sort();
 
-        // Generate the HTML list items
         const liList = folders
-            .map(folder => `<li><a href="./${folder}/index.html" target="_blank">${folder}</a></li>`)
-            .join('\n        ');
+            .map(folder => `<li><a href="./${folder}/index.html" onclick="openPart(event)">${folder}</a></li>`)
+            .join('\n');
 
-        // Prepare the new <ul> content
-        const newUl = `<h1>Parts</h1><ul id="Parts">
-        ${liList}
-    </ul>`;
+        const newUl = `<ol id="Parts">${liList}</ol>`;
 
-        // Read the index.html content
         const html = await Deno.readTextFile(indexFile);
 
-        // Replace the content of <ul id="Parts">...</ul>
-        // This regex matches <ul id="Parts">...</ul> including newlines and whitespace
-        const updatedHtml = html.replace(
-            /<ul id="Parts">.*?<\/ul>/s,
-            newUl
-        );
+        const updatedHtml = html.replace(/<ol id="Parts">.*?<\/ol>/s, newUl);
 
-        // Write the updated HTML back to index.html
         await Deno.writeTextFile(indexFile, updatedHtml);
 
-        console.log(`Updated project list in index.html with ${folders.length} parts:`);
-        folders.forEach(folder => console.log(`  - ${folder}`));
+        console.log(`Updated project list in index.html with ${folders.length} parts`);
+        // folders.forEach(folder => console.log(`  - ${folder}`));
 
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

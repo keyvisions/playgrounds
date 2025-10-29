@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 const currentTheme = localStorage.getItem('theme');
 
@@ -27,6 +28,27 @@ function setBackground(svg) {
 
     bodyStyle.backgroundImage = `url("${svg}")`;
     bodyStyle.backgroundSize = '100px 100px';
+}
+
+async function openPart(event) {
+    event.preventDefault();
+    document.getElementById("Part").setAttribute("src", event.target.href);
+    const readmeUrl = event.target.href.replace("index.html", "README.md");
+    try {
+        const response = await fetch(readmeUrl);
+        if (!response.ok) {
+            document.getElementById("README").innerHTML = "<em>No README available for this part.</em>";
+        } else {
+            const md = await response.text();
+            if (window.marked) {
+                document.getElementById("README").innerHTML = marked.parse(md);
+            } else {
+                document.getElementById("README").innerText = md;
+            }
+        }
+    } catch (_error) {
+        document.getElementById("README").innerHTML = "<em>No README available for this part.</em>";
+    }
 }
 
 function checkCF(CF) {

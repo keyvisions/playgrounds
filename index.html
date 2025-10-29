@@ -10,6 +10,7 @@
         integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="./playgrounds.css" />
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="./playgrounds.js"></script>
 </head>
 
@@ -23,28 +24,26 @@
     <main style="display: grid; grid-template-columns: auto 1fr auto;">
         <aside class="left">
             <h2>Parts</h2>
-            <ol id="Parts">
-                <li><a href="./barcode/index.html" target="_blank">barcode</a></li>
-                <li><a href="./kv-form/index.html" target="_blank">kv-form</a></li>
-                <li><a href="./kv-gantt/index.html" target="_blank">kv-gantt</a></li>
-                <li><a href="./kv-gauge/index.html" target="_blank">kv-gauge</a></li>
-                <li><a href="./kv-pair/index.html" target="_blank">kv-pair</a></li>
-                <li><a href="./kv-params/index.html" target="_blank">kv-params</a></li>
-                <li><a href="./kv-pick/index.html" target="_blank">kv-pick</a></li>
-                <li><a href="./kv-table/index.html" target="_blank">kv-table</a></li>
-                <li><a href="./kv-tags/index.html" target="_blank">kv-tags</a></li>
-                <li><a href="./kv-timeline/index.html" target="_blank">kv-timeline</a></li>
-                <li><a href="./kvAutocomplete/index.html" target="_blank">kvAutocomplete</a></li>
-                <li><a href="./kvCart/index.html" target="_blank">kvCart</a></li>
-                <li><a href="./kvImportData/index.html" target="_blank">kvImportData</a></li>
-                <li><a href="./kvJSONForm/index.html" target="_blank">kvJSONForm</a></li>
-                <li><a href="./kvProductionLine/index.html" target="_blank">kvProductionLine</a></li>
-                <li><a href="./kvSelect/index.html" target="_blank">kvSelect</a></li>
-                <li><a href="./kvSelections/index.html" target="_blank">kvSelections</a></li>
-                <li><a href="./kvTags/index.html" target="_blank">kvTags</a></li>
-            </ol>
+            <ol id="Parts"><li><a href="./barcode/index.html" onclick="openPart(event)">barcode</a></li>
+<li><a href="./kv-form/index.html" onclick="openPart(event)">kv-form</a></li>
+<li><a href="./kv-gantt/index.html" onclick="openPart(event)">kv-gantt</a></li>
+<li><a href="./kv-gauge/index.html" onclick="openPart(event)">kv-gauge</a></li>
+<li><a href="./kv-pair/index.html" onclick="openPart(event)">kv-pair</a></li>
+<li><a href="./kv-params/index.html" onclick="openPart(event)">kv-params</a></li>
+<li><a href="./kv-pick/index.html" onclick="openPart(event)">kv-pick</a></li>
+<li><a href="./kv-table/index.html" onclick="openPart(event)">kv-table</a></li>
+<li><a href="./kv-tags/index.html" onclick="openPart(event)">kv-tags</a></li>
+<li><a href="./kv-timeline/index.html" onclick="openPart(event)">kv-timeline</a></li>
+<li><a href="./kvAutocomplete/index.html" onclick="openPart(event)">kvAutocomplete</a></li>
+<li><a href="./kvCart/index.html" onclick="openPart(event)">kvCart</a></li>
+<li><a href="./kvImportData/index.html" onclick="openPart(event)">kvImportData</a></li>
+<li><a href="./kvJSONForm/index.html" onclick="openPart(event)">kvJSONForm</a></li>
+<li><a href="./kvProductionLine/index.html" onclick="openPart(event)">kvProductionLine</a></li>
+<li><a href="./kvSelect/index.html" onclick="openPart(event)">kvSelect</a></li>
+<li><a href="./kvSelections/index.html" onclick="openPart(event)">kvSelections</a></li>
+<li><a href="./kvTags/index.html" onclick="openPart(event)">kvTags</a></li></ol>
         </aside>
-        <iframe id="Part" src="about:blank" style="border:none; padding:1rem; width:fit-content;">
+        <iframe id="Part" src="about:blank" style="border:none; width:100%; height:100%; display:block; position:relative; top:0; left:0; right:0; bottom:0;">
             Part
         </iframe>
         <aside class="right">

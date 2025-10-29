@@ -1,3 +1,4 @@
+// deno-lint-ignore-file
 window.addEventListener('load', () => {
 	document.querySelectorAll('input[type=selections]').forEach((input, i) => {
 		input.setAttribute('type', 'text');
