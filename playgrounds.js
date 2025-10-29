@@ -50,6 +50,7 @@ async function openPart(event) {
         document.getElementById("README").innerHTML = "<em>No README available for this part.</em>";
     }
 }
+window.openPart = openPart;
 
 function checkCF(CF) {
     const c = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ',

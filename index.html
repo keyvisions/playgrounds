@@ -1,69 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="dark light">
     <title>Document</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
-        integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="stylesheet" href="playgrounds.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"
+      integrity="sha512-q3eWabyZPc1XTCmF+8/LuE1ozpg5xxn7iO89yfSOd5/oKvyqLngoNGsx8jq92Y8eXJ/IRxQbEC+FGSYxtk2oiw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="./playgrounds.css" />
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="playgrounds.js"></script>
-</head>
+  </head>
 
-<body onload="load()">
+  <body onload="load()">
     <header>
-        <nav><i class="fab fa-github"></i> <a href="https://github.com/keyvisions/playgrounds">keyvisions/playgrounds</a></nav>
-        <form class="search" method="get" action="index.html"><input name="search" type="search"> <button type="submit"
-                style="border:none; background-color: transparent; color:inherit;"><i
-                    class="fas fa-fw fa-search"></i></button></form>
+      <nav>
+        <i class="fab fa-github"></i> <a
+          href="https://github.com/keyvisions/playgrounds"
+        >keyvisions/playgrounds</a>
+      </nav>
+      <form class="search" method="get" action="index.html">
+        <input name="search" type="search"> <button
+          type="submit"
+          style="border: none; background-color: transparent; color: inherit"
+        >
+          <i
+            class="fas fa-fw fa-search"
+          ></i>
+        </button>
+      </form>
     </header>
-    <main style="display: grid; grid-template-columns: auto 1fr auto;">
-        <aside class="left">
-            <h2>Parts</h2>
-            <ol id="Parts"><li><a href="./barcode/index.html" onclick="openPart(event)">barcode</a></li>
-<li><a href="./kv-form/index.html" onclick="openPart(event)">kv-form</a></li>
-<li><a href="./kv-gantt/index.html" onclick="openPart(event)">kv-gantt</a></li>
-<li><a href="./kv-gauge/index.html" onclick="openPart(event)">kv-gauge</a></li>
-<li><a href="./kv-pair/index.html" onclick="openPart(event)">kv-pair</a></li>
-<li><a href="./kv-params/index.html" onclick="openPart(event)">kv-params</a></li>
-<li><a href="./kv-pick/index.html" onclick="openPart(event)">kv-pick</a></li>
-<li><a href="./kv-table/index.html" onclick="openPart(event)">kv-table</a></li>
-<li><a href="./kv-tags/index.html" onclick="openPart(event)">kv-tags</a></li>
-<li><a href="./kv-timeline/index.html" onclick="openPart(event)">kv-timeline</a></li>
-<li><a href="./kvAutocomplete/index.html" onclick="openPart(event)">kvAutocomplete</a></li>
-<li><a href="./kvCart/index.html" onclick="openPart(event)">kvCart</a></li>
-<li><a href="./kvImportData/index.html" onclick="openPart(event)">kvImportData</a></li>
-<li><a href="./kvJSONForm/index.html" onclick="openPart(event)">kvJSONForm</a></li>
-<li><a href="./kvProductionLine/index.html" onclick="openPart(event)">kvProductionLine</a></li>
-<li><a href="./kvSelect/index.html" onclick="openPart(event)">kvSelect</a></li>
-<li><a href="./kvSelections/index.html" onclick="openPart(event)">kvSelections</a></li>
-<li><a href="./kvTags/index.html" onclick="openPart(event)">kvTags</a></li></ol>
-        </aside>
-        <iframe id="Part" src="about:blank" style="border:none; width:100%; height:100%; display:block; position:relative; top:0; left:0; right:0; bottom:0;">
-            Part
-        </iframe>
-        <aside class="right">
-            <h2>Read me</h2>
-            <div id="README"></div>
-        </aside>
+    <main style="display: grid; grid-template-columns: auto 1fr auto">
+      <aside class="left">
+        <h2>Parts</h2>
+        <ol id="Parts">
+          <li>
+            <a href="./barcode/index.html" onclick="openPart(event)">barcode</a>
+          </li>
+          <li>
+            <a href="./kv-form/index.html" onclick="openPart(event)">kv-form</a>
+          </li>
+          <li>
+            <a href="./kv-gantt/index.html" onclick="openPart(event)"
+            >kv-gantt</a>
+          </li>
+          <li>
+            <a href="./kv-gauge/index.html" onclick="openPart(event)"
+            >kv-gauge</a>
+          </li>
+          <li>
+            <a href="./kv-pair/index.html" onclick="openPart(event)">kv-pair</a>
+          </li>
+          <li>
+            <a href="./kv-params/index.html" onclick="openPart(event)"
+            >kv-params</a>
+          </li>
+          <li>
+            <a href="./kv-pick/index.html" onclick="openPart(event)">kv-pick</a>
+          </li>
+          <li>
+            <a href="./kv-table/index.html" onclick="openPart(event)"
+            >kv-table</a>
+          </li>
+          <li>
+            <a href="./kv-tags/index.html" onclick="openPart(event)">kv-tags</a>
+          </li>
+          <li>
+            <a href="./kv-timeline/index.html" onclick="openPart(event)"
+            >kv-timeline</a>
+          </li>
+          <li>
+            <a href="./kvAutocomplete/index.html" onclick="openPart(event)"
+            >kvAutocomplete</a>
+          </li>
+          <li>
+            <a href="./kvCart/index.html" onclick="openPart(event)">kvCart</a>
+          </li>
+          <li>
+            <a href="./kvImportData/index.html" onclick="openPart(event)"
+            >kvImportData</a>
+          </li>
+          <li>
+            <a href="./kvJSONForm/index.html" onclick="openPart(event)"
+            >kvJSONForm</a>
+          </li>
+          <li>
+            <a href="./kvProductionLine/index.html" onclick="openPart(event)"
+            >kvProductionLine</a>
+          </li>
+          <li>
+            <a href="./kvSelect/index.html" onclick="openPart(event)"
+            >kvSelect</a>
+          </li>
+          <li>
+            <a href="./kvSelections/index.html" onclick="openPart(event)"
+            >kvSelections</a>
+          </li>
+          <li>
+            <a href="./kvTags/index.html" onclick="openPart(event)">kvTags</a>
+          </li>
+        </ol>
+      </aside>
+      <iframe
+        name="Part"
+        id="Part"
+        src="about:blank"
+        style="border: none; width: 100%; height: 100%; display: block; position: relative; top: 0; left: 0; right: 0; bottom: 0"
+      >
+        Part
+      </iframe>
+      <aside class="right">
+        <h2>Read me</h2>
+        <div id="README"></div>
+      </aside>
     </main>
     <footer>
-        <div style="padding:0.5rem">
-            KeyVisions&trade; &copy;
-            <script>document.write((new Date()).getFullYear())</script> All rights reserved.
-            <select name="background" onchange="setBackground(this.value)" style="padding:0 0.5rem; float:right">
-                <option value="">none</option>
-                <option value="./media/butterfly.svg">Butterfly</option>
-                <option value="./media/flower.svg">Flower</option>
-                <option value="./media/marijuana.svg">Marijuana</option>
-            </select>
-            <i class="far fa-fw fa-moon" onclick="toggleColorScheme(event)" style="padding:0 0.5rem; float:right"></i>
-        </div>
+      <div style="padding: 0.5rem">
+        KeyVisions&trade; &copy;
+        <script>
+          document.write((new Date()).getFullYear());
+        </script> All rights reserved.
+        <select
+          name="background"
+          onchange="setBackground(this.value)"
+          style="padding: 0 0.5rem; float: right"
+        >
+          <option value="">none</option>
+          <option value="./media/butterfly.svg">Butterfly</option>
+          <option value="./media/flower.svg">Flower</option>
+          <option value="./media/marijuana.svg">Marijuana</option>
+        </select>
+        <i
+          class="far fa-fw fa-moon"
+          onclick="toggleColorScheme(event)"
+          style="padding: 0 0.5rem; float: right"
+        ></i>
+      </div>
     </footer>
-</body>
-
+    <script src="./playgrounds.js"></script>
+  </body>
 </html>
