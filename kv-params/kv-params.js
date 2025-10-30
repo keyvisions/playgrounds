@@ -29,7 +29,7 @@ class kvParams extends HTMLElement {
 		'pair': { en: 'Pair', it: 'Accoppia' },
 		'new': { en: 'New parameter', it: 'Nuovo parametro' },
 		'required': { en: 'Required', it: 'Obbligatorio' },
-		'showhide': { en: 'Show all parameters', it: 'Mostra tutti i parametri' }
+		'showhide': { en: 'Show only required parameters', it: 'Mostra solo parametri obbligatori' }
 	};
 	static #Flags = [
 		{ en: 'Described', it: 'Descrittivo', icon: 'fas fa-font' },
@@ -69,7 +69,7 @@ class kvParams extends HTMLElement {
 
 			if (target.name === 'showhide') {
 				target.closest("kv-params").querySelectorAll('table :is(input, select, textarea):not([required])').forEach(el => 
-					el.closest('tr').style.display = target.checked ? 'none' : ''
+					el.closest('tr').style.display = target.checked ? '' : 'none'
 				);
 				return;
 			}
@@ -410,6 +410,9 @@ class kvParams extends HTMLElement {
 				cols = Math.max(cols, this.Data[`P${param.id}`]?.length || 1);
 		});
 
+		if (cols > 1 && this.sheet != 4)
+			cols = 1;
+
 		const count = this.Schema.length;
 
 		this.Schema.forEach((param, j) => {
@@ -504,7 +507,7 @@ class kvParams extends HTMLElement {
 
 		const target = this.querySelector('[name="showhide"]');
 		target.closest("kv-params").querySelectorAll('table :is(input, select, textarea):not([required])').forEach(el => 
-			el.closest('tr').style.display = target.checked ? '' : 'none'
+			el.closest('tr').style.display = target.checked ? 'none' : ''
 		);
 				
 		function attributes(param) {

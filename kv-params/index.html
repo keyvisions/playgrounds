@@ -5,7 +5,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>kv-params</title>
-	<link href="../kv-style.css" type="text/css" rel="stylesheet">
+	<link href="../css/kv-style.css" type="text/css" rel="stylesheet">
 	<link href="../kv-pair/kv-pair.css" type="text/css" rel="stylesheet">
 	<link href="./kv-params.css" type="text/css" rel="stylesheet">
 
@@ -56,7 +56,7 @@
 			onclick="navigator.clipboard.writeText(document.querySelector('kv-params').save())">Save</button>
 	</p>
 	<form>
-		<input name="parameters">
+		<textarea name="parameters" style="display: block; width:100%; height: 7rem;"></textarea>
 		<kv-params name="parameters" schema="./compressor.json" data="./data.json" columns="2"
 			template="xSheet"></kv-params>
 
