@@ -1,3 +1,4 @@
+import * as esbuild from "https://deno.land/x/esbuild@v0.19.11/mod.js";
 import { ensureDir } from "https://deno.land/std@0.208.0/fs/mod.ts";
 
 // Get last build time
@@ -28,25 +29,21 @@ async function isNewer(filePath: string): Promise<boolean> {
     }
 }
 
-function minifyCSS(cssContent: string): string {
-    // Basic CSS minification
-    return cssContent
-        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove comments
-        .replace(/\s+/g, ' ') // Collapse whitespace
-        .replace(/;\s*}/g, '}') // Remove last semicolon
-        .replace(/\s*{\s*/g, '{') // Clean braces
-        .replace(/;\s*/g, ';') // Clean semicolons
-        .trim();
+async function minifyCSS(cssContent: string): Promise<string> {
+    const result = await esbuild.transform(cssContent, {
+        minify: true,
+        loader: "css"
+    });
+    return result.code;
 }
 
-function minifyJS(jsContent: string): string {
-    // Basic JS minification
-    return jsContent
-        .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
-        .replace(/\/\/.*$/gm, '') // Remove line comments
-        .replace(/\s+/g, ' ') // Collapse whitespace
-        .replace(/\s*([{}();,:])\s*/g, '$1') // Clean operators
-        .trim();
+async function minifyJS(jsContent: string): Promise<string> {
+    const result = await esbuild.transform(jsContent, {
+        minify: true,
+        loader: "js",
+        target: "esnext"
+    });
+    return result.code;
 }
 
 async function buildCSS(components: string, include = '', force = false) {
@@ -55,8 +52,8 @@ async function buildCSS(components: string, include = '', force = false) {
     
     // Build list of CSS files to check
     const cssFiles = [];
-    if (await fileExists('./kv-style.css')) {
-        cssFiles.push('./kv-style.css');
+    if (await fileExists('./css/kv-style.css')) {
+        cssFiles.push('./css/kv-style.css');
     }
     
     if (include) {
@@ -113,7 +110,7 @@ async function buildCSS(components: string, include = '', force = false) {
         return;
     }
 
-    const minified = minifyCSS(combinedCSS);
+    const minified = await minifyCSS(combinedCSS);
     
     await ensureDir(`./${mainName}/deploy`);
     await Deno.writeTextFile(`./${mainName}/deploy/${mainName}.min.css`, minified);
@@ -177,7 +174,7 @@ async function buildJS(components: string, include = '', force = false) {
         return;
     }
 
-    const minified = minifyJS(combinedJS);
+    const minified = await minifyJS(combinedJS);
     
     await ensureDir(`./${mainName}/deploy`);
     await Deno.writeTextFile(`./${mainName}/deploy/${mainName}.min.js`, minified);
@@ -257,4 +254,5 @@ async function buildAll() {
 
 if (import.meta.main) {
     await buildAll();
+    esbuild.stop();
 }

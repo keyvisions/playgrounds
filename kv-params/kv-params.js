@@ -65,10 +65,11 @@ class kvParams extends HTMLElement {
 		this.Schema = JSON.parse(this.innerText || "[]");
 
 		this.addEventListener('mouseup', event => {
-			const target = event.target;
+			let target = event.target;
 
-			if (target.name === 'showhide') {
-				target.closest("kv-params").querySelectorAll('table :is(input, select, textarea):not([required])').forEach(el => 
+			if (target.name === 'showhide' || target.firstElementChild?.name === 'showhide') {
+				if (target.name !== 'showhide') target = target.firstElementChild; 
+				target.closest("kv-params").querySelector('table').querySelectorAll(':is(input, select, textarea):not([required])').forEach(el => 
 					el.closest('tr').style.display = target.checked ? '' : 'none'
 				);
 				return;
@@ -89,7 +90,7 @@ class kvParams extends HTMLElement {
 				const count = this.querySelectorAll('tbody>tr').length;
 				this.querySelectorAll('tbody>tr').forEach(row => {
 					if (row.children[0].hasAttribute('colspan'))
-						row.children[0].setAttribute('colspan', colspan)
+						row.children[0].setAttribute('colspan', colspan);
 					else {
 						const node = row.lastElementChild.cloneNode(true);
 						node.children[0].value = '';
@@ -111,7 +112,7 @@ class kvParams extends HTMLElement {
 
 				this.querySelectorAll('tbody>tr').forEach(row => {
 					if (row.children[0].hasAttribute('colspan'))
-						row.children[0].setAttribute('colspan', colspan)
+						row.children[0].setAttribute('colspan', colspan);
 					else
 						row.lastElementChild.remove();
 				});
@@ -503,7 +504,7 @@ class kvParams extends HTMLElement {
 
 		if (mode == 'show')
 			this.querySelectorAll('input, textarea, select').forEach(el => el.setAttribute('disabled', ''));
-		this.insertAdjacentHTML('afterbegin', `<label><input form="none" name="showhide" type="checkbox">${kvParams.#Texts.showhide[this.Lang]}</label>`);
+		this.insertAdjacentHTML('afterbegin', `<label><input form="none" name="showhide" type="checkbox"> ${kvParams.#Texts.showhide[this.Lang]}</label>`);
 
 		const target = this.querySelector('[name="showhide"]');
 		target.closest("kv-params").querySelectorAll('table :is(input, select, textarea):not([required])').forEach(el => 
