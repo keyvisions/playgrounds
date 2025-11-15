@@ -1,29 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>kv-pick</title>
     <link href="./kv-pick.css" type="text/css" rel="stylesheet">
     <script src="./kv-pick.js" defer></script>
-</head>
+    <script>
+      const picked = [];
+      function pick(event) {
+        const form = event.target.form;
 
-<body>
-    <kv-pick data-batches="batches" data-quantity="qty" batch="DBAA5" batchqty="1">
-        {
-        "batches": [
-        {"expiration":"2028-11-30","name":"DBAA5","location":"A5_1","available":1,"picked":1},
+        const qrcode = `${form.elements["batchid"].value}/${to3Digits(form.elements["batchqty"].value)}/${to3Digits(form.elements["labelnum"].value)}`;
+        if (picked.includes(qrcode)) {
+          alert(`Box ${qrcode} already picked!`);
+        } else {
+          picked.push(qrcode);
+        }
+        return false;
+      }
+      function to3Digits(n, clamp = true) {
+        if (typeof n !== "number" || !isFinite(n) || isNaN(n)) {
+          n = 0;
+        }
+        const i = Math.floor(n);
+        if (i < 0) {
+          if (clamp) return "000";
+          throw new RangeError("Negative numbers not allowed");
+        }
+        if (i > 999) {
+          if (clamp) return String(i % 1000).padStart(3, "0"); // or return '999'
+          throw new RangeError("Number out of range (0-999)");
+        }
+        return String(i).padStart(3, "0");
+      }
+    </script>
+  </head>
+
+  <body>
+    <form>
+      <kv-pick
+        data-batches="batches"
+        data-quantity="qty"
+        batch="DBAA5"
+        batchqty="1"
+      >
+        { "batches": [
+        {"expiration":"2028-11-30","name":"DBAA5","location":"A5_1","available":100,"picked":1},
         {"expiration":"2029-05-31","name":"DBAF5","location":"A5_1","available":12},
         {"expiration":"2029-06-30","name":"DBAG5","location":"A5_1","available":1},
         {"expiration":"2029-07-31","name":"DBBH5","location":"A5_1","available":1}
-        ],
-        "requested":20,
-        "code":"EXPO-LOVBASE"
-        }
-    </kv-pick>
-    <label>Parcel:</label> <input tabindex="-1" name="parcel"><br>
-    <button type="submit">Pick</button>
-</body>
-
+        ], "requested":20, "code":"EXPO-LOVBASE" }
+      </kv-pick>
+      <p>
+        <label>QR Code:</label>
+        <input
+          name="batchid"
+          pattern="\w{5}"
+          placeholder="CHAM5"
+        >/
+        <input
+          type="number"
+          name="batchqty"
+          min="0"
+          max="999"
+          placeholder="000"
+        >/
+        <input
+          type="number"
+          name="labelnum"
+          min="0"
+          max="999"
+          placeholder="000"
+        ><br>
+      </p>
+      <button type="submit" onclick="return pick(event)">Pick</button>
+    </form>
+  </body>
 </html>

@@ -11,3 +11,4 @@ kv-form/
 .lastbuild
 **/deploy/
 
+**/test.*

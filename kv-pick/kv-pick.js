@@ -61,21 +61,25 @@ class kvPick extends HTMLElement {
 					if (this.querySelector(".selected")) {
 						this.querySelector(".selected").scrollIntoView(false);
 
-						const requested = parseFloat(this.querySelector("td.requested").innerText),
-							available = parseFloat(this.querySelector(".selected td.available").innerText),
+// Do not check, just add! 2025/11/08						
+						const 
+							//requested = parseFloat(this.querySelector("td.requested").innerText),
+							//available = parseFloat(this.querySelector(".selected td.available").innerText),
 							picked = parseFloat(this.querySelector("#picked").value) || 0;
 
-						let pickable = picked < requested ? requested - picked : null;
-						pickable = pickable > available ? available : pickable;
+//						let pickable = picked < requested ? requested - picked : null;
+//						pickable = pickable > available ? available : pickable;
 
 						const input = this.querySelector(".selected input");
 						const value = parseInt(input.getAttribute("value")) || 0;
-						if (pickable == null)
+//						if (pickable == null)
+//							;
+						if (this.batchCode != "" && this.batchQty == -1)
 							;
 						else if (this.batchQty == -1)
 							input.setAttribute("value", picked || "");
-//						else if (isNaN(this.batchQty) || this.batchQty == 0)
-//							input.setAttribute("value",  picked ? value + 1 : pickable);
+////						else if (isNaN(this.batchQty) || this.batchQty == 0)
+////							input.setAttribute("value",  picked ? value + 1 : pickable);
 						else
 							input.setAttribute("value", (value + this.batchQty) || "");
 
