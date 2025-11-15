@@ -623,8 +623,8 @@ class kvParams extends HTMLElement {
 			return this.children[0].value;
 		} else if (this.Mode != 'show') {
 			let tests = this.querySelectorAll('tfoot>tr>th').length - 1;
-			tests = this.hasAttribute('template') ? 1 : tests;
-			this.querySelectorAll('input, select, textarea').forEach((el, i) => {
+			tests = this.hasAttribute('template') && this.Sheet != 7 ? 1 : tests; // Test sheet
+			this.querySelectorAll('input:not([name=showhide]), select, textarea').forEach((el, i) => {
 				const s = i % tests;
 				if (!s) {
 					this.Data[el.name] = new Array(tests);
