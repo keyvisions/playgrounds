@@ -411,7 +411,7 @@ class kvParams extends HTMLElement {
 				cols = Math.max(cols, this.Data[`P${param.id}`]?.length || 1);
 		});
 
-		if (cols > 1 && this.sheet != 4)
+		if (cols > 1 && sheet != 7)
 			cols = 1;
 
 		const count = this.Schema.length;
