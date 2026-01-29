@@ -1,0 +1,49 @@
+kv-sign {
+    display: inline-block;
+}
+
+kv-sign .kv-sign-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+kv-sign .kv-sign-canvas {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: crosshair;
+    touch-action: none;
+    background-color: #fff;
+}
+
+kv-sign .kv-sign-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+kv-sign .kv-sign-clear,
+kv-sign .kv-sign-save {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+kv-sign .kv-sign-clear:hover {
+    background-color: #ffebee;
+    border-color: #ef5350;
+}
+
+kv-sign .kv-sign-save:hover {
+    background-color: #e3f2fd;
+    border-color: #42a5f5;
+}
+
+kv-sign .kv-sign-clear:active,
+kv-sign .kv-sign-save:active {
+    transform: translateY(1px);
+}

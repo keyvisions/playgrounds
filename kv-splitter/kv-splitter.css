@@ -1,0 +1,84 @@
+/* System colors, fonts and metrics */
+html {
+  background: Canvas;
+  color: CanvasText;
+}
+
+body {
+  font-family:
+    system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
+}
+
+a {
+  color: LinkText;
+}
+
+@media (forced-colors: active) {
+  button {
+    background: ButtonFace;
+    color: ButtonText;
+    border: thin solid CanvasText;
+  }
+
+  input,
+  select,
+  textarea {
+    background: Field;
+    color: FieldText;
+  }
+
+  ::selection {
+    background: Highlight;
+    color: HighlightText;
+  }
+}
+
+dialog {
+  padding-top: 2.5rem;
+  font-size: smaller;
+}
+
+dialog header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: var(--padding) 2rem var(--padding) 1rem;
+  margin-bottom: 1rem;
+  color: Field;
+  background-color: FieldText;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+dialog header::after {
+  position: absolute;
+  line-height: 1rem;
+  right: 1rem;
+  font-family: inherit;
+  content: "✖";
+}
+
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, Segoe UI, Roboto, Arial
+}
+
+/* Host element: let the component fill its container without forcing viewport height */
+kv-splitter {
+  display: block;
+  height: 100%;
+}
+
+.demo-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600
+}
