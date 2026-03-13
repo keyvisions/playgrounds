@@ -7,71 +7,10 @@
     <title>kv-sign - Signature Component</title>
     <link href="./kv-sign.css" type="text/css" rel="stylesheet">
     <script src="./kv-sign.js" defer></script>
-    <style>
-        body {
-            font-family: sans-serif;
-            padding: 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #333;
-        }
-        .demo-section {
-            margin: 2rem 0;
-            padding: 1.5rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            background-color: #fafafa;
-        }
-        .demo-section h2 {
-            margin-top: 0;
-            color: #555;
-        }
-        .controls {
-            margin: 1rem 0;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        .controls label {
-            display: flex;
-            flex-direction: column;
-            gap: 0.25rem;
-        }
-        .controls input {
-            padding: 0.25rem 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        #output {
-            margin-top: 1rem;
-            padding: 1rem;
-            background-color: #fff;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-family: monospace;
-            font-size: 0.85rem;
-            word-break: break-all;
-        }
-    </style>
-    <script>
-        function setWidth(value) {
-            document.getElementById('sign1').setAttribute('width', value);
-        }
-        function setHeight(value) {
-            document.getElementById('sign1').setAttribute('height', value);
-        }
-        function setColor(value) {
-            document.getElementById('sign1').setAttribute('color', value);
-        }
-        function setLineWidth(value) {
-            document.getElementById('sign1').setAttribute('linewidth', value);
-        }
-
+    <!--script>
         document.addEventListener('DOMContentLoaded', () => {
             const sign1 = document.getElementById('sign1');
-            
+
             sign1.addEventListener('save', (e) => {
                 const output = document.getElementById('output');
                 if (e.detail.dataUrl) {
@@ -86,50 +25,37 @@
                 const output = document.getElementById('output');
                 output.innerHTML = '<strong>Signature cleared!</strong>';
             });
+
+            // Handle form submission
+            const form = document.getElementById('signatureForm');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const formOutput = document.getElementById('formOutput');
+                let output = '<strong>Form Data:</strong><br>';
+                for (const [key, value] of formData.entries()) {
+                    if (value instanceof File) {
+                        output += `${key}: File (${value.name}, ${value.size} bytes, ${value.type})<br>`;
+                    } else {
+                        output += `${key}: ${value}<br>`;
+                    }
+                }
+                formOutput.innerHTML = output;
+            });
         });
-    </script>
+    </script-->
 </head>
 
 <body>
     <h1>kv-sign - Signature Component</h1>
-    
-    <div class="demo-section">
-        <h2>Basic Usage</h2>
-        <kv-sign></kv-sign>
-    </div>
-
-    <div class="demo-section">
-        <h2>Custom Size</h2>
-        <kv-sign width="800" height="300"></kv-sign>
-    </div>
-
-    <div class="demo-section">
-        <h2>Custom Color & Line Width</h2>
-        <kv-sign color="#0066cc" linewidth="3" width="600" height="250"></kv-sign>
-    </div>
-
-    <div class="demo-section">
-        <h2>Interactive Demo</h2>
-        <div class="controls">
-            <label>
-                Width:
-                <input type="number" value="500" min="200" max="1000" step="50" onchange="setWidth(this.value)">
-            </label>
-            <label>
-                Height:
-                <input type="number" value="200" min="100" max="500" step="50" onchange="setHeight(this.value)">
-            </label>
-            <label>
-                Color:
-                <input type="color" value="#000000" onchange="setColor(this.value)">
-            </label>
-            <label>
-                Line Width:
-                <input type="number" value="2" min="1" max="10" step="1" onchange="setLineWidth(this.value)">
-            </label>
-        </div>
-        <kv-sign id="sign1" width="500" height="200"></kv-sign>
-        <div id="output">Events will appear here...</div>
+    <form id="signatureForm" action="/submit" method="post" enctype="multipart/form-data">
+        <label for="userName">Name:</label>
+        <input type="text" id="userName" name="userName" required><br><br>
+        <label>Signature:</label><br>
+        <kv-sign name="signature" width="400" height="150"></kv-sign><br><br>
+        <button type="submit">Submit Form</button>
+    </form>
+    <div id="formOutput"></div>
     </div>
 
 </body>

@@ -5,6 +5,8 @@ function kvJSONForm(jsonField, ith) {
 			if (!document.querySelector(`form[id="json${i}"]`))
 				document.body.insertAdjacentHTML('beforeend', `<form id="json${i}" style="display:none"></form>`);
 			kvJSONForm(element, i);
+			if (typeof element.onload == "function")
+				element.onload();
 		});
 		return;
 	}

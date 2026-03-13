@@ -1,0 +1,5 @@
+/* kv-putaway web component styles */
+:host {
+  display: block;
+  box-sizing: border-box;
+}

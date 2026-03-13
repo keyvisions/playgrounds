@@ -5,10 +5,14 @@
 ** Usage: <kv-sign width="500" height="200"></kv-sign>
 */
 class kvSign extends HTMLElement {
+    static formAssociated = true;
+
     static observedAttributes = ['width', 'height', 'color', 'linewidth'];
 
     constructor() {
         super();
+        this._internals = this.attachInternals();
+
         this.canvas = null;
         this.ctx = null;
         this.drawing = false;
@@ -21,7 +25,7 @@ class kvSign extends HTMLElement {
         this.setupEventListeners();
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback(_name, oldValue, newValue) {
         if (this.canvas && oldValue !== newValue) {
             this.render();
             this.setupEventListeners();
@@ -37,7 +41,6 @@ class kvSign extends HTMLElement {
                 <canvas class="kv-sign-canvas" width="${width}" height="${height}"></canvas>
                 <div class="kv-sign-buttons">
                     <button class="kv-sign-clear">Clear</button>
-                    <button class="kv-sign-save">Confirm</button>
                 </div>
             </div>
         `;
@@ -143,6 +146,30 @@ class kvSign extends HTMLElement {
 
     isEmpty() {
         return this.isCanvasBlank();
+    }
+
+    dataURLToBlob(dataURL) {
+        const arr = dataURL.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+            u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type: mime });
+    }
+
+    get formData() {
+        const formData = new FormData();
+        if (!this.isEmpty()) {
+            const dataUrl = this.canvas.toDataURL('image/png');
+            const blob = this.dataURLToBlob(dataUrl);
+            const file = new File([blob], 'signature.png', { type: 'image/png' });
+            const name = this.getAttribute('name') || 'signature';
+            formData.append(name, file);
+        }
+        return formData;
     }
 }
 

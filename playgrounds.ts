@@ -19,8 +19,8 @@ export async function updatePartsList() {
                 }
             }
         });
-    // deno-lint-ignore no-empty
-    } catch {}
+        // deno-lint-ignore no-empty
+    } catch { }
 
     try {
         // Find all root-level directories with index.html, not ignored
