@@ -5,15 +5,74 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>kv-putaway</title>
-	<link rel="style" href="./kv-putaway.css" >
+
+	<link rel="style" href="./kv-putaway.css">
 	<script defer src="./kv-putaway.js"></script>
+
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+		integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+		crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 	<style>
-		body { font-family:Arial, Helvetica, sans-serif; }
+		:root {
+			font-family: Arial, Helvetica, sans-serif;
+			--special-backcolor: green;
+			--special-color: white;
+		}
+
+		dialog {
+			padding: 0;
+		}
+
+		dialog header {
+			background-color: var(--special-backcolor);
+			color: var(--special-color);
+			padding: 0.5em;
+		}
 	</style>
+
+	<script>
+		console.clear();
+		function putaway(event) {
+			console.clear();
+			document.querySelectorAll("kv-putaway input").forEach(el => {
+				console.log(el.value);
+			});
+			return false;
+		}
+		function print(data) {
+			alert("Print: " + JSON.stringify(data));
+			return true;
+		}
+	</script>
 </head>
 
 <body>
-	<kv-putaway name="qty" title="XYZ">800</kv-putaway>
+	<form>
+		<table>
+			<thead>
+				<tr>
+					<th>Part Number</th>
+					<th>Quantità</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>ABC</td>
+					<td><kv-putaway name="qty" itemid="ABC" onprint="print()">100</kv-putaway></td>
+				</tr>
+				<tr>
+					<td>DEF</td>
+					<td><kv-putaway name="qty" itemid="DEF" onprint="print()">200</kv-putaway></td>
+				</tr>
+				<tr>
+					<td>GHI</td>
+					<td><kv-putaway name="qty" itemid="GHI"></kv-putaway></td>
+				</tr>
+			</tbody>
+		</table>
+		<button onclick="return putaway(event)">Status</button>
+	</form>
 </body>
 
 </html>

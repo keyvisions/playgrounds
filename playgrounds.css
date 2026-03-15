@@ -1,101 +1,108 @@
 .dark-mode a {
-    color: #66aaff;
+	color: #66aaff;
 }
+
 .dark-mode a:visited {
-    color: #b388ff;
+	color: #b388ff;
 }
-.dark-mode a:hover, .dark-mode a:focus {
-    color: #ffd166;
+
+.dark-mode a:hover,
+.dark-mode a:focus {
+	color: #ffd166;
 }
 
 .light-mode a {
-    color: #0074d9;
+	color: #0074d9;
 }
+
 .light-mode a:visited {
-    color: #005fa3;
+	color: #005fa3;
 }
-.light-mode a:hover, .light-mode a:focus {
-    color: #ff851b;
+
+.light-mode a:hover,
+.light-mode a:focus {
+	color: #ff851b;
 }
+
 :root {
-    --special: rgb(127, 127, 127);
-    --special_light: rgba(127, 127, 127, 0.25);
-    --padding: 1rem;
+	--special: rgb(127, 127, 127);
+	--special_light: rgba(127, 127, 127, 0.25);
+	--padding: 1rem;
 }
 
 body {
-    color-scheme: light dark;
-    color: var(--special);
-    font-family: sans-serif;
-    font-size: 12pt;
-    width: 100vw;
-    height: 100vh;
-    margin: 0;
-    display: grid;
-    grid-template-rows: auto 1fr;
+	color-scheme: light dark;
+	color: var(--special);
+	font-family: sans-serif;
+	font-size: 12pt;
+	width: 100vw;
+	height: 100vh;
+	margin: 0;
+	display: grid;
+	grid-template-rows: auto 1fr;
 }
 
 header,
 footer {
-    overflow: hidden;
-    padding: var(--padding);
+	overflow: hidden;
+	padding: var(--padding);
 }
 
 main>div {
-    padding: var(--padding);
+	padding: var(--padding);
 }
 
 aside {
-    position: relative;
-    background-color: var(--special_light);
-    width: 15rem;
-    padding: var(--padding);
+	position: relative;
+	background-color: var(--special_light);
+	width: 15rem;
+	padding: var(--padding);
 }
 
 aside.collapsed {
-    width: 1rem;
-    padding: 0;
+	width: 1rem;
+	padding: 0;
 }
 
 aside.collapsed>* {
-    display: none;
+	display: none;
 }
 
 aside::after,
 aside::before {
-    position: absolute;
-    top: 0;
-    left: 0;
-    font-family: "Font Awesome 5 Free";
-    font-weight: 900;
-    padding-top: 1rem;
-    cursor: pointer;
+	position: absolute;
+	top: 0;
+	left: 0;
+	font-family: "Font Awesome 5 Free";
+	font-weight: 900;
+	padding-top: 1rem;
+	cursor: pointer;
 }
 
 aside.left::after {
-    content: "\f137";
-    left: 16.5rem;
+	content: "\f137";
+	left: 16.5rem;
 }
 
 aside.left.collapsed::after {
-    content: "\f138";
-    left: 0.5rem;
+	content: "\f138";
+	left: 0.5rem;
 }
 
 aside.right::before {
-    content: "\f138";
-    left: -0.5rem;
+	content: "\f138";
+	left: -0.5rem;
 }
 
 aside.right.collapsed::before {
-    content: "\f137";
-    right: 0;
+	content: "\f137";
+	right: 0;
 }
 
 .search {
-    float: right;
+	float: right;
 }
 
 .fa-moon {
-    cursor: pointer;
+	cursor: pointer;
 }

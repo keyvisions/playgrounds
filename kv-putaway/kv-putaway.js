@@ -2,7 +2,6 @@
 class KvPutaway extends HTMLElement {
 	constructor() {
 		super();
-		this.attachShadow({ mode: 'open' });
 	}
 
 	connectedCallback() {
@@ -12,244 +11,258 @@ class KvPutaway extends HTMLElement {
 				throw new Error();
 		} catch {
 			this.putawayData = {
+				itemid: this.getAttribute("itemid"),
 				quantity: parseInt(this.textContent) || null,
-				lu: [{ code: null, units: 1, quantity: parseInt(this.textContent), batch: null, origin: null }]
+				lu: [{ units: 1, quantity: parseInt(this.textContent), batch: "", origin: "", coded: false }]
 			}
 		}
 
+		this.textContent = "";
+
+		// Setup custom onprint event if attribute exists
+		if (this.hasAttribute("onprint")) {
+			const fnName = this.getAttribute("onprint").replace(/\(.*\)/, "").trim();
+			if (typeof window[fnName] === "function") {
+				this.onprint = window[fnName];
+			}
+		}
+
+		if (!(this.putawayData.quantity > 0))
+			return;
+
 		this._render();
-		this._initEvents();
+
+		if (document.getElementById("kvPutawayDialog"))
+			return;
+
+		const dialog = document.createElement("dialog");
+		dialog.id = "kvPutawayDialog";
+		dialog.innerHTML = `
+			<header><span></span><span style="float: right; cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-fw fa-xmark"></i></span></header>
+			<form style="padding: 0.5em;">
+				<table>
+					<thead>
+						<tr>
+							<th>UDC</th>
+							<th>Qt.à</th>
+							<th>Lotto</th>
+							<th>Origine</th>
+							<th class="addUnits" style="cursor: pointer"><i class="fa-solid fa-fw fa-plus" title="Aggiungi riga"></i></th>
+						</tr>
+					</thead>
+					<tbody></tbody>
+					<tfoot>
+						<tr style="font-size:smaller; text-align: center">
+							<td><output name="totalUnits"></output></td>
+							<td><output name="totalQuantity"></output></td>
+						</tr>
+						<tr>
+							<td colspan="5"><label><input type="checkbox" name="end">Fine carico</label></td>
+						</tr>
+						<tr>
+							<td colspan="5" style="text-align:right"><button id="saveData">OK</button></td>
+						</tr>
+					</tfoot>
+				</table>
+			</form>`;
+		document.body.appendChild(dialog);
+
+		this._dialogEvents(dialog);
 	}
 
 	_render() {
-		this.shadowRoot.innerHTML = `
-			<style>
-				:host {
-					font-family: inherit;
-					color: inherit;
-					background: inherit;
-				}
-				table, input, button, label, output {
-					font-family: inherit;
-					color: inherit;
-				}
-				button {
-					min-width: 5em;
-				}
-				.modal {
-					display: none;
-					position: fixed;
-					z-index: 1000;
-					left: 0; top: 0; width: 100vw; height: 100vh;
-					background: rgba(0,0,0,0.1);
-					justify-content: center; align-items: center;
-				}
-				.modal.active { display: flex; }
-				.modal-content {
-					background: Canvas;
-					color: CanvasText;
-					min-width: 320px;
-					font-size: smaller;
-				}
-				.modal-content header {
-					background-color: CanvasText;
-					color: Canvas;
-					padding: 0.5em;
-				}
-				.modal-content table {
-					padding: 0.5em;
-				}
-			</style>
-			<strong title="Quantità dichiarata">${this.putawayData.quantity || ''}</strong> / <strong id="putawayRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</strong>
-			<input id="putawayData" type="hidden" name="${this.getAttribute("name")}">
-			<button id="openModalBtn" title="Crea UDC">UDC</button>
-			<button id="printLabels" title="Stampa UDC">Etichette</button>
-			<div class="modal" id="putawayModal">
-				<form class="modal-content">
-					<header>${this.getAttribute("title")}: ${this.putawayData.quantity || ''}<span class="esc" style="float: right; cursor:pointer">&#10006;</span></header>
-					<table>
-						<thead>
-							<tr>
-								<th>Units</th>
-								<th>Qt.y</th>
-								<th>Batch</th>
-								<th>Origin</th>
-								<th id="addUnits" style="cursor: pointer">&#10011;</th>
-							</tr>
-						</thead>
-						<tbody id="luTbody"></tbody>
-						<tfoot>
-							<tr>
-								<td><output name="totalUnits"></output></td>
-								<td><output name="totalQuantity"></output></td>
-							</tr>
-							<tr>
-								<td colspan="5"><label><input type="checkbox" name="end">Fine carico</label></td>
-							</tr>
-							<tr>
-								<td colspan="3"><button class="esc">Annulla</button></td>
-								<td colspan="2"><button id="saveData" style="float:right">OK</button></td>
-							</tr>
-						</tfoot>
-					</table>
-				</form>
-			</div>`;
+		this.insertAdjacentHTML("afterbegin", `
+			<input id="kvPutawayData" type="hidden" name="${this.getAttribute("name")}">
+			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="kvPutawayRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
+			<i class="fa-solid fa-fw fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
+		`);
+		this.removeAttribute("name");
+
+		this.addEventListener('click', (event) => {
+			event.stopPropagation();
+
+			const putawayData = event.currentTarget.putawayData;
+
+			if (event.target.classList.contains("openDialog")) {
+				if ((putawayData.quantity || 0) <= 0)
+					return;
+
+				if (putawayData.lu.length === 0)
+					putawayData.lu.push({ coded: false, units: 1, quantity: putawayData.quantity, batch: null, origin: null });
+
+				this._renderLUs(putawayData);
+
+				const dialog = document.getElementById('kvPutawayDialog');
+				dialog.querySelector("header>span").innerHTML = this.getAttribute("itemid");
+				dialog.showModal();
+
+			}
+		});
+
+		this.putawayData = this.putawayData;
+		this.querySelector("input").value = JSON.stringify(this.putawayData);
+
+		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
+		const statusQty = Math.sign(realQty - this.putawayData.quantity)
+			* (this.putawayData.lu.find(lu => !lu.coded) ? 0 : 1);;
+		this.querySelector('#kvPutawayRealQty').style.color = ['red', 'green', 'red'].at(statusQty);
 	}
 
-	_initEvents() {
-		const putawayData = this.shadowRoot.getElementById('putawayData');
-		putawayData.value = JSON.stringify(this.putawayData);
-
-		const putawayRealQty = this.shadowRoot.getElementById('putawayRealQty');
-
-		const openModalBtn = this.shadowRoot.getElementById('openModalBtn');
-		const printBtn = this.shadowRoot.getElementById('printLabels');
-
-		const modal = this.shadowRoot.getElementById('putawayModal');
-		const form = modal.querySelector('form');
-		const tbody = modal.querySelector('#luTbody');
-		const addBtn = modal.querySelector('#addUnits');
-		const saveBtn = modal.querySelector('#saveData');
+	_dialogEvents(dialog) {
+		const form = dialog.querySelector('form');
+		const saveBtn = dialog.querySelector('#saveData');
 
 		const endCheckbox = form.querySelector('input[name="end"]');
 
-		// Open modal: load LU structure from innerText or default
-		openModalBtn.addEventListener('click', () => {
-			if (!this.putawayData.quantity)
+		dialog.querySelector("thead").addEventListener('click', (event) => {
+			if (event.target.tagName !== "I")
 				return;
-
-			if (this.putawayData.lu.length === 0)
-				this.putawayData.lu.push({ code: null, units: 1, quantity: this.putawayData.quantity, batch: null, origin: null });
-
-			this._renderLUs(tbody, this.putawayData.lu);
-			modal.classList.add('active');
-		});
-
-		this.addEventListener('keydown', event => {
-			if (event.code === 'Escape') {
-				modal.classList.remove('active');
-				event.stopPropagation();
-			}
-		});
-		this.shadowRoot.querySelectorAll(".esc").forEach(el => {
-			el.addEventListener('click', (event) => {
-				modal.classList.remove('active');
-			});
-		});
-
-		// Add units row
-		addBtn.addEventListener('click', (event) => {
 			event.preventDefault();
-			const luRows = Array.from(tbody.querySelectorAll('tr')).map(tr => this._rowToData(tr));
-			luRows.push({ units: 1, quantity: '', batch: '', origin: '' });
-			this._renderLUs(tbody, luRows);
+			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
+			luRows.push({ units: 1, quantity: null, batch: '', origin: '', coded: false });
+			this._renderLUs({ lu: luRows });
 		});
 
-		// Delete units row
-		tbody.addEventListener('click', (event) => {
-			if (event.target.classList.contains('deleteUnits')) {
-				if (tbody.children.length > 1 && confirm('Are you sure?')) {
-					event.target.closest('tr').remove();
-					this._summary();
-				}
+		dialog.querySelector("tbody").addEventListener('click', (event) => {
+			const action = event.target;
+			if (action.tagName !== "I")
+				return;
+			event.preventDefault();
+
+			if (action.classList.contains("fa-xmark") && confirm('Sicuri di voler eliminare la riga?')) {
+				action.closest('tr').remove();
+				this._summary();
+			} else if (action.classList.contains("fa-barcode") && this.onprint) {
+				const i = parseInt(action.closest("td").dataset.i);
+
+				this.putawayData.lu[i].coded = this.onprint(this.putawayData, i);
+				action.closest("tr").querySelector("[name=coded]").value = this.putawayData.lu[i].coded; // Labels printed
+				action.closest("td").style.color = this.putawayData.lu[i].coded ? "" : "red";
+
+				this.querySelector("input").value = JSON.stringify(this.putawayData);
 			}
 		});
 
-		// Summary on input change
-		tbody.addEventListener('input', (event) => {
+		// Input change
+		dialog.querySelector("tbody").addEventListener('input', (event) => {
+			event.target.closest("tr").querySelector("[name=coded]").value = false; // Labels need to be reprinted
 			if (["units", "quantity"].includes(event.target.name)) {
 				this._summary();
 			}
 		});
 
-		// Save data on checkbox
+		// Toggle putaway status
 		endCheckbox.addEventListener('change', (event) => {
-			this._saveData(event, event.target.checked);
-		});
+			const disabled = event.target.checked;
 
-		// Print labels
-		printBtn.addEventListener('click', (event) => {
-			alert('Print LU labels');
+			const dialog = document.getElementById("kvPutawayDialog");
+
+			const form = dialog.querySelector('form');
+			form.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.disabled = disabled);
+			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
+			dialog.querySelectorAll(".action").forEach(el => {
+				if (!disabled && el.closest("tr").previousElementSibling) {
+					el.className = "action deleteUnits";
+					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-fw fa-xmark" title="Elimina riga"></i>`);
+					el.querySelector("i").remove();
+				} else if (disabled && this.onprint) {
+					el.className = "action printLabels";
+					el.style.color = el.querySelector("input").value === "false" ? "red" : "";
+					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i>`);
+					el.querySelector("i").remove();
+				} else {
+					el.className = "action";
+					el.querySelector("i").insertAdjacentHTML("afterend", `<i></i>`);
+					el.querySelector("i").remove();
+				}
+			});
+
+			if (disabled && !this.putawayData.hasOwnProperty("totalLU")) {
+				this.putawayData.totalLU = 1;
+			} else if (!disabled) {
+				delete this.putawayData.totalLU;
+			}
 		});
 
 		// Save data
 		saveBtn.addEventListener('click', (event) => {
 			event.preventDefault();
-			this._saveData(event);
 
-			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
-			const statusQty = Math.sign(realQty - this.putawayData.quantity);
-			putawayRealQty.style.color = ['black', 'green', 'red'].at(statusQty);
-			putawayRealQty.textContent = realQty || '';
-
-			modal.classList.remove('active');
-		});
-
-		// Helper to render LU rows
-		this._renderLUs = (tbody, luData) => {
-			tbody.innerHTML = '';
-			luData.forEach(lu => {
-				const tr = document.createElement('tr');
-				tr.className = 'putaway';
-				tr.innerHTML = `
-					<td><input name="units" type="number" value="${lu.units || 1}" min="1" max="999" style="width:3em" required></td>
-					<td><input name="quantity" type="number" min="1" max="1000000" value="${lu.quantity || ''}" style="width:5em" required></td>
-					<td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em"></td>
-					<td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em"></td>
-					<td class="deleteUnits" style="cursor: pointer"><input type="hidden" name="code" value="${lu.code}">${lu.code ? "" : "&#10006;"}</td>
-				`;
-				tbody.appendChild(tr);
-			});
-			this._summary();
-		};
-
-		// Helper to extract row data
-		this._rowToData = (tr) => {
-			return {
-				code: parseInt(tr.querySelector('[name=units]').code) || '',
-				units: parseInt(tr.querySelector('[name=units]').value) || 1,
-				quantity: parseInt(tr.querySelector('[name=quantity]').value) || '',
-				batch: tr.querySelector('[name=batch]').value || '',
-				origin: tr.querySelector('[name=origin]').value || ''
-			};
-		};
-
-		this._summary = () => {
-			let totalUnits = 0, totalQuantity = 0;
-			this.shadowRoot.querySelectorAll('.putaway').forEach(putaway => {
-				const units = parseInt(putaway.querySelector('[name=units]').value) || 0;
-				const quantity = parseInt(putaway.querySelector('[name=quantity]').value) || 0;
-				totalUnits += units;
-				totalQuantity += units * quantity;
-			});
-			this.shadowRoot.querySelector('[name=totalUnits]').value = totalUnits;
-			this.shadowRoot.querySelector('[name=totalQuantity]').value = totalQuantity;
-		};
-
-		this._saveData = (_event, disabled = false) => {
-			const form = this.shadowRoot.querySelector('form');
-			form.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.disabled = disabled);
-			this.shadowRoot.getElementById("addUnits").style.display = disabled ? "none" : "";
-			this.shadowRoot.querySelectorAll(".deleteUnits").forEach(element => element.style.display = disabled ? "none" : "");
+			const dialog = document.getElementById("kvPutawayDialog");
 
 			this.putawayData.lu = [];
-			this.shadowRoot.querySelectorAll('.putaway').forEach(putaway => {
-				const data = {};
-				putaway.querySelectorAll('input').forEach(input => {
-					data[input.name] = input.value;
-				});
-				this.putawayData.lu.push(data);
+			dialog.querySelectorAll('.putaway').forEach(putaway => {
+				const lu = this._rowToData(putaway);
+				if (lu.units && lu.quantity)
+					this.putawayData.lu.push(lu)
 			});
-			if (form.end.checked) {
-				this.putawayData.lu.push({
-					units: null,
-					quantity: parseInt(form.querySelector('[name=totalQuantity]').value) || null
-				});
-			}
-			putawayData.value = JSON.stringify(this.putawayData);
-			return false;
-		};
+
+			delete this.putawayData.totalLU;
+			if (dialog.querySelector("[type=checkbox]").checked)
+				this.putawayData.totalLU = this.putawayData.lu.reduce((a, b) => a + b.units, 0);
+
+			this.querySelector("input").value = JSON.stringify(this.putawayData);
+
+			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
+			const statusQty = Math.sign(realQty - this.putawayData.quantity)
+				* (this.putawayData.lu.find(lu => !lu.coded) ? 0 : 1);
+			this.querySelector('#kvPutawayRealQty').style.color = ['red', 'green', 'red'].at(statusQty);
+			this.querySelector('#kvPutawayRealQty').textContent = realQty || '—';
+
+			document.getElementById("kvPutawayDialog").close();
+		});
 	}
+
+	_renderLUs = (data) => {
+		const tbody = document.getElementById("kvPutawayDialog").querySelector("tbody");
+
+		const disabled = data.hasOwnProperty("totalLU") ? "disabled" : "";
+
+		tbody.innerHTML = '';
+		data.lu.forEach((lu, i) => {
+			const tr = document.createElement('tr');
+			tr.className = 'putaway';
+			tr.innerHTML = `
+				<td><input name="units" type="number" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${disabled}></td>
+				<td><input name="quantity" type="number" min="1" max="1000000" value="${lu.quantity || ''}" style="width:5em" required ${disabled}></td>
+				<td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em" ${disabled}></td>
+				<td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em" ${disabled}></td>`;
+			if (!disabled && tbody.children.length > 0)
+				tr.innerHTML += `<td data-i="${i}" class="action deleteUnits" style="cursor: pointer"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-xmark" title="Elimina riga"></i></td>`;
+			else if (disabled && this.onprint)
+				tr.innerHTML += `<td data-i="${i}" class="action printLabels" style="cursor: pointer${lu.coded ? `` : `; color: red`}"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i></td>`;
+			else
+				tr.innerHTML += `<td data-i="${i}" class="action"><input type="hidden" name="coded" value="false"><i></i></td>`;
+
+			if (lu.units > 0)
+				tbody.appendChild(tr);
+		});
+		this._summary();
+	};
+
+	_rowToData = (tr) => {
+		return {
+			units: parseInt(tr.querySelector('[name=units]').value) || 1,
+			quantity: parseInt(tr.querySelector('[name=quantity]').value) || null,
+			batch: tr.querySelector('[name=batch]').value || '',
+			origin: tr.querySelector('[name=origin]').value || '',
+			coded: tr.querySelector('[name=coded]').value === "true" ? true : false
+		};
+	};
+
+	_summary = () => {
+		const dialog = document.getElementById("kvPutawayDialog");
+
+		let totalUnits = 0, totalQuantity = 0;
+		dialog.querySelectorAll('.putaway').forEach(putaway => {
+			const units = parseInt(putaway.querySelector('[name=units]').value) || 0;
+			const quantity = parseInt(putaway.querySelector('[name=quantity]').value) || 0;
+			totalUnits += units;
+			totalQuantity += units * quantity;
+		});
+		dialog.querySelector('[name=totalUnits]').value = totalUnits;
+		dialog.querySelector('[name=totalQuantity]').value = totalQuantity;
+	};
 }
 
 customElements.define('kv-putaway', KvPutaway);
