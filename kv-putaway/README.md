@@ -15,15 +15,27 @@ Given a "delivery" of a specified quantity (using the `data-quantity` attribute)
 
 ## Usage
 
-
 Include the component in your HTML:
 
 ```html
-<kv-putaway name="data" data-quantity="2000" data-lu=""></kv-putaway>
+<kv-putaway name="qty" itemid="ABC" onprint="print()">150</kv-putaway>
 ```
 
-- `data-quantity`: Sets the initial quantity for the first row.
-- `name` and `data-lu`: Optional attributes for custom data handling.
+**Attributes:**
+- **name**: Name for the hidden input storing JSON data.
+- **itemid**: Identifier for the item (displayed in dialog header).
+- **onprint**: Optional function name for custom label printing (e.g., onprint="print()").
+
+**Inner text:**
+- The number inside the tag sets the initial quantity for the first row.
+
+**Workflow:**
+- Click the box icon to open the dialog.
+- Add/edit/remove rows for loading units (LU).
+- Enter units, quantity, batch, and origin for each LU.
+- Totals update automatically.
+- Finalize with "Fine carico" checkbox.
+- Print labels or save data using buttons.
 
 ## Example
 

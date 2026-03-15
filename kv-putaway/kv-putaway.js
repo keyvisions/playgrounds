@@ -72,6 +72,7 @@ class KvPutaway extends HTMLElement {
 
 	_render() {
 		this.insertAdjacentHTML("afterbegin", `
+			<style>.warning { color: red; }</style>
 			<input id="kvPutawayData" type="hidden" name="${this.getAttribute("name")}">
 			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="kvPutawayRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
 			<i class="fa-solid fa-fw fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
@@ -90,12 +91,12 @@ class KvPutaway extends HTMLElement {
 				if (putawayData.lu.length === 0)
 					putawayData.lu.push({ coded: false, units: 1, quantity: putawayData.quantity, batch: null, origin: null });
 
-				this._renderLUs(putawayData);
-
 				const dialog = document.getElementById('kvPutawayDialog');
-				dialog.querySelector("header>span").innerHTML = this.getAttribute("itemid");
-				dialog.showModal();
 
+				this._renderLUs(dialog, putawayData);
+
+				dialog.querySelector("header>span").innerHTML = `${this.getAttribute("itemid")}: ${this.putawayData.quantity}`;
+				dialog.showModal();
 			}
 		});
 
@@ -103,9 +104,8 @@ class KvPutaway extends HTMLElement {
 		this.querySelector("input").value = JSON.stringify(this.putawayData);
 
 		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
-		const statusQty = Math.sign(realQty - this.putawayData.quantity)
-			* (this.putawayData.lu.find(lu => !lu.coded) ? 0 : 1);;
-		this.querySelector('#kvPutawayRealQty').style.color = ['red', 'green', 'red'].at(statusQty);
+		const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
+		this.querySelector('#kvPutawayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
 	}
 
 	_dialogEvents(dialog) {
@@ -120,7 +120,7 @@ class KvPutaway extends HTMLElement {
 			event.preventDefault();
 			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
 			luRows.push({ units: 1, quantity: null, batch: '', origin: '', coded: false });
-			this._renderLUs({ lu: luRows });
+			this._renderLUs(dialog, { lu: luRows });
 		});
 
 		dialog.querySelector("tbody").addEventListener('click', (event) => {
@@ -137,18 +137,36 @@ class KvPutaway extends HTMLElement {
 
 				this.putawayData.lu[i].coded = this.onprint(this.putawayData, i);
 				action.closest("tr").querySelector("[name=coded]").value = this.putawayData.lu[i].coded; // Labels printed
-				action.closest("td").style.color = this.putawayData.lu[i].coded ? "" : "red";
+				if (this.putawayData.lu[i].coded)
+					action.closest("td").classList.remove(`warning`);
+				else
+					action.closest("td").classList.add(`warning`);
 
 				this.querySelector("input").value = JSON.stringify(this.putawayData);
 			}
 		});
 
 		// Input change
-		dialog.querySelector("tbody").addEventListener('input', (event) => {
+		dialog.querySelector("tbody").addEventListener('change', (event) => {
 			event.target.closest("tr").querySelector("[name=coded]").value = false; // Labels need to be reprinted
-			if (["units", "quantity"].includes(event.target.name)) {
-				this._summary();
+			switch (event.target.name) {
+				case "units":
+					const oldvalue = parseFloat(event.target.oldvalue),
+						newvalue = parseFloat(event.target.value),
+						quantity = parseFloat(event.target.closest("tr").querySelector("[name=quantity]").value);
+					event.target.closest("tr").querySelector("[name=quantity]").value = parseInt(quantity * oldvalue / newvalue);
+					event.target.oldvalue = newvalue;
+
+				case "quantity":
+					this._summary();
 			}
+		});
+
+		dialog.addEventListener(`close`, (event) => {
+			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
+			const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
+			this.querySelector('#kvPutawayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
+			this.querySelector('#kvPutawayRealQty').textContent = realQty || '—';
 		});
 
 		// Toggle putaway status
@@ -156,18 +174,22 @@ class KvPutaway extends HTMLElement {
 			const disabled = event.target.checked;
 
 			const dialog = document.getElementById("kvPutawayDialog");
-
-			const form = dialog.querySelector('form');
-			form.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.disabled = disabled);
 			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
+			dialog.querySelectorAll('.putaway').forEach(putaway => {
+				const lu = this._rowToData(putaway);
+				if (!(lu.units && lu.quantity))
+					putaway.remove();
+			});
+
+			dialog.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.disabled = disabled);
+
 			dialog.querySelectorAll(".action").forEach(el => {
 				if (!disabled && el.closest("tr").previousElementSibling) {
 					el.className = "action deleteUnits";
 					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-fw fa-xmark" title="Elimina riga"></i>`);
 					el.querySelector("i").remove();
 				} else if (disabled && this.onprint) {
-					el.className = "action printLabels";
-					el.style.color = el.querySelector("input").value === "false" ? "red" : "";
+					el.className = `action printLabels ${el.querySelector("input").value === "false" ? "warning" : ""}`;
 					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i>`);
 					el.querySelector("i").remove();
 				} else {
@@ -203,34 +225,32 @@ class KvPutaway extends HTMLElement {
 
 			this.querySelector("input").value = JSON.stringify(this.putawayData);
 
-			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
-			const statusQty = Math.sign(realQty - this.putawayData.quantity)
-				* (this.putawayData.lu.find(lu => !lu.coded) ? 0 : 1);
-			this.querySelector('#kvPutawayRealQty').style.color = ['red', 'green', 'red'].at(statusQty);
-			this.querySelector('#kvPutawayRealQty').textContent = realQty || '—';
-
 			document.getElementById("kvPutawayDialog").close();
 		});
 	}
 
-	_renderLUs = (data) => {
-		const tbody = document.getElementById("kvPutawayDialog").querySelector("tbody");
+	_renderLUs = (dialog, data) => {
+		const tbody = dialog.querySelector("tbody");
 
-		const disabled = data.hasOwnProperty("totalLU") ? "disabled" : "";
+		const barcode = data.hasOwnProperty("totalLU");
+		dialog.querySelector("[name=end]").checked = barcode;
+		dialog.querySelector(".addUnits i").style.display = barcode ? "none" : "";
 
 		tbody.innerHTML = '';
-		data.lu.forEach((lu, i) => {
+		data.lu.forEach((lu, i, lus) => {
+			const disabled = i !== lus.length - 1;
+
 			const tr = document.createElement('tr');
 			tr.className = 'putaway';
 			tr.innerHTML = `
-				<td><input name="units" type="number" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${disabled}></td>
-				<td><input name="quantity" type="number" min="1" max="1000000" value="${lu.quantity || ''}" style="width:5em" required ${disabled}></td>
-				<td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em" ${disabled}></td>
-				<td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em" ${disabled}></td>`;
-			if (!disabled && tbody.children.length > 0)
+				<td><input name="units" type="number" onfocus="this.oldvalue = this.value" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${disabled || barcode ? "disabled" : ""}></td>
+				<td><input name="quantity" type="number" min="1" max="1000000" value="${lu.quantity || ''}" style="width:5em" required ${disabled || barcode ? "disabled" : ""}></td>
+				<td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em" ${disabled || barcode ? "disabled" : ""}></td>
+				<td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em" ${disabled || barcode ? "disabled" : ""}></td>`;
+			if (!barcode && !disabled && tbody.children.length > 0)
 				tr.innerHTML += `<td data-i="${i}" class="action deleteUnits" style="cursor: pointer"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-xmark" title="Elimina riga"></i></td>`;
-			else if (disabled && this.onprint)
-				tr.innerHTML += `<td data-i="${i}" class="action printLabels" style="cursor: pointer${lu.coded ? `` : `; color: red`}"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i></td>`;
+			else if (barcode && this.onprint)
+				tr.innerHTML += `<td data-i="${i}" class="action printLabels ${lu.coded ? `` : `warning`}" style="cursor: pointer"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i></td>`;
 			else
 				tr.innerHTML += `<td data-i="${i}" class="action"><input type="hidden" name="coded" value="false"><i></i></td>`;
 
