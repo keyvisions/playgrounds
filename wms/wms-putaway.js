@@ -1,5 +1,5 @@
 // deno-lint-ignore-file
-class KvPutaway extends HTMLElement {
+class WMSPutAway extends HTMLElement {
 	constructor() {
 		super();
 	}
@@ -32,11 +32,12 @@ class KvPutaway extends HTMLElement {
 
 		this._render();
 
-		if (document.getElementById("kvPutawayDialog"))
+		if (document.getElementById("WMSPutAwayDialog"))
 			return;
 
 		const dialog = document.createElement("dialog");
-		dialog.id = "kvPutawayDialog";
+		dialog.id = "WMSPutAwayDialog";
+		dialog.className = "wms";
 		dialog.innerHTML = `
 			<header><span></span><span style="float: right; cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-fw fa-xmark"></i></span></header>
 			<form style="padding: 0.5em;">
@@ -73,8 +74,8 @@ class KvPutaway extends HTMLElement {
 	_render() {
 		this.insertAdjacentHTML("afterbegin", `
 			<style>.warning { color: red; }</style>
-			<input id="kvPutawayData" type="hidden" name="${this.getAttribute("name")}">
-			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="kvPutawayRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
+			<input id="WMSPutAwayData" type="hidden" name="${this.getAttribute("name")}">
+			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="WMSPutAwayRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
 			<i class="fa-solid fa-fw fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
 		`);
 		this.removeAttribute("name");
@@ -91,7 +92,7 @@ class KvPutaway extends HTMLElement {
 				if (putawayData.lu.length === 0)
 					putawayData.lu.push({ coded: false, units: 1, quantity: putawayData.quantity, batch: null, origin: null });
 
-				const dialog = document.getElementById('kvPutawayDialog');
+				const dialog = document.getElementById('WMSPutAwayDialog');
 
 				this._renderLUs(dialog, putawayData);
 
@@ -105,7 +106,7 @@ class KvPutaway extends HTMLElement {
 
 		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 		const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
-		this.querySelector('#kvPutawayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
+		this.querySelector('#WMSPutAwayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
 	}
 
 	_dialogEvents(dialog) {
@@ -118,6 +119,7 @@ class KvPutaway extends HTMLElement {
 			if (event.target.tagName !== "I")
 				return;
 			event.preventDefault();
+
 			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
 			luRows.push({ units: 1, quantity: null, batch: '', origin: '', coded: false });
 			this._renderLUs(dialog, { lu: luRows });
@@ -132,6 +134,7 @@ class KvPutaway extends HTMLElement {
 			if (action.classList.contains("fa-xmark") && confirm('Sicuri di voler eliminare la riga?')) {
 				action.closest('tr').remove();
 				this._summary();
+
 			} else if (action.classList.contains("fa-barcode") && this.onprint) {
 				const i = parseInt(action.closest("td").dataset.i);
 
@@ -156,6 +159,18 @@ class KvPutaway extends HTMLElement {
 						quantity = parseFloat(event.target.closest("tr").querySelector("[name=quantity]").value);
 					event.target.closest("tr").querySelector("[name=quantity]").value = parseInt(quantity * oldvalue / newvalue);
 					event.target.oldvalue = newvalue;
+/*
+					// Add residue row
+					const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
+					if (quantity % newvalue > 0) {
+						const lastElement = luRows[luRows.length - 1];
+						const luResidue = { ...lastElement };
+						luResidue.units = 1;
+						luResidue.quantity = quantity % newvalue;
+						luRows.push(luResidue);
+					}
+*/
+					this._renderLUs(dialog, { lu: luRows });
 
 				case "quantity":
 					this._summary();
@@ -165,15 +180,15 @@ class KvPutaway extends HTMLElement {
 		dialog.addEventListener(`close`, (event) => {
 			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 			const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
-			this.querySelector('#kvPutawayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
-			this.querySelector('#kvPutawayRealQty').textContent = realQty || '—';
+			this.querySelector('#WMSPutAwayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
+			this.querySelector('#WMSPutAwayRealQty').textContent = realQty || '—';
 		});
 
 		// Toggle putaway status
 		endCheckbox.addEventListener('change', (event) => {
 			const disabled = event.target.checked;
 
-			const dialog = document.getElementById("kvPutawayDialog");
+			const dialog = document.getElementById("WMSPutAwayDialog");
 			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
 			dialog.querySelectorAll('.putaway').forEach(putaway => {
 				const lu = this._rowToData(putaway);
@@ -210,7 +225,7 @@ class KvPutaway extends HTMLElement {
 		saveBtn.addEventListener('click', (event) => {
 			event.preventDefault();
 
-			const dialog = document.getElementById("kvPutawayDialog");
+			const dialog = document.getElementById("WMSPutAwayDialog");
 
 			this.putawayData.lu = [];
 			dialog.querySelectorAll('.putaway').forEach(putaway => {
@@ -225,7 +240,7 @@ class KvPutaway extends HTMLElement {
 
 			this.querySelector("input").value = JSON.stringify(this.putawayData);
 
-			document.getElementById("kvPutawayDialog").close();
+			document.getElementById("WMSPutAwayDialog").close();
 		});
 	}
 
@@ -271,7 +286,7 @@ class KvPutaway extends HTMLElement {
 	};
 
 	_summary = () => {
-		const dialog = document.getElementById("kvPutawayDialog");
+		const dialog = document.getElementById("WMSPutAwayDialog");
 
 		let totalUnits = 0, totalQuantity = 0;
 		dialog.querySelectorAll('.putaway').forEach(putaway => {
@@ -285,4 +300,4 @@ class KvPutaway extends HTMLElement {
 	};
 }
 
-customElements.define('kv-putaway', KvPutaway);
+customElements.define('wms-putaway', WMSPutAway);

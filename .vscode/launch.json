@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug kv-putaway",
+            "name": "Debug wms",
             "request": "launch",
             "type": "msedge",
-            "file": "${workspaceFolder}/kv-putaway/index.html",
+            "file": "${workspaceFolder}/wms/index.html",
             "runtimeArgs": [
                 "--disable-web-security" // Allow CORS
             ]

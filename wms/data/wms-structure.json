@@ -1,0 +1,98 @@
+[
+	{
+		"layout": "horizontal",
+		"prefix": "D",
+		"count": 23,
+		"grid": "1x10"
+	},
+	{
+		"layout": "horizontal",
+		"prefix": "D",
+		"count": 23,
+		"grid": "2x10"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "B01",
+		"count": 14,
+		"grid": "3x3"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "B02",
+		"count": 10,
+		"grid": "3x3"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "B03",
+		"count": 10,
+		"grid": "3x3"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "B04",
+		"count": 10,
+		"grid": "3x3"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "B05",
+		"count": 6,
+		"grid": "3x3"
+	},
+		{
+		"layout": "vertical",
+		"prefix": "B06",
+		"count": 5,
+		"grid": "3x3"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "B07",
+		"count": 3,
+		"grid": "3x3"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A01",
+		"count": 25,
+		"grid": "5x6"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A02",
+		"count": 24,
+		"grid": "5x6"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A03",
+		"count": 9,
+		"grid": "5x6"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A04",
+		"count": 10,
+		"grid": "5x6"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A05",
+		"count": 10,
+		"grid": "5x6"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A06",
+		"count": 10,
+		"grid": "5x6"
+	},
+	{
+		"layout": "vertical",
+		"prefix": "A07",
+		"count": 11,
+		"grid": "5x6"
+	}
+]

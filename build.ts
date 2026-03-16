@@ -224,7 +224,7 @@ async function buildAll() {
         buildCSS("kv-params,kv-pair", "", true), buildJS("kv-params,kv-pair", "UMS", true),
         buildCSS("kv-pair"), buildJS("kv-pair"), buildHTML("kv-pair"),
         buildCSS("kv-gantt"), buildJS("kv-gantt"),
-        buildCSS("kv-putaway"), buildJS("kv-putaway"),
+        buildCSS("wms-putaway"), buildJS("wms-putaway"),
 
         // Not HTMLElement
         buildCSS("kvJSONForm"), buildJS("kvJSONForm"),

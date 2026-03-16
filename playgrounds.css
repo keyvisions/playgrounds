@@ -55,8 +55,9 @@ main>div {
 aside {
 	position: relative;
 	background-color: var(--special_light);
-	width: 15rem;
+	min-width: 15rem;
 	padding: var(--padding);
+	overflow: auto;
 }
 
 aside.collapsed {
