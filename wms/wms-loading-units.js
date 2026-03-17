@@ -1,7 +1,8 @@
 // deno-lint-ignore-file
-class WMSPutAway extends HTMLElement {
+class WMSLoadingUnits extends HTMLElement {
 	constructor() {
 		super();
+		this.classList.add("wms");
 	}
 
 	connectedCallback() {
@@ -32,12 +33,11 @@ class WMSPutAway extends HTMLElement {
 
 		this._render();
 
-		if (document.getElementById("WMSPutAwayDialog"))
+		if (document.getElementById("WMSLoadingUnitsDialog"))
 			return;
 
 		const dialog = document.createElement("dialog");
-		dialog.id = "WMSPutAwayDialog";
-		dialog.className = "wms";
+		dialog.id = "WMSLoadingUnitsDialog";
 		dialog.innerHTML = `
 			<header><span></span><span style="float: right; cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-fw fa-xmark"></i></span></header>
 			<form style="padding: 0.5em;">
@@ -66,7 +66,7 @@ class WMSPutAway extends HTMLElement {
 					</tfoot>
 				</table>
 			</form>`;
-		document.body.appendChild(dialog);
+		this.appendChild(dialog);
 
 		this._dialogEvents(dialog);
 	}
@@ -74,8 +74,8 @@ class WMSPutAway extends HTMLElement {
 	_render() {
 		this.insertAdjacentHTML("afterbegin", `
 			<style>.warning { color: red; }</style>
-			<input id="WMSPutAwayData" type="hidden" name="${this.getAttribute("name")}">
-			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="WMSPutAwayRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
+			<input id="WMSLoadingUnitsData" type="hidden" name="${this.getAttribute("name")}">
+			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="WMSLoadingUnitsRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
 			<i class="fa-solid fa-fw fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
 		`);
 		this.removeAttribute("name");
@@ -92,7 +92,7 @@ class WMSPutAway extends HTMLElement {
 				if (putawayData.lu.length === 0)
 					putawayData.lu.push({ coded: false, units: 1, quantity: putawayData.quantity, batch: null, origin: null });
 
-				const dialog = document.getElementById('WMSPutAwayDialog');
+				const dialog = document.getElementById('WMSLoadingUnitsDialog');
 
 				this._renderLUs(dialog, putawayData);
 
@@ -106,7 +106,7 @@ class WMSPutAway extends HTMLElement {
 
 		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 		const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
-		this.querySelector('#WMSPutAwayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
+		this.querySelector('#WMSLoadingUnitsRealQty').style.color = ['', 'green', 'red'].at(statusQty);
 	}
 
 	_dialogEvents(dialog) {
@@ -180,15 +180,15 @@ class WMSPutAway extends HTMLElement {
 		dialog.addEventListener(`close`, (event) => {
 			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 			const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
-			this.querySelector('#WMSPutAwayRealQty').style.color = ['', 'green', 'red'].at(statusQty);
-			this.querySelector('#WMSPutAwayRealQty').textContent = realQty || '—';
+			this.querySelector('#WMSLoadingUnitsRealQty').style.color = ['', 'green', 'red'].at(statusQty);
+			this.querySelector('#WMSLoadingUnitsRealQty').textContent = realQty || '—';
 		});
 
 		// Toggle putaway status
 		endCheckbox.addEventListener('change', (event) => {
 			const disabled = event.target.checked;
 
-			const dialog = document.getElementById("WMSPutAwayDialog");
+			const dialog = document.getElementById("WMSLoadingUnitsDialog");
 			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
 			dialog.querySelectorAll('.putaway').forEach(putaway => {
 				const lu = this._rowToData(putaway);
@@ -225,7 +225,7 @@ class WMSPutAway extends HTMLElement {
 		saveBtn.addEventListener('click', (event) => {
 			event.preventDefault();
 
-			const dialog = document.getElementById("WMSPutAwayDialog");
+			const dialog = document.getElementById("WMSLoadingUnitsDialog");
 
 			this.putawayData.lu = [];
 			dialog.querySelectorAll('.putaway').forEach(putaway => {
@@ -240,7 +240,7 @@ class WMSPutAway extends HTMLElement {
 
 			this.querySelector("input").value = JSON.stringify(this.putawayData);
 
-			document.getElementById("WMSPutAwayDialog").close();
+			document.getElementById("WMSLoadingUnitsDialog").close();
 		});
 	}
 
@@ -286,7 +286,7 @@ class WMSPutAway extends HTMLElement {
 	};
 
 	_summary = () => {
-		const dialog = document.getElementById("WMSPutAwayDialog");
+		const dialog = document.getElementById("WMSLoadingUnitsDialog");
 
 		let totalUnits = 0, totalQuantity = 0;
 		dialog.querySelectorAll('.putaway').forEach(putaway => {
@@ -300,4 +300,4 @@ class WMSPutAway extends HTMLElement {
 	};
 }
 
-customElements.define('wms-putaway', WMSPutAway);
+customElements.define('wms-loading-units', WMSLoadingUnits);

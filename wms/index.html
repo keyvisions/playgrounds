@@ -7,10 +7,10 @@
 	<title>WMS</title>
 
 	<script defer src="./wms-warehouse.js"></script>
-	<script defer src="./wms-putaway.js"></script>
+	<script defer src="./wms-loading-units.js"></script>
 	<script defer src="./wms-transfer.js"></script>
 	<script defer src="./wms-location.js"></script>
-	<script defer src="./wms-structure-editor.js"></script>
+	<script defer src="./wms-structure.js"></script>
 
 	<link rel="stylesheet" href="./wms.css" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -29,7 +29,7 @@
 		console.clear();
 		function putaway(event) {
 			console.clear();
-			document.querySelectorAll("wms-putaway input").forEach(el => {
+			document.querySelectorAll("wms-loading-units input[type=hidden]").forEach(el => {
 				console.log(el.value);
 			});
 			return false;
@@ -42,40 +42,62 @@
 </head>
 
 <body>
-	<wms-structure-editor src="./data/wms-structure.json"></wms-structure-editor>
-	<wms-location src="./data/wms-structure.json"></wms-location>
-	<!--wms-warehouse planimetry="./media/warehouse.svg" mode="putaway" inventory="./data/wms-inventory.json"
-		locations="./data/wms-locations.json" data="./data/wms-data.json">
-	</wms-warehouse-->
-	<wms-transfer></wms-transfer>
-
-	<!--
-	<form>
-		<table>
-			<thead>
-				<tr>
-					<th>Part Number</th>
-					<th>Quantità</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td>ABC</td>
-					<td><wms-putaway name="qty" itemid="ABC" onprint="print()">100</wms-putaway></td>
-				</tr>
-				<tr>
-					<td>DEF</td>
-					<td><wms-putaway name="qty" itemid="DEF" onprint="print()">200</wms-putaway></td>
-				</tr>
-				<tr>
-					<td>GHI</td>
-					<td><wms-putaway name="qty" itemid="GHI"></wms-putaway></td>
-				</tr>
-			</tbody>
-		</table>
-		<button onclick="return putaway(event)">Status</button>
-	</form>
--->
+	<div>
+		<button onclick="toggleVisibility('structure-wrapper')">Toggle Structure Editor</button>
+		<div id="structure-wrapper" style="display:none">
+			<wms-structure src="./data/wms-structure.json"></wms-structure>
+		</div>
+	</div>
+	<div>
+		<button onclick="toggleVisibility('location-wrapper')">Toggle Location Viewer</button>
+		<div id="location-wrapper" style="display:none">
+			<wms-location src="./data/wms-structure.json"></wms-location>
+		</div>
+	</div>
+	<div>
+		<button onclick="toggleVisibility('transfer-wrapper')">Toggle Transfer</button>
+		<div id="transfer-wrapper" style="display:none">
+			<wms-transfer src=""></wms-transfer>
+		</div>
+	</div>
+	<div>
+		<button onclick="toggleVisibility('loading-units-wrapper')">Toggle Loading Units</button>
+		<div id="loading-units-wrapper" style="display:none">
+			<form class="wms">
+				<table>
+					<thead>
+						<tr>
+							<th>Part Number</th>
+							<th>Quantità</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>ABC</td>
+							<td><wms-loading-units name="qty" itemid="ABC" onprint="print()">100</wms-loading-units></td>
+						</tr>
+						<tr>
+							<td>DEF</td>
+							<td><wms-loading-units name="qty" itemid="DEF" onprint="print()">200</wms-loading-units></td>
+						</tr>
+						<tr>
+							<td>GHI</td>
+							<td><wms-loading-units name="qty" itemid="GHI"></wms-loading-units></td>
+						</tr>
+					</tbody>
+				</table>
+				<button onclick="return putaway(event)">Status</button>
+			</form>
+		</div>
+	</div>
+	<script>
+		function toggleVisibility(id) {
+			const el = document.getElementById(id);
+			if (el) {
+				el.style.display = (el.style.display === 'none') ? '' : 'none';
+			}
+		}
+	</script>
 </body>
 
 </html>

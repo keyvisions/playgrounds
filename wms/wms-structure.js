@@ -1,6 +1,7 @@
-class WmsStructureEditor extends HTMLElement {
+class WmsStructure extends HTMLElement {
 	constructor() {
 		super();
+		this.classList.add("wms");
 		this.storageUnits = [];
 	}
 
@@ -25,45 +26,45 @@ class WmsStructureEditor extends HTMLElement {
 
 	render() {
 		this.innerHTML = `
-      ${this.loadError ? `<div style='color:red'>${this.loadError}</div>` : ''}
-      <div class="editor">
-        <h3>Storage Units</h3>
-        <table id="storage-table">
-          <thead>
-			<tr><th>Layout</th><th>Prefix</th><th>Count</th><th>Grid</th><th>Remove</th></tr>
-          </thead>
-          <tbody>
-            ${(() => {
+		${this.loadError ? `<div class="warning">${this.loadError}</div>` : ''}
+		<div class="editor">
+			<h3><i class="fa-solid fa-warehouse"></i> Unità di Deposito [N. <span id="totalLU">${this.countLU()}</span>]</h3>
+			<table id="storage-table">
+			<thead>
+				<tr><th></th><th>Disposizione</th><th>Prefisso</th><th>Elementi</th><th>Griglia</th><th><i class="fa-solid fa-plus add-btn" id="add-unit"></i></th></tr>
+			</thead>
+			<tbody>
+				${(() => {
 				// Show cumulative index for units with same prefix
 				const prefixCounts = {};
 				return this.storageUnits.map((u, idx) => {
 					const prevCount = prefixCounts[u.prefix] || 0;
 					prefixCounts[u.prefix] = prevCount + u.count;
 					return `
-                  <tr>
-                    <td>
-                      <select data-idx="${idx}" class="unit-layout">
-                        <option value="vertical" ${u.layout === 'vertical' ? 'selected' : ''}>Vertical</option>
-                        <option value="horizontal" ${u.layout === 'horizontal' ? 'selected' : ''}>Horizontal</option>
-                      </select>
-                    </td>
-                    <td contenteditable="true" data-idx="${idx}" class="unit-prefix">${u.prefix}</td>
-                    <td contenteditable="true" data-idx="${idx}" class="unit-count">${u.count}</td>
-					<td contenteditable="true" data-idx="${idx}" class="unit-grid">${u.grid || ''}</td>
-                    <td><button type="button" class="remove-btn unit-remove" data-idx="${idx}"><i class="fa-solid fa-fw fa-trash"></i></button></td>
-                  </tr>
-                `;
+						<tr>
+							<td><i class="fa-solid fa-barcode unitlabels"></i></td>
+						  <td>
+							 <select data-idx="${idx}" class="unit-layout">
+								<option value="vertical" ${u.layout === 'vertical' ? 'selected' : ''}>Vertical</option>
+								<option value="horizontal" ${u.layout === 'horizontal' ? 'selected' : ''}>Horizontal</option>
+							 </select>
+						  </td>
+						  <td contenteditable="true" data-idx="${idx}" class="unit-prefix">${u.prefix}</td>
+						  <td contenteditable="true" data-idx="${idx}" class="unit-count">${u.count}</td>
+							<td contenteditable="true" data-idx="${idx}" class="unit-grid">${u.grid || '1x1'}</td>
+						  <td><i class="fa-solid fa-fw fa-trash remove-btn unit-remove" data-idx="${idx}"></i></td>
+						</tr>
+					 `;
 				}).join('');
 			})()}
-          </tbody>
-        </table>
-        <button type="button" class="add-btn" id="add-unit">Add Storage Unit</button>
-        <div class="actions">
-          <button type="button" id="save-json">Download JSON</button>
-          <button type="button" id="generate-locations">Generate Locations</button>
-        </div>
-      </div>
-    `;
+			</tbody>
+			</table>
+			<div class="actions">
+				<button type="button" id="save-json">Download JSON</button>
+				<button type="button" id="generate-locations">Generate Locations</button>
+			</div>
+		</div>
+	 `;
 		this.setupEvents();
 	}
 
@@ -86,19 +87,23 @@ class WmsStructureEditor extends HTMLElement {
 			cell.onblur = () => {
 				const idx = Number(cell.getAttribute('data-idx'));
 				this.storageUnits[idx].count = parseInt(cell.textContent.trim(), 10);
+				this.render();
 			};
 		});
 		this.querySelectorAll('.unit-grid').forEach(cell => {
 			cell.onblur = () => {
 				const idx = Number(cell.getAttribute('data-idx'));
 				this.storageUnits[idx].grid = cell.textContent.trim();
+				this.render();
 			};
 		});
 		this.querySelectorAll('.unit-remove').forEach(btn => {
 			btn.onclick = () => {
-				const idx = Number(btn.getAttribute('data-idx'));
-				this.storageUnits.splice(idx, 1);
-				this.render();
+				if (confirm(`Sicuri di voler eliminare l'unità di deposito?`)) {
+					const idx = Number(btn.getAttribute('data-idx'));
+					this.storageUnits.splice(idx, 1);
+					this.render();
+				}
 			};
 		});
 		this.querySelector('#add-unit').onclick = () => {
@@ -112,13 +117,13 @@ class WmsStructureEditor extends HTMLElement {
 			const url = URL.createObjectURL(blob);
 			const a = document.createElement('a');
 			a.href = url;
-			a.download = 'storageUnits.json';
+			a.download = 'wms-structure.json';
 			a.click();
 			URL.revokeObjectURL(url);
 		};
 		// Generate Locations
 		this.querySelector('#generate-locations').onclick = () => {
-			const locations = this.generateLocations(this.storageUnits);
+			const locations = this.generateLocations();
 			const json = JSON.stringify(locations, null, 2);
 			const blob = new Blob([json], { type: 'application/json' });
 			const url = URL.createObjectURL(blob);
@@ -129,12 +134,23 @@ class WmsStructureEditor extends HTMLElement {
 			URL.revokeObjectURL(url);
 		};
 	}
+
+	countLU() {
+		let total = 0;
+		(this.storageUnits || []).forEach(unit => {
+			const { count, grid } = unit;
+			const [rows, cols] = (grid || '').split('x').map(Number);
+			total += count * rows * cols;
+		});
+		return total;
+	}
+
 	// Generate exhaustive locations from structure
-	generateLocations(structure) {
+	generateLocations() {
 		const locations = {};
 		// Cumulative index for units with same prefix
 		const prefixIndex = {};
-		(structure || []).forEach(unit => {
+		(this.storageUnits || []).forEach(unit => {
 			const { layout, prefix, count, grid } = unit;
 			const [rows, cols] = (grid || '').split('x').map(Number);
 
@@ -169,4 +185,4 @@ class WmsStructureEditor extends HTMLElement {
 	}
 }
 
-customElements.define('wms-structure-editor', WmsStructureEditor);
+customElements.define('wms-structure', WmsStructure);

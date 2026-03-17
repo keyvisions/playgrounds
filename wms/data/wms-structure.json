@@ -41,7 +41,7 @@
 		"count": 6,
 		"grid": "3x3"
 	},
-		{
+	{
 		"layout": "vertical",
 		"prefix": "B06",
 		"count": 5,
@@ -94,5 +94,11 @@
 		"prefix": "A07",
 		"count": 11,
 		"grid": "5x6"
+	},
+	{
+		"layout": "horizontal",
+		"prefix": "C",
+		"count": 5,
+		"grid": "1x1"
 	}
 ]

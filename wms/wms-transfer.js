@@ -3,9 +3,11 @@ class WmsTransfer extends HTMLElement {
 		super();
 	}
 	connectedCallback() {
+		this.classList.add("wms");
 		this.innerHTML = `
-			<label><span><i class="fa-solid fa-cubes-stacked"></i> Ubicazione</span>: <output name="location"></output></label>
-			<label><span><i class="fa-solid fa-fw fa-barcode"></i> UDC</span>: <output name="lu"></output></label>
+			<h3><i class="fa-solid fa-right-to-bracket"></i> Trasferisci</h3>
+			<label><span><i class="fa-solid fa-fw fa-barcode"></i> UDC</span>: <input name="lu" placeholder="es. 0000012345678" readonly></label>
+			<label><span><i class="fa-solid fa-warehouse"></i> UDD</span>: <input name="location" placeholder="es. A01 01 01" readonly></label>
 			<input name="code" style="font-size: x-large">
 			<div id="sentiments" aria-disabled="true" style="display: flex; justify-content: space-evenly; font-size: larger;">
 				<div id="S0" class="sentiment">&bull;</div>
@@ -14,6 +16,7 @@ class WmsTransfer extends HTMLElement {
 				<div id="S3" class="sentiment">3</div>
 				<div id="S4" class="sentiment">4</div>
 				<div id="S5" class="sentiment">5</div>
+				<div id="S6" class="sentiment"><i class="fa-solid fa-trash"></i></div>
 			</div>
 			<hr>
 			<table id="inventory"></table>

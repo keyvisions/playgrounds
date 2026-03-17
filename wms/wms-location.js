@@ -12,7 +12,7 @@ class WmsLocation extends HTMLElement {
 			try {
 				const resp = await fetch(srcAttr);
 				structure = await resp.json();
-			} catch (e) {
+			} catch (_e) {
 				structure = null;
 			}
 		}
@@ -44,7 +44,7 @@ class WmsLocation extends HTMLElement {
 					if (layout === 'vertical') {
 						const colOffset = (i - startIdx) * cols;
 						const firstColNum = colOffset + 1;
-						const unitLabel = `Vertical ${prefix}${String(firstColNum).padStart(3, '0')}`;
+						const unitLabel = `${prefix}${String(firstColNum).padStart(3, '0')}`;
 						html += `<div class=\"unit\"><div class=\"unit-title\">${unitLabel}</div><table>`;
 						for (let r = rows; r >= 1; --r) {
 							html += '<tr>';
@@ -60,7 +60,7 @@ class WmsLocation extends HTMLElement {
 					}
 					// prefix + drawer (2 digits) + column (3 digits) + row (2 digits)
 					else if (layout === 'horizontal') {
-						const unitLabel = `Horizontal ${prefix}${String(i).padStart(2, '0')}`;
+						const unitLabel = `${prefix}${String(i).padStart(2, '0')}`;
 						html += `<div class="unit"><div class="unit-title">${unitLabel}</div><table>`;
 						for (let r = rows; r >= 1; --r) {
 							html += '<tr>';
