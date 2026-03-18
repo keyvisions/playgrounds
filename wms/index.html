@@ -6,11 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>WMS</title>
 
-	<script defer src="./wms-warehouse.js"></script>
-	<script defer src="./wms-loading-units.js"></script>
-	<script defer src="./wms-transfer.js"></script>
-	<script defer src="./wms-location.js"></script>
 	<script defer src="./wms-structure.js"></script>
+	<script defer src="./wms-map.js"></script>
+	<script defer src="./wms-loading-units.js"></script>
+	<script defer src="./wms.js"></script>
 
 	<link rel="stylesheet" href="./wms.css" />
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -20,7 +19,7 @@
 	<style>
 		:root {
 			font-family: Arial, Helvetica, sans-serif;
-			--special-backcolor: green;
+			--special-backcolor: lightgreen;
 			--special-color: white;
 		}
 	</style>
@@ -38,66 +37,58 @@
 			alert("Print: " + JSON.stringify(data));
 			return true;
 		}
+		function highlightMap(event) {
+			const prefix = event.target.closest("tr")?.querySelector(".unit-prefix")?.innerText;
+			if (prefix) {
+				event.target.closest("table").querySelector("tr.selected")?.classList.remove("selected");
+				event.target.closest("tr").classList.add("selected");
+				const svg = document.querySelector("wms-map").SVGDocument;
+				if (svg) {
+					svg.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
+					svg.querySelectorAll(`[id*=${prefix}]`).forEach(el => el.classList.add("selected"));
+				}
+			}
+		}
 	</script>
 </head>
 
 <body>
-	<div>
-		<button onclick="toggleVisibility('structure-wrapper')">Toggle Structure Editor</button>
-		<div id="structure-wrapper" style="display:none">
-			<wms-structure src="./data/wms-structure.json"></wms-structure>
-		</div>
+	<div style="display: flex; gap: 1rem;">
+		<wms-structure name="structure" src="./data/wms-structure.json" onclick="highlightMap(event)"></wms-structure>
+		<wms-map style="flex: 1 1 0; min-width:0;" mode="edit" map="./media/warehouse.svg"
+			inventory="./data/wms-inventory.json" locations="./data/wms-locations.json">
+		</wms-map>
 	</div>
+
+	<wms-manage src=""></wms-manage>
+
 	<div>
-		<button onclick="toggleVisibility('location-wrapper')">Toggle Location Viewer</button>
-		<div id="location-wrapper" style="display:none">
-			<wms-location src="./data/wms-structure.json"></wms-location>
-		</div>
+		<form class="wms">
+			<table>
+				<thead>
+					<tr>
+						<th>Codice</th>
+						<th>Quantità</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>ABC</td>
+						<td><wms-loading-units name="qty" itemid="ABC" onprint="print()">100</wms-loading-units></td>
+					</tr>
+					<tr>
+						<td>DEF</td>
+						<td><wms-loading-units name="qty" itemid="DEF" onprint="print()">200</wms-loading-units></td>
+					</tr>
+					<tr>
+						<td>GHI</td>
+						<td><wms-loading-units name="qty" itemid="GHI"></wms-loading-units></td>
+					</tr>
+				</tbody>
+			</table>
+			<button onclick="return putaway(event)">Status</button>
+		</form>
 	</div>
-	<div>
-		<button onclick="toggleVisibility('transfer-wrapper')">Toggle Transfer</button>
-		<div id="transfer-wrapper" style="display:none">
-			<wms-transfer src=""></wms-transfer>
-		</div>
-	</div>
-	<div>
-		<button onclick="toggleVisibility('loading-units-wrapper')">Toggle Loading Units</button>
-		<div id="loading-units-wrapper" style="display:none">
-			<form class="wms">
-				<table>
-					<thead>
-						<tr>
-							<th>Part Number</th>
-							<th>Quantità</th>
-						</tr>
-					</thead>
-					<tbody>
-						<tr>
-							<td>ABC</td>
-							<td><wms-loading-units name="qty" itemid="ABC" onprint="print()">100</wms-loading-units></td>
-						</tr>
-						<tr>
-							<td>DEF</td>
-							<td><wms-loading-units name="qty" itemid="DEF" onprint="print()">200</wms-loading-units></td>
-						</tr>
-						<tr>
-							<td>GHI</td>
-							<td><wms-loading-units name="qty" itemid="GHI"></wms-loading-units></td>
-						</tr>
-					</tbody>
-				</table>
-				<button onclick="return putaway(event)">Status</button>
-			</form>
-		</div>
-	</div>
-	<script>
-		function toggleVisibility(id) {
-			const el = document.getElementById(id);
-			if (el) {
-				el.style.display = (el.style.display === 'none') ? '' : 'none';
-			}
-		}
-	</script>
 </body>
 
 </html>

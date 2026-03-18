@@ -1,7 +1,21 @@
 /* WMS web components styles */
 .wms .warning {
+	color: red;
+}
+.wms .warningBox {
 	background-color: red;
 	color: white;
+}
+.wms .success {
+	color: lightgreen;
+}
+.wms .successBox {
+	background-color: lightgreen;
+}
+
+.wms .selected {
+	background-color: var(--special-backcolor);
+	color: var(--special-color);
 }
 
 .wms dialog {
@@ -17,20 +31,21 @@
 .wms dialog header {
 	background-color: var(--special-backcolor);
 	color: var(--special-color);
-	padding: 0.5rem;
+	padding: 0.5em;
 }
 
 .wms .sentiment {
 	display: inline-block;
-	width: 2rem;
-	height: 2rem;
-	line-height: 2rem;
+	width: 2em;
+	height: 2em;
+	line-height: 2em;
 	border-radius: 50%;
 	background: CanvasText;
 	color: Canvas;
 	text-align: center;
 	font-weight: bold;
-	font-size: 1.2rem;
+	font-size: 1em;
+	cursor: pointer;
 }
 
 .wms input[readonly] {
@@ -38,11 +53,15 @@
 	border: none;
 }
 
-wms-transfer {
+wms-manage {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
-	padding: 0.5rem;
+	gap: 1em;
+	padding: 0.5em 0;
+	font-size: large;
+}
+wms-manage input {
+	font-size: inherit;
 }
 
 .wms i {
@@ -54,18 +73,18 @@ wms-transfer {
 }
 
 .wms thead>tr>th {
-	padding: 0.5rem;
-	border-bottom: medium solid gray;
+	padding: 0.5em;
+	border-bottom: thin solid gray;
 	font-size: smaller;
 }
 
 .wms tbody>tr>td {
-	padding: 0.5rem;
+	padding: 0.5em;
 	border-bottom: thin solid gray;
 }
 
 .wms select,
 .wms input,
 .wms button {
-	padding: 0.25rem;
+	padding: 0.25em;
 }

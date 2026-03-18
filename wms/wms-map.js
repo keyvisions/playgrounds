@@ -6,13 +6,15 @@ const StorageUnits = [
 ];
 
 class WMSMap extends HTMLElement {
+	// viewBox state
+	#Vx = 0; #Vy = 0; #Vw = 0; #Vh = 0; 
+	#vx = 0; #vy = 0; #vw = 0; #vh = 0;
+
 	constructor() {
 		super();
-		this.attachShadow({ mode: "open" });
+		this.insertAdjacentHTML("afterbegin", `<textarea id="SVG" name="SVG" style="display:block">SVG</textarea>`);
 
-		// viewBox state
-		this._Vx = this._Vy = this._Vw = this._Vh = 0;
-		this._vx = this._vy = this._vw = this._vh = 0;
+		this.attachShadow({ mode: "open" });
 
 		// pan state
 		this._isPanning = false;
@@ -25,6 +27,8 @@ class WMSMap extends HTMLElement {
 
 		this._svgLoaded = false;
 		this._eventsAttached = false;
+
+		this.onResize = () => this.#alignSVG();
 	}
 
 	static get observedAttributes() {
@@ -42,11 +46,11 @@ class WMSMap extends HTMLElement {
 			this.setAttribute("mode", "picking");
 
 		this.#render();
-		window.addEventListener("resize", this.#alignSVG);
+		window.addEventListener("resize", this.onResize);
 	}
 
 	disconnectedCallback() {
-		window.removeEventListener("resize", this.#alignSVG);
+		window.removeEventListener("resize", this.onResize);
 	}
 
 	attributeChangedCallback(name, oldValue, newValue) {
@@ -81,6 +85,8 @@ class WMSMap extends HTMLElement {
 			this.#localizeRack();
 		}
 	}
+
+
 
 	#render() {
 		this.shadowRoot.innerHTML = `
@@ -149,7 +155,10 @@ class WMSMap extends HTMLElement {
 		return this.#svgDoc?.querySelector("svg") ?? null;
 	}
 
-	get svg() {
+	get SVG() {
+		return this.querySelector("#SVG").value;
+	}
+	get SVGDocument() {
 		return this.#svgDoc ?? null;
 	}
 
@@ -161,7 +170,7 @@ class WMSMap extends HTMLElement {
 		if (!svgDoc) return;
 
 		// Inject SVG styles
-		svgDoc.querySelectorAll("style").forEach(s => s.remove());
+//		svgDoc.querySelectorAll("style").forEach(s => s.remove());
 		const style = svgDoc.createElement("style");
 		style.textContent = `
 			:root { color-scheme: light dark; }
@@ -178,7 +187,7 @@ class WMSMap extends HTMLElement {
 			const inner = svgDoc.documentElement.innerHTML;
 			svgDoc.documentElement.innerHTML = `<g>${inner}</g>`;
 		}
-		svgDoc.documentElement.firstElementChild.insertAdjacentElement("afterbegin", style);
+//		svgDoc.documentElement.firstElementChild.insertAdjacentElement("afterbegin", style);
 
 		const svg = this.#svg;
 
@@ -232,7 +241,7 @@ class WMSMap extends HTMLElement {
 		this.#syncViewBox();
 
 		if (!this._eventsAttached) {
-			this.#attachSvgEvents(svg);
+			this.#attachSVGEvents(svg);
 			this._eventsAttached = true;
 		}
 
@@ -242,11 +251,11 @@ class WMSMap extends HTMLElement {
 	#syncViewBox() {
 		const svg = this.#svg;
 		if (!svg) return;
-		[this._Vx, this._Vy, this._Vw, this._Vh] = [
+		[this.#Vx, this.#Vy, this.#Vw, this.#Vh] = [
 			svg.viewBox.baseVal.x, svg.viewBox.baseVal.y,
 			svg.viewBox.baseVal.width, svg.viewBox.baseVal.height
 		];
-		[this._vx, this._vy, this._vw, this._vh] = [this._Vx, this._Vy, this._Vw, this._Vh];
+		[this.#vx, this.#vy, this.#vw, this.#vh] = [this.#Vx, this.#Vy, this.#Vw, this.#Vh];
 	}
 
 	#emitSvgChange() {
@@ -255,15 +264,7 @@ class WMSMap extends HTMLElement {
 		const map = svg.outerHTML.replace(` xmlns=""`, "").replaceAll(/\s+/g, " ").trim();
 		this.dispatchEvent(new CustomEvent("svgchange", { detail: map, bubbles: true }));
 		if (this.getAttribute("mode") === "edit")
-			this.#copyToClipboard(map);
-	}
-
-	#copyToClipboard(text) {
-		if (navigator.clipboard && document.hasFocus()) {
-			navigator.clipboard.writeText(text).catch(() => console.warn("Copy failed"));
-		} else {
-			console.warn("Copy failed");
-		}
+			this.querySelector("#SVG").value = map;
 	}
 
 	#assignTitles(svg) {
@@ -290,7 +291,7 @@ class WMSMap extends HTMLElement {
 		return rackId.substring(0, 4) + (Number(rackId.substring(4)) + 1);
 	}
 
-	#attachSvgEvents(svg) {
+	#attachSVGEvents(svg) {
 		// Prevent browser-native touch scrolling/zooming inside SVG area
 		svg.style.touchAction = "none";
 
@@ -330,16 +331,16 @@ class WMSMap extends HTMLElement {
 
 			const scaleFactor = 1.1;
 			const rect = svg.getBoundingClientRect();
-			const mx = ((event.clientX - rect.left) / rect.width) * this._vw + this._vx;
-			const my = ((event.clientY - rect.top) / rect.height) * this._vh + this._vy;
+			const mx = ((event.clientX - rect.left) / rect.width) * this.#vw + this.#vx;
+			const my = ((event.clientY - rect.top) / rect.height) * this.#vh + this.#vy;
 			const k = event.deltaY < 0 ? 1 / scaleFactor : scaleFactor;
-			const newW = this._vw * k;
-			const newH = this._vh * k;
-			this._vx = mx - (mx - this._vx) * (newW / this._vw);
-			this._vy = my - (my - this._vy) * (newH / this._vh);
-			this._vw = newW;
-			this._vh = newH;
-			svg.setAttribute("viewBox", `${this._vx} ${this._vy} ${this._vw} ${this._vh}`);
+			const newW = this.#vw * k;
+			const newH = this.#vh * k;
+			this.#vx = mx - (mx - this.#vx) * (newW / this.#vw);
+			this.#vy = my - (my - this.#vy) * (newH / this.#vh);
+			this.#vw = newW;
+			this.#vh = newH;
+			svg.setAttribute("viewBox", `${this.#vx} ${this.#vy} ${this.#vw} ${this.#vh}`);
 		}, { passive: false });
 
 		svg.addEventListener("pointerdown", event => {
@@ -352,8 +353,8 @@ class WMSMap extends HTMLElement {
 				this._isPanning = true;
 				this._startX = event.clientX;
 				this._startY = event.clientY;
-				this._startVx = this._vx;
-				this._startVy = this._vy;
+				this._startVx = this.#vx;
+				this._startVy = this.#vy;
 				this._pinch = null;
 			} else if (this._pointers.size === 2) {
 				// pinch start
@@ -365,12 +366,12 @@ class WMSMap extends HTMLElement {
 				const rect = svg.getBoundingClientRect();
 				this._pinch = {
 					dist: Math.hypot(dx, dy),
-					vx: this._vx,
-					vy: this._vy,
-					vw: this._vw,
-					vh: this._vh,
-					cx: ((midX - rect.left) / rect.width) * this._vw + this._vx,
-					cy: ((midY - rect.top) / rect.height) * this._vh + this._vy,
+					vx: this.#vx,
+					vy: this.#vy,
+					vw: this.#vw,
+					vh: this.#vh,
+					cx: ((midX - rect.left) / rect.width) * this.#vw + this.#vx,
+					cy: ((midY - rect.top) / rect.height) * this.#vh + this.#vy,
 				};
 			}
 		});
@@ -394,11 +395,11 @@ class WMSMap extends HTMLElement {
 				const midX = (a.x + b.x) / 2;
 				const midY = (a.y + b.y) / 2;
 
-				this._vw = newW;
-				this._vh = newH;
-				this._vx = this._pinch.cx - ((midX - rect.left) / rect.width) * newW;
-				this._vy = this._pinch.cy - ((midY - rect.top) / rect.height) * newH;
-				svg.setAttribute("viewBox", `${this._vx} ${this._vy} ${this._vw} ${this._vh}`);
+				this.#vw = newW;
+				this.#vh = newH;
+				this.#vx = this._pinch.cx - ((midX - rect.left) / rect.width) * newW;
+				this.#vy = this._pinch.cy - ((midY - rect.top) / rect.height) * newH;
+				svg.setAttribute("viewBox", `${this.#vx} ${this.#vy} ${this.#vw} ${this.#vh}`);
 				return;
 			}
 
@@ -407,11 +408,11 @@ class WMSMap extends HTMLElement {
 				if (Math.abs(event.clientX - this._startX) > 3 || Math.abs(event.clientY - this._startY) > 3)
 					this._didPan = true;
 				const rect = svg.getBoundingClientRect();
-				const dxPan = (event.clientX - this._startX) * (this._vw / rect.width);
-				const dyPan = (event.clientY - this._startY) * (this._vh / rect.height);
-				this._vx = this._startVx - dxPan;
-				this._vy = this._startVy - dyPan;
-				svg.setAttribute("viewBox", `${this._vx} ${this._vy} ${this._vw} ${this._vh}`);
+				const dxPan = (event.clientX - this._startX) * (this.#vw / rect.width);
+				const dyPan = (event.clientY - this._startY) * (this.#vh / rect.height);
+				this.#vx = this._startVx - dxPan;
+				this.#vy = this._startVy - dyPan;
+				svg.setAttribute("viewBox", `${this.#vx} ${this.#vy} ${this.#vw} ${this.#vh}`);
 			}
 		});
 
@@ -434,7 +435,7 @@ class WMSMap extends HTMLElement {
 
 		if (reset) {
 			// Restore to natural portrait viewBox and clear rotation
-			svg.setAttribute("viewBox", `${this._Vx} ${this._Vy} ${this._Vw} ${this._Vh}`);
+			svg.setAttribute("viewBox", `${this.#Vx} ${this.#Vy} ${this.#Vw} ${this.#Vh}`);
 			g?.removeAttribute("transform");
 		}
 
@@ -455,7 +456,7 @@ class WMSMap extends HTMLElement {
 		}
 
 		// Always keep _vx/_vy/_vw/_vh in sync with the actual SVG viewBox
-		[this._vx, this._vy, this._vw, this._vh] =
+		[this.#vx, this.#vy, this.#vw, this.#vh] =
 			svg.getAttribute("viewBox").split(" ").map(Number);
 	}
 
@@ -496,10 +497,10 @@ class WMSMap extends HTMLElement {
 				for (const row of pickRows) {
 					if (typeof row !== "object" || row === null) continue;
 
-					this.#splitCsvValues(row.location).forEach(loc => matchedLocations.add(loc));
+					this.#splitCSVValues(row.location).forEach(loc => matchedLocations.add(loc));
 
-					const partnumbers = this.#splitCsvValues(row.partnumber).map(v => v.toLowerCase());
-					const lus = this.#splitCsvValues(row.lu).map(v => v.toLowerCase());
+					const partnumbers = this.#splitCSVValues(row.partnumber).map(v => v.toLowerCase());
+					const lus = this.#splitCSVValues(row.lu).map(v => v.toLowerCase());
 					if (!partnumbers.length && !lus.length) continue;
 
 					this.#matchInventoryLocations(inventory, partnumbers, lus, matchedLocations);
@@ -508,9 +509,9 @@ class WMSMap extends HTMLElement {
 				inventory = [...matchedLocations];
 			} else {
 				const qs = this.#queryParams;
-				const qsLocations = this.#splitCsvValues(qs.get("location"));
-				const qsPartnumbers = this.#splitCsvValues(qs.get("partnumber")).map(v => v.toLowerCase());
-				const qsLus = this.#splitCsvValues(qs.get("lu")).map(v => v.toLowerCase());
+				const qsLocations = this.#splitCSVValues(qs.get("location"));
+				const qsPartnumbers = this.#splitCSVValues(qs.get("partnumber")).map(v => v.toLowerCase());
+				const qsLus = this.#splitCSVValues(qs.get("lu")).map(v => v.toLowerCase());
 
 				if (qsPartnumbers.length || qsLus.length) {
 					inventory = [...this.#matchInventoryLocations(inventory, qsPartnumbers, qsLus, new Set(qsLocations))];
@@ -574,10 +575,10 @@ class WMSMap extends HTMLElement {
 		return [];
 	}
 
-	#splitCsvValues(value) {
+	#splitCSVValues(value) {
 		if (Array.isArray(value))
 			return value
-				.flatMap(v => this.#splitCsvValues(v))
+				.flatMap(v => this.#splitCSVValues(v))
 				.filter(Boolean);
 		if (value == null) return [];
 		return String(value)
@@ -833,7 +834,7 @@ class WMSMap extends HTMLElement {
 				.map(([k, v]) => `<b>${k}</b>: ${v}`)
 				.join("<br>");
 		else
-			return `<div>${item.lu.padStart(9, "0")} <b>${item.partnumber}</b> <i>${item.quantity.toLocaleString()} ${item.um}</i></div>`;
+			return `<div>${String(item.lu).padStart(9, "0")} <b>${item.partnumber}</b> <i>${item.quantity.toLocaleString()} ${item.um}</i></div>`;
 	}
 
 	#openStorageUnitDialog(target, storageUnit, inventory, context = {}) {
