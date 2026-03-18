@@ -35,6 +35,7 @@ class WmsManage extends HTMLElement {
 
 		const REGEX_LOCATION = /^[A-Za-z]\d{7}$/;
 		const REGEX_LU = /^\d{1,9}$/;
+		
 		const Location = this.querySelector('[name=location]');
 		const LU = this.querySelector('[name=lu]');
 		const sentiments = this.querySelector('#sentiments');

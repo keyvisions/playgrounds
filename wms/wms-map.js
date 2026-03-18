@@ -86,8 +86,6 @@ class WMSMap extends HTMLElement {
 		}
 	}
 
-
-
 	#render() {
 		this.shadowRoot.innerHTML = `
 			<style>
@@ -778,19 +776,54 @@ class WMSMap extends HTMLElement {
 
 		const suggested = this.#lastRack(target);
 		const current = target.querySelector("title").textContent;
-		const label = autoAssign
-			? suggested
-			: prompt("Rack label:", current || suggested);
+		const currentDirection = target.getAttribute("direction") || "ltr";
+		// Create dialog
+		const dialog = document.createElement("dialog");
+		dialog.className = "vRackEdit";
+		dialog.innerHTML = `
+			<h3>Prima ubicazione</h3>
+			<form method="dialog" style="display:flex;flex-direction:column;gap:1em">
+				<label><span>Posizione</span><br>
+					<select name="direction">
+						<option value="ltr" ${currentDirection === "ltr" ? "selected" : ""}>In basso a sinistra</option>
+						<option value="rtl" ${currentDirection === "rtl" ? "selected" : ""}>In basso a destra</option>
+					</select>
+				</label>
+				<label><span>Etichetta</span><br>
+					<input name="label" type="text" value="${current || suggested}" style="width:100%" autofocus>
+				</label>
+				<div style="display:flex;justify-content:flex-end;gap:1em">
+					<button value="cancel" type="button" onclick="this.closest('dialog').close()">Annulla</button>
+					<button value="ok" type="submit">OK</button>
+				</div>
+			</form>
+		`;
+		this.shadowRoot.appendChild(dialog);
+		dialog.showModal();
 
-		if (label === null) return; // cancelled
-		target.querySelector("title").textContent = label;
+		dialog.addEventListener("close", () => dialog.remove());
 
-		// Sync all non-empty titles → element ids
-		this.#svg.querySelectorAll("title").forEach(t => {
-			if (t.textContent !== "") t.parentElement.setAttribute("id", t.textContent);
+		dialog.querySelector("form").addEventListener("submit", e => {
+			e.preventDefault();
+			const form = e.target;
+			const label = form.label.value.trim();
+			const direction = form.direction.value;
+			if (!label) { dialog.close(); return; }
+			target.querySelector("title").textContent = label;
+			// Sync all non-empty titles → element ids
+			this.#svg.querySelectorAll("title").forEach(t => {
+				if (t.textContent !== "") t.parentElement.setAttribute("id", t.textContent);
+			});
+			// Update direction attribute
+			target.setAttribute("direction", direction);
+			this.#emitSvgChange();
+			dialog.close();
 		});
-
-		this.#emitSvgChange();
+		// Auto-assign
+		if (autoAssign) {
+			dialog.querySelector("input[name='label']").value = suggested;
+			dialog.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true }));
+		}
 	}
 
 	async #showStorageUnit(event) {

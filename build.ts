@@ -177,7 +177,7 @@ async function buildJS(components: string, include = '', force = false) {
     const minified = await minifyJS(combinedJS);
     
     await ensureDir(`./${mainName}/deploy`);
-    await Deno.writeTextFile(`./${mainName}/deploy/${mainName}.min.js`, minified);
+    await Deno.writeTextFile(`./${mainName}/deploy/${mainName}.min.js`, minified.replace(/(\t+)/g, " "));
     console.log(`Built ${mainName}.min.js`);
 }
 
