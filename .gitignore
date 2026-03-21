@@ -6,6 +6,7 @@ kv-budget/
 kv-date/
 kv-organogram/
 kv-form/
+wms/.data
 
 # Build artifacts
 .lastbuild

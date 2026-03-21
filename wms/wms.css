@@ -1,41 +1,44 @@
 /* WMS web components styles */
-.wms .warning {
+.wms .failure {
 	color: red;
 }
-.wms .warningBox {
+
+.wms .failureBox {
 	background-color: red;
 	color: white;
 }
+
+.wms .warning {
+	color: orange;
+}
+
+.wms .warningBox {
+	background-color: orange;
+}
+
 .wms .success {
 	color: lightgreen;
 }
+
 .wms .successBox {
 	background-color: lightgreen;
 }
 
-.wms .selected {
-	background-color: var(--special-backcolor);
-	color: var(--special-color);
+.wms .selected,
+.wms .lu_selected {
+	background-color: var(--special-backcolor, Highlight) !important;
+	color: var(--special-color, HighlightText) !important;
 }
 
-.wms dialog {
-	padding: 0;
-	font-size: smaller;
-}
-
-.wms dialog input,
 .wms dialog button {
-	font-size: smaller;
+	min-width: 5em;
 }
 
 .wms dialog header {
-	background-color: var(--special-backcolor);
-	color: var(--special-color);
 	padding: 0.5em;
 }
 
 .wms .sentiment {
-	display: inline-block;
 	width: 2em;
 	height: 2em;
 	line-height: 2em;
@@ -53,15 +56,17 @@
 	border: none;
 }
 
-wms-manage {
+.wms [aria-disabled=true] .sentiment {
+	background-color: lightgray;
+}
+
+wms-place {
 	display: flex;
 	flex-direction: column;
 	gap: 1em;
 	padding: 0.5em 0;
-	font-size: large;
-}
-wms-manage input {
-	font-size: inherit;
+	font-size: x-large;
+	align-items: center;
 }
 
 .wms i {
@@ -76,15 +81,78 @@ wms-manage input {
 	padding: 0.5em;
 	border-bottom: thin solid gray;
 	font-size: smaller;
+	color: initial;
 }
 
 .wms tbody>tr>td {
 	padding: 0.5em;
 	border-bottom: thin solid gray;
+	color: initial;
 }
 
 .wms select,
 .wms input,
 .wms button {
 	padding: 0.25em;
+}
+
+wms-storage-unit {
+	width: 90%;
+}
+
+wms-storage-unit table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+wms-storage-unit table tr:last-child td {
+	border-bottom: thick solid CanvasText;
+}
+
+wms-storage-unit th {
+	font-size: small;
+}
+
+wms-storage-unit td {
+	border: thin solid CanvasText;
+	padding: 0.25em;
+	height: 4em;
+	vertical-align: top;
+	overflow: auto;
+	position: relative;
+}
+
+wms-storage-unit td[data-sentiment]::after {
+	content: attr(data-sentiment);
+	position: absolute;
+	top: 4px;
+	right: 4px;
+
+	font-weight: bold;
+	background: CanvasText;
+	color: Canvas;
+	width: 1.5em;
+	height: 1.5em;
+	line-height: 1.5em;
+	border-radius: 50%;
+	text-align: center;
+}
+
+wms-storage-unit td.selected {
+	background: lightgreen;
+	color: black;
+}
+
+wms-storage-unit td.available {
+	outline: 3px solid Highlight;
+	outline-offset: -4px;
+}
+
+wms-storage-unit td.unavailable {
+	outline: 3px solid red;
+	outline-offset: -4px;
+}
+
+wms-storage-unit td.putaway {
+	cursor: pointer;
 }

@@ -1,59 +1,75 @@
-class WmsManage extends HTMLElement {
+// deno-lint-ignore-file no-window
+class WMSPlace extends HTMLElement {
 	#codeInput
 
 	constructor() {
 		super();
-	}
-	connectedCallback() {
 		this.classList.add("wms");
+	}
+
+	connectedCallback() {
 		this.innerHTML = `
-			<label><span><i class="fa-solid fa-fw fa-barcode"></i> UDC</span>: <input name="lu" placeholder="es. 123456789" readonly></label>
-			<label><span><i class="fa-solid fa-warehouse"></i> UDD</span>: <input name="location" placeholder="es. A01 001 01" readonly></label>
-			<input name="code">
-			<div id="sentiments" aria-disabled="true" style="display: flex; justify-content: space-evenly; font-size: larger;">
-				<!--div id="S0" class="sentiment">&bull;</div-->
+			<label><span><i class="fa-solid fa-fw fa-box"></i> Unità di Carico (UdC)</span><br><input form name="lu" placeholder="es. 123456789" style="font-size: x-large" readonly></label>
+			<label><span><i class="fa-solid fa-fw fa-warehouse"></i> Unità di Deposito (UdD)</span><br><input form name="location" placeholder="es. A01 001 01" style="font-size: x-large" readonly></label>
+			<input form name="code" placeholder="codice" style="font-size: x-large" autofocus>
+			<div id="sentiments" aria-disabled="true" style="display: flex; column-gap: 0.4em;">
 				<div id="S1" class="sentiment">1</div>
 				<div id="S2" class="sentiment">2</div>
 				<div id="S3" class="sentiment">3</div>
 				<div id="S4" class="sentiment">4</div>
 				<div id="S5" class="sentiment">5</div>
-				<!--div id="S6" class="sentiment"><i class="fa-solid fa-trash"></i></div-->
 			</div>
-			<hr>
-			<table id="inventory" style="font-size:smaller"></table>
+			<span style="font-size:small">A sentimento, quanto pieno è l'UdD?</span>
 		`;
 
 		this.#codeInput = this.querySelector('input[name=code]');
-		this.#codeInput.addEventListener('change', (event) => this.check(event, this.#codeInput));
+
+		// Register oncheck handler from attribute if present, else set default
+		if (this.hasAttribute('oncheck')) {
+			const fnName = this.getAttribute("oncheck").replace(/\(.*\)/, "").trim();
+			if (typeof window[fnName] === 'function') {
+				this.oncheck = window[fnName];
+			} else {
+				this.oncheck = () => false;
+			}
+		} else {
+			this.oncheck = () => false;
+		}
+		this.#codeInput.addEventListener('change', async (event) => {
+			const exists = await this.oncheck(this.#codeInput.value);
+			this.#check(event, this.#codeInput, exists);
+		});
 		const sentiments = this.querySelector('#sentiments');
-		sentiments.addEventListener('click', (event) => this.allocate(event));
+		sentiments.addEventListener('click', (event) => this.#allocate(event));
 		this.#codeInput.focus();
 	}
-	check(event, el) {
-		event.stopPropagation();
-		event.preventDefault();
 
+	#check(_event, el, exists = false) {
 		const REGEX_LOCATION = /^[A-Za-z]\d{7}$/;
 		const REGEX_LU = /^\d{1,9}$/;
-		
+
 		const Location = this.querySelector('[name=location]');
 		const LU = this.querySelector('[name=lu]');
 		const sentiments = this.querySelector('#sentiments');
 
-		el.classList.remove('warningBox');
-		if (REGEX_LOCATION.test(el.value)) {
-			Location.classList.add("successBox");
-			Location.value = el.value.toUpperCase();
+		el.classList.remove('failureBox');
+		if (REGEX_LOCATION.test(el.value) && exists) {
+			Location.value = el.value.toUpperCase().replace(/^([A-Za-z])(\d{2})(\d{3})(\d{2})$/, "$1$2 $3 $4");
+			Location.className = exists ? 'successBox' : 'warningBox';
 			el.value = '';
+
 		} else if (/^[0-5]$/.test(el.value)) {
-			this.querySelector(`#S${el.value}`).click();
+			if (Location.value && LU.value)
+				this.querySelector(`#S${el.value}`).click();
 			el.value = '';
+
 		} else if (REGEX_LU.test(el.value)) {
-			LU.classList.add("successBox");
 			LU.value = el.value.padStart(9, '0');
+			LU.className = exists ? 'successBox' : 'warningBox';
 			el.value = '';
+
 		} else {
-			el.classList.add('warningBox');
+			el.classList.add('failureBox');
 		}
 
 		if (Location.value && LU.value)
@@ -63,7 +79,8 @@ class WmsManage extends HTMLElement {
 
 		this.#codeInput.focus()
 	}
-	allocate(event) {
+
+	#allocate(event) {
 		event.stopPropagation();
 		event.preventDefault();
 
@@ -71,21 +88,21 @@ class WmsManage extends HTMLElement {
 		if (sentiments.getAttribute('aria-disabled') === 'true' || event.target.className !== 'sentiment')
 			return;
 
-		const Location = this.querySelector('[name=location]');
-		const LU = this.querySelector('[name=lu]');
-		const Inventory = this.querySelector('#inventory');
-		const d = new Date();
-		const timestamp = d.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', year: 'numeric', month: '2-digit', day: '2-digit' }).replace(',', '');
+		if (this.hasAttribute('onsubmit')) {
+			const fnName = this.getAttribute('onsubmit').replace(/\(.*\)/, '').trim();
+			if (typeof window[fnName] === 'function') {
+				window[fnName].call(this, {
+					lu: this.querySelector('[name=lu]').value,
+					location: this.querySelector('[name=location]').value,
+					sentiment: Number(event.target.id[1])
+				});
+			}
+		}
 
-		Inventory.insertAdjacentHTML('afterbegin', `<tr><td><i class="fa-solid fa-clock"></i> ${timestamp}</td><td><i class="fa-solid fa-barcode"></i></td><td>${LU.value}</td><td><i class="fa-solid fa-right-to-bracket"></i></td><td>${Location.value.replace(/(.{3})(.{3})(.{2})/, "$1 $2 $3")}</td><td class="sentiment" style="font-size: xx-small">${event.target.textContent}</td></tr>`);
-
-		Location.value = '';
-		Location.classList.remove("successBox");
-		LU.value = '';
-		LU.classList.remove("successBox");
-
+		this.querySelector('[name=lu]').classList.remove("successBox", "warningBox");
+		this.querySelector('[name=location]').classList.remove("successBox", "warningBox");
 		sentiments.setAttribute('aria-disabled', 'true');
 	}
 }
 
-customElements.define('wms-manage', WmsManage);
+customElements.define('wms-place', WMSPlace);

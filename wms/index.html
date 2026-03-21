@@ -20,12 +20,19 @@
 		:root {
 			font-family: Arial, Helvetica, sans-serif;
 			--special-backcolor: lightgreen;
-			--special-color: white;
+			--special-color: black;
 		}
 	</style>
 
 	<script>
-		console.clear();
+		let _URL;
+		fetch(".data")
+			.then(res => res.text())
+			.then(res => { 
+				_URL = res.match(/^URL=(.*)$/m)[1]
+			})
+			.catch(err => console.log("No .data file"));
+		
 		function putaway(event) {
 			console.clear();
 			document.querySelectorAll("wms-loading-units input[type=hidden]").forEach(el => {
@@ -33,9 +40,14 @@
 			});
 			return false;
 		}
-		function print(data) {
+		function printLULabels(data) {
 			alert("Print: " + JSON.stringify(data));
 			return true;
+		}
+		function printSULabels(data) {
+			let url = `${_URL}filldocx.asp?type=labels&layout=${data.layout}&set=${data.prefix}&count=${data.count}&rows=${data.grid.split("x")[0]}&cols=${data.grid.split("x")[1]}&offset=${data.offset}&destfile=Labels${data.prefix}.docx`;
+			window.location = url;
+			return false;
 		}
 		function highlightMap(event) {
 			const prefix = event.target.closest("tr")?.querySelector(".unit-prefix")?.innerText;
@@ -49,23 +61,44 @@
 				}
 			}
 		}
+		async function verifyCode(code) {
+			try {
+				const response = await fetch(`${_URL}?*r=5514&code=${encodeURIComponent(code)}`, {
+					headers: { 'Accept': 'application/json' }
+				});
+				const data = await response.json();
+				return !!data.exists;
+			} catch (_err) {
+				return false;
+			}
+		}
+		async function placeLU(data) {
+			try {
+				const response = await fetch(`${_URL}?*r=5517&data=${encodeURIComponent(JSON.stringify(data))}`);
+				await response.text();
+				return true;
+			} catch (_err) {
+				return false;
+			}
+		}
 	</script>
 </head>
 
 <body>
+	<wms-place oncheck="verifyCode" onsubmit="placeLU()"></wms-place>
+
 	<div style="display: flex; gap: 1rem;">
-		<wms-structure name="structure" src="./data/wms-structure.json" onclick="highlightMap(event)"></wms-structure>
-		<wms-map style="flex: 1 1 0; min-width:0;" mode="edit" map="./media/warehouse.svg"
+		<input type="hidden" id="structure" name="fData" value="./data/wms-structure.json">
+		<wms-structure refinput="structure" onclick="highlightMap(event)" onprint="printSULabels(data)"></wms-structure>
+		<wms-map style="flex: 1 1 0; min-width:0;" mode="putting" map="./media/warehouse.svg"
 			inventory="./data/wms-inventory.json" locations="./data/wms-locations.json">
 		</wms-map>
 	</div>
 
-	<wms-manage src=""></wms-manage>
-
 	<div>
 		<form class="wms">
 			<table>
-				<thead>
+				<thead>	
 					<tr>
 						<th>Codice</th>
 						<th>Quantità</th>
@@ -74,11 +107,11 @@
 				<tbody>
 					<tr>
 						<td>ABC</td>
-						<td><wms-loading-units name="qty" itemid="ABC" onprint="print()">100</wms-loading-units></td>
+						<td><wms-loading-units name="qty" itemid="ABC" onprint="printLULabels()">100</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>DEF</td>
-						<td><wms-loading-units name="qty" itemid="DEF" onprint="print()">200</wms-loading-units></td>
+						<td><wms-loading-units name="qty" itemid="DEF" onprint="printLULabels()">200</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>GHI</td>

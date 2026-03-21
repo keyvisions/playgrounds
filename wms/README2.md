@@ -12,11 +12,11 @@ Recommended workflow:
 1. Start from the warehouse DWG planimetry.
 2. Ensure equal racks are drawn with equal sizes in the source drawing.
 3. Convert DWG to SVG https://anyconv.com/dwg-to-svg-converter/
-4. Configure `StorageUnits` dimensions (`w`, `h`) in `kv-warehouse.js` to match rack sizes in the SVG. The dimensions need to be determined from the resulting SVG by listing all rectangular paths and their counts, then comparing them to the planimetry.
+4. Configure `StorageUnits` dimensions (`w`, `h`) in `kv-warehouse.js` to match SU sizes in the SVG. The dimensions need to be determined from the resulting SVG by listing all rectangular paths and their counts, then comparing them to the planimetry.
 5. Open the component in `edit` mode:
 	- it loads the SVG,
 	- detects rectangular paths matching configured unit sizes,
-	- converts matching paths into `<rect class="rack ...">`,
+	- converts matching paths into `<rect class="SU ...">`,
 	- classifies racks by storage-unit type,
 	- performs additional SVG cleanup removing extremely complex paths and paths outside of a given boundary, lastly determine the confining viewport.
 6. Save the resulting cleaned SVG replacing the original source SVG.
@@ -51,7 +51,7 @@ This preparation step is required before reliable picking/putaway visualization.
 	- In `putaway`: used to mark racks containing the queried `partnumber`.
 - `locations`
 	- JSON URL/path only.
-	- Used in `putaway` to compute rack availability.
+	- Used in `putaway` to compute SU availability.
 - `data`
 	- JSON URL/path only.
 	- Used in `picking` mode only.
@@ -171,7 +171,7 @@ This means a location already at occupancy 3 can still accept an item with size 
 
 ### `edit`
 
-- Enables rack labeling/edit workflow.
+- Enables SU labeling/edit workflow.
 - On mode change, `_setup()` is run to normalize/rebuild SVG structures used for editing.
 
 ## Process point of view
@@ -180,7 +180,7 @@ The recommended architecture is:
 
 - **Web Component = orchestration + visualization**
 	- shows candidate racks and bin context.
-	- captures operator interactions (navigation, rack inspection, barcode scans).
+	- captures operator interactions (navigation, SU inspection, barcode scans).
 	- sends intent to API and re-renders from API responses.
 - **API = warehouse business logic + data consistency**
 	- validates process rules (item identity, allowed destinations, capacity, task state).
@@ -191,7 +191,7 @@ The recommended architecture is:
 
 1. Operator receives putaway list (LUs / partnumbers / constraints).
 2. Component highlights involved racks (`selected` / `available`) using API-provided data.
-3. Operator moves physically with cart, reaches highlighted rack, inspects slots.
+3. Operator moves physically with cart, reaches highlighted SU, inspects slots.
 4. Operator scans package barcode (LU or partnumber) and then scans destination location barcode.
 5. Component sends the scan event to API (task id + barcode + location + context).
 6. API validates and applies transaction atomically:
@@ -207,7 +207,7 @@ Key rule: the component must not be the source of truth for occupancy or stock; 
 
 1. Operator receives picking list (locations and/or partnumber/LU constraints).
 2. Component highlights racks containing requested items.
-3. Operator reaches rack, scans location and/or item depending on procedure.
+3. Operator reaches SU, scans location and/or item depending on procedure.
 4. Component sends confirmation to API (task id + scanned values + quantity).
 5. API validates and applies transaction atomically:
 	- confirms item and source location match open picking line.
@@ -223,10 +223,10 @@ Key rule: the component must not be the source of truth for occupancy or stock; 
 
 ## Visual semantics
 
-- `.rack.selected`
-	- Rack selected by location mapping (picking) or partnumber hit (putaway).
-- `.rack.available`
-	- Rack has at least one compatible location for requested putaway size.
+- `.SU.selected`
+	- SU selected by location mapping (picking) or partnumber hit (putaway).
+- `.SU.available`
+	- SU has at least one compatible location for requested putaway size.
 
 ## Lifecycle and public API
 

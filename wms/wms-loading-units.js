@@ -66,19 +66,23 @@ class WMSLoadingUnits extends HTMLElement {
 					</tfoot>
 				</table>
 			</form>`;
-		this.appendChild(dialog);
+		document.body.appendChild(dialog);
 
 		this._dialogEvents(dialog);
 	}
 
 	_render() {
+		let formAttr = '';
+		const form = this.closest('form');
+		if (form && form.id) {
+			formAttr = `form="${form.id}"`;
+		}
 		this.insertAdjacentHTML("afterbegin", `
 			<style>.warning { color: red; }</style>
-			<input id="WMSLoadingUnitsData" type="hidden" name="${this.getAttribute("name")}">
+			<input type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>
 			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="WMSLoadingUnitsRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
 			<i class="fa-solid fa-fw fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
 		`);
-		this.removeAttribute("name");
 
 		this.addEventListener('click', (e) => {
 			e.stopPropagation();
@@ -153,14 +157,16 @@ class WMSLoadingUnits extends HTMLElement {
 			e.target.closest("tr").querySelector("[name=coded]").value = false; // Labels need to be reprinted
 			switch (e.target.name) {
 				case "units": {
+/*
 					const oldvalue = parseFloat(e.target.oldvalue),
 						newvalue = parseFloat(e.target.value),
 						quantity = parseFloat(e.target.closest("tr").querySelector("[name=quantity]").value);
 					e.target.closest("tr").querySelector("[name=quantity]").value = parseInt(quantity * oldvalue / newvalue);
 					e.target.oldvalue = newvalue;
+*/
+					const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
 /*
 					// Add residue row
-					const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
 					if (quantity % newvalue > 0) {
 						const lastElement = luRows[luRows.length - 1];
 						const luResidue = { ...lastElement };

@@ -1,8 +1,8 @@
 // deno-lint-ignore-file
 const StorageUnits = [
-	{ name: "small", alias: "A", layout: "vertical", w: 3, h: 7, bays: 6, shelves: 5 },
-	{ name: "medium", alias: "B", layout: "vertical", w: 7, h: 17, bays: 3, shelves: 3 },
-	{ name: "large", alias: "D", layout: "horizontal", w: 18, h: 26, default: { cols: 20, rows: 2 }, drawers: [] }
+	{ name: "small", alias: "A", layout: "V", w: 3, h: 7, bays: 6, shelves: 5 },
+	{ name: "medium", alias: "B", layout: "V", w: 7, h: 17, bays: 3, shelves: 3 },
+	{ name: "large", alias: "D", layout: "H", w: 18, h: 26, default: { cols: 20, rows: 2 }, drawers: [] }
 ];
 
 class WMSMap extends HTMLElement {
@@ -12,14 +12,26 @@ class WMSMap extends HTMLElement {
 
 	constructor() {
 		super();
+		this.classList.add("wms");
+
 		let formAttr = '';
 		const form = this.closest && this.closest('form');
 		if (form && form.id) {
 			formAttr = `form=\"${form.id}\"`;
 		}
-		this.insertAdjacentHTML("afterbegin", `<input id="${this.constructor.name}" type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>`);
 
-		this.attachShadow({ mode: "open" });
+		this.insertAdjacentHTML("afterbegin", `
+			<input id="${this.constructor.name}" type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>
+			<div id="sentiments" style="display: flex; gap: 1em; padding: 0.5em; justify-content: center;">
+				<div style="line-height:2em">Ingombro UdC</div> 
+				<div id="S1" class="sentiment">1</div>
+				<div id="S2" class="sentiment">2</div>
+				<div id="S3" class="sentiment">3</div>
+				<div id="S4" class="sentiment">4</div>
+				<div id="S5" class="sentiment">5</div>
+			</div>
+			<object type="image/svg+xml" style="display: block; width: 100%; height: 100%; border: thin solid gray; box-sizing: border-box;"></object>
+		`);
 
 		// pan state
 		this._isPanning = false;
@@ -62,7 +74,7 @@ class WMSMap extends HTMLElement {
 		if (oldValue === newValue) return;
 
 		if (name === "map") {
-			const obj = this.shadowRoot?.querySelector("object");
+			const obj = this.querySelector("object");
 			if (obj) obj.data = newValue ?? "";
 		}
 		if (name === "inventory" && this._svgLoaded) {
@@ -75,7 +87,7 @@ class WMSMap extends HTMLElement {
 			this.#localizeSU();
 		}
 		if (name === "mode") {
-			this.#syncSizeControlVisibility();
+			this.#syncSentimentControlVisibility();
 		}
 		if (name === "mode" && this._svgLoaded) {
 			switch (newValue) {
@@ -92,33 +104,11 @@ class WMSMap extends HTMLElement {
 	}
 
 	#render() {
-		this.shadowRoot.innerHTML = `
-			<style>
-				object { display: block; width: 100%; height: 100%; border: thin solid gray; box-sizing: border-box; }
-				.vStorageUnit { width: 90%; }
-				.vStorageUnit table { width: 100%; border-collapse: collapse; }
-				.vStorageUnit table tr:last-child td { border-bottom: thick solid CanvasText; }
-				.vStorageUnit th { font-size: small; }
-				.vStorageUnit td { border: 1px solid CanvasText; padding: 0.25em; height: 4em; vertical-align: top; overflow: auto; position: relative; }
-				.vStorageUnit td[data-occupancy]::after { content: attr(data-occupancy); position: absolute; top: 4px; right: 4px; font-size: 0.75em; font-weight: bold; color: Canvas; background: CanvasText; padding: 0.25em 0.5em;}
-				.vStorageUnit td.selected { background: lightgreen; color: black; }
-				.vStorageUnit td.available { outline: 3px solid Highlight; outline-offset: -4px; }
-				.vStorageUnit td.unavailable { outline: 3px solid red; outline-offset: -4px; }
-				.vStorageUnit td.putaway { cursor: pointer; }
-			</style>
-			<p id="size-control">Dimensione carico: <label><input type="radio" name="size" value="1">1</label> <label><input type="radio" name="size" value="2">2</label> <label><input type="radio" name="size" value="3">3</label> <label><input type="radio" name="size" value="4">4</label> <label><input type="radio" name="size" value="5">5</label></p>
-			<object type="image/svg+xml"></object>
-		`;
+		this.querySelector("#sentiments")?.addEventListener("click", (event) => this.#onSentimentChange(event));
 
-		const querySize = this.#getRequestedSizeFromQuery() ?? 1;
-		const sizeRadios = this.shadowRoot.querySelectorAll('input[name="size"]');
-		for (const radio of sizeRadios) {
-			radio.checked = radio.value === String(querySize);
-			radio.addEventListener("change", () => this.#onSizeChange());
-		}
-		this.#syncSizeControlVisibility();
+		this.#syncSentimentControlVisibility();
 
-		const obj = this.shadowRoot.querySelector("object");
+		const obj = this.querySelector("object");
 		const map = this.getAttribute("map");
 		if (map) obj.data = map;
 
@@ -131,27 +121,31 @@ class WMSMap extends HTMLElement {
 		});
 	}
 
-	#onSizeChange() {
-		const requestedSize = this.#getRequestedSize();
+	#onSentimentChange(event) {
+		this.querySelectorAll("#sentiments .sentiment").forEach(sentiment => sentiment.classList.remove("lu_selected"));
+		if (event.target.classList.contains("sentiment"))
+			event.target.classList.add("lu_selected");
+		const requestedSentiment = this.#getRequestedSentiment();
+
 		const url = new URL(window.location.href);
-		if (requestedSize === null)
-			url.searchParams.delete("size");
+		if (requestedSentiment === null)
+			url.searchParams.delete("sentiment");
 		else
-			url.searchParams.set("size", String(requestedSize));
+			url.searchParams.set("sentiment", String(requestedSentiment));
 		history.replaceState(null, "", url);
 
 		if (this.getAttribute("mode") === "putaway" && this._svgLoaded)
 			this.#localizeSU();
 	}
 
-	#syncSizeControlVisibility() {
-		const sizeControl = this.shadowRoot?.querySelector("#size-control");
+	#syncSentimentControlVisibility() {
+		const sizeControl = this.querySelector("#sentiment-control");
 		if (!sizeControl) return;
 		sizeControl.hidden = this.getAttribute("mode") !== "putaway";
 	}
 
 	get #svgDoc() {
-		return this.shadowRoot.querySelector("object")?.contentDocument ?? null;
+		return this.querySelector("object")?.contentDocument ?? null;
 	}
 
 	get #svg() {
@@ -231,7 +225,7 @@ class WMSMap extends HTMLElement {
 		svg.firstElementChild?.tagName === "DESC" && svg.firstElementChild.remove();
 
 		this.#assignTitles(svg);
-		this.#emitSvgChange();
+		this.#emitSVGChange();
 	}
 
 	#init() {
@@ -261,7 +255,7 @@ class WMSMap extends HTMLElement {
 		[this.#vx, this.#vy, this.#vw, this.#vh] = [this.#Vx, this.#Vy, this.#Vw, this.#Vh];
 	}
 
-	#emitSvgChange() {
+	#emitSVGChange() {
 		const svg = this.#svg;
 		if (!svg) return;
 		const map = svg.outerHTML.replace(` xmlns=""`, "").replaceAll(/\s+/g, " ").trim();
@@ -275,7 +269,7 @@ class WMSMap extends HTMLElement {
 			if (!SU.querySelector("title"))
 				SU.insertAdjacentHTML("afterbegin", `<title></title>`);
 			const type = StorageUnits.find(unit => SU.classList.contains(unit.name));
-			if (type?.layout === "vertical")
+			if (type?.layout === "V")
 				SU.querySelector("title").textContent = SU.id;
 		});
 	}
@@ -298,9 +292,39 @@ class WMSMap extends HTMLElement {
 		// Prevent browser-native touch scrolling/zooming inside SVG area
 		svg.style.touchAction = "none";
 
-		svg.addEventListener("dblclick", () => {
-			if (this.getAttribute("mode") === "edit") return;
-			this.#alignSVG(true);
+		// Distinguish between single and double click on SU in edit mode
+		let clickTimer = null;
+		svg.addEventListener("dblclick", event => {
+			if (this.getAttribute("mode") !== "edit") {
+				this.#alignSVG(true);
+				return;
+			}
+			// Cancel single click timer if double click occurs
+			if (clickTimer) {
+				clearTimeout(clickTimer);
+				clickTimer = null;
+			}
+			let target = event.target;
+			if (target?.tagName === "svg") {
+				const hit = this.#svgDoc?.elementFromPoint?.(event.clientX, event.clientY);
+				target = hit?.closest?.("rect.SU") ?? target;
+			}
+			if (target?.tagName === "rect" && target.classList.contains("SU")) {
+				const storageUnit = StorageUnits.find(unit => unit.alias === target.id[0]);
+				if (!storageUnit) return;
+
+				let storageUnitComponent = document.body.querySelector("wms-storage-unit");
+				if (!storageUnitComponent) {
+					storageUnitComponent = document.createElement("wms-storage-unit");
+					document.body.appendChild(storageUnitComponent);
+				}
+				storageUnitComponent.showDialog({
+					target,
+					storageUnit,
+					inventory: [],
+					context: { mode: "edit" }
+				});
+			}
 		});
 
 		svg.addEventListener("click", event => {
@@ -318,10 +342,16 @@ class WMSMap extends HTMLElement {
 				target = hit?.closest?.("rect.SU") ?? target;
 			}
 			if (target?.tagName === "rect") {
-				if (this.getAttribute("mode") === "edit")
-					this.#editSU(target, event.ctrlKey);
-				else
+				if (this.getAttribute("mode") === "edit") {
+					// Wait to see if double click occurs
+					if (clickTimer) clearTimeout(clickTimer);
+					clickTimer = setTimeout(() => {
+						this.#editSU(target, event.ctrlKey);
+						clickTimer = null;
+					}, 250);
+				} else {
 					this.#showStorageUnit({ target });
+				}
 			} else if (event.target.tagName === "DIALOG" && event.target.open) {
 				event.target.close();
 			}
@@ -533,7 +563,7 @@ class WMSMap extends HTMLElement {
 			if (!storageUnit) return;
 
 			let SU;
-			if (storageUnit.layout === "horizontal") {
+			if (storageUnit.layout === "H") {
 				for (SU of svgDoc.querySelectorAll(`rect[id^='${location[0]}']`)) {
 					if (Number(SU.id.substring(1, 3)) <= Number(location.substring(1, 3)) &&
 						Number(location.substring(1, 3)) <= Number(SU.id.substring(4, 6)))
@@ -550,7 +580,7 @@ class WMSMap extends HTMLElement {
 				}
 			}
 
-			svgDoc.firstElementChild.style.border = ""
+			svgDoc.firstElementChild.style.border = "";
 			if (SU)
 				svgDoc.getElementById(SU.id)?.classList.add("selected");
 			else
@@ -602,7 +632,7 @@ class WMSMap extends HTMLElement {
 		return loc.replace(/^(.{3})(.{3})(.{2})$/, "$1 $2 $3");
 	}
 
-	#isValidOccupancy(v) {
+	#isValidSentiment(v) {
 		return Number.isFinite(v) && v >= 0 && v <= 5;
 	}
 
@@ -628,14 +658,14 @@ class WMSMap extends HTMLElement {
 		const location = query.get("location");
 		const partnumber = query.get("partnumber");
 		const lu = query.get("lu");
-		const size = query.get("size");
+		const sentiment = query.get("sentiment");
 
 		return {
 			...(mode ? { mode } : {}),
 			...(location ? { location } : {}),
 			...(partnumber ? { partnumber } : {}),
 			...(lu ? { lu } : {}),
-			...(size ? { size } : {}),
+			...(sentiment ? { sentiment } : {}),
 			...extra
 		};
 	}
@@ -675,12 +705,12 @@ class WMSMap extends HTMLElement {
 	}
 
 	/**
-	 * Returns all location codes belonging to a vertical SU rect.
+	 * Returns all location codes belonging to a V SU rect.
 	 * e.g. SU id "A01 043 01" → ["A0104301","A0104302",...,"A0104805"]
 	 */
 	#SULocations(SU) {
 		const storageUnit = StorageUnits.find(u => u.alias === SU.id[0]);
-		if (!storageUnit || storageUnit.layout !== "vertical") return [];
+		if (!storageUnit || storageUnit.layout !== "V") return [];
 		const m = SU.id.match(/^([A-Z])(\d{2}) (\d{3}) \d{2}$/);
 		if (!m) return [];
 		const [, alias, row, bayStr] = m;
@@ -697,14 +727,14 @@ class WMSMap extends HTMLElement {
 	/**
 	 * Putaway mode SU colorization.
 	 * - selected: SU has at least one location containing querystring partnumber
-	 * - available: SU has at least one location with occupancy + requestedSize <= 5
+	 * - available: SU has at least one location with sentiment + requestedSentiment <= 5
 	 */
 	#colorizeSUs(inventory, locations) {
 		const svgDoc = this.#svgDoc;
 		if (!svgDoc) return;
 
 		const partnumber = this.#getQueryPartnumber();
-		const requestedSize = this.#getRequestedSize();
+		const requestedSentiment = this.#getRequestedSentiment();
 
 		const hitSet = new Set(
 			(partnumber
@@ -725,18 +755,18 @@ class WMSMap extends HTMLElement {
 			// selected = SU contains requested partnumber
 			if (partnumber && codes.some(c => hitSet.has(c))) SU.classList.add("selected");
 
-			// available = at least one location can hold requested size
-			// occupancy value is 0..5 where 5 means full
-			if (requestedSize !== null) {
-				const maxAllowedOccupancy = 5 - requestedSize;
+			// available = at least one location can hold the requested sentiment
+			// sentiment value is 0..5 where 5 means full
+			if (requestedSentiment !== null) {
+				const maxAllowedSentiment = 5 - requestedSentiment;
 				let hasKnown = false;
 				let canFit = false;
 				for (const c of codes) {
 					const raw = locations?.[c];
 					const v = raw == null ? Number.NaN : Number(raw);
-					if (!this.#isValidOccupancy(v)) continue;
+					if (!this.#isValidSentiment(v)) continue;
 					hasKnown = true;
-					if (v <= maxAllowedOccupancy) { canFit = true; break; }
+					if (v <= maxAllowedSentiment) { canFit = true; break; }
 				}
 				if (canFit) SU.classList.add("available");
 				else if (hasKnown) SU.classList.add("unavailable");
@@ -748,8 +778,8 @@ class WMSMap extends HTMLElement {
 		return this.#norm(this.#queryParams.get("partnumber"));
 	}
 
-	#getRequestedSizeFromQuery() {
-		const raw = this.#queryParams.get("size");
+	#getRequestedSentimentFromQuery() {
+		const raw = this.#queryParams.get("sentiment");
 		if (raw == null || raw === "") return null;
 		const n = Number.parseInt(raw, 10);
 		if (Number.isNaN(n)) return null;
@@ -757,17 +787,17 @@ class WMSMap extends HTMLElement {
 	}
 
 	/**
-	 * Requested size in range 1..5.
+	 * Requested sentiment in range 1..5.
 	 * Returns null if not provided.
 	 */
-	#getRequestedSize() {
-		const checked = this.shadowRoot?.querySelector('input[name="size"]:checked');
-		if (checked) {
-			const inputSize = Number.parseInt(checked.value, 10);
-			if (!Number.isNaN(inputSize))
-				return Math.max(1, Math.min(5, inputSize));
+	#getRequestedSentiment() {
+		const selected = this.querySelector('.sentiment.selected');
+		if (selected) {
+			const inputSentiment = Number.parseInt(selected.id[1], 10);
+			if (!Number.isNaN(inputSentiment))
+				return Math.max(1, Math.min(5, inputSentiment));
 		}
-		return this.#getRequestedSizeFromQuery();
+		return this.#getRequestedSentimentFromQuery();
 	}
 
 	/**
@@ -803,7 +833,7 @@ class WMSMap extends HTMLElement {
 				</div>
 			</form>
 		`;
-		this.shadowRoot.appendChild(dialog);
+		this.appendChild(dialog);
 		dialog.showModal();
 
 		dialog.addEventListener("close", () => dialog.remove());
@@ -821,7 +851,7 @@ class WMSMap extends HTMLElement {
 			});
 			// Update direction attribute
 			target.setAttribute("direction", direction);
-			this.#emitSvgChange();
+			this.#emitSVGChange();
 			dialog.close();
 		});
 		// Auto-assign
@@ -836,7 +866,7 @@ class WMSMap extends HTMLElement {
 		const storageUnit = StorageUnits.find(unit => unit.alias === target.id[0]);
 		if (!storageUnit) return;
 
-		if (storageUnit.layout === "horizontal") {
+		if (storageUnit.layout === "H") {
 			for (const SU of this.#svgDoc.querySelectorAll(`rect[id^='${target.id[0]}']`)) {
 				if (Number(SU.id.substring(1, 3)) <= Number(target.id.substring(1, 3)) &&
 					Number(target.id.substring(1, 3)) <= Number(SU.id.substring(4, 6)))
@@ -845,41 +875,50 @@ class WMSMap extends HTMLElement {
 		} else {
 			const mode = this.getAttribute("mode");
 			const extraParams = { location: target.id };
+			let inventory = [];
+			let locationStates = {};
 			try {
-				const inventory = await this.#loadDataAttribute("inventory", [], extraParams);
-				let locationStates = {};
+				inventory = await this.#loadDataAttribute("inventory", [], extraParams);
 				if (mode === "putaway") {
 					const loaded = await this.#loadDataAttribute("locations", {}, extraParams);
 					if (loaded && typeof loaded === "object" && !Array.isArray(loaded))
 						locationStates = loaded;
 				}
-				this.#openStorageUnitDialog(target, storageUnit,
-					this.#asArray(inventory),
-					{ mode, locationStates });
 			} catch (err) {
 				console.error("Error fetching storage unit data", err);
-				this.#openStorageUnitDialog(target, storageUnit, [], { mode });
 			}
+
+			let storageUnitComponent = document.body.querySelector("wms-storage-unit");
+			if (!storageUnitComponent) {
+				storageUnitComponent = document.createElement("wms-storage-unit");
+				document.body.appendChild(storageUnitComponent);
+			}
+			storageUnitComponent.showDialog({
+				target,
+				storageUnit,
+				inventory: this.#asArray(inventory),
+				context: { mode, locationStates }
+			});
 		}
 	}
+}
 
-	#binContent(item, standard = false) {
-		if (typeof item !== "object" || item === null)
-			return String(item);
-		if (standard)
-			return Object.entries(item)
-				.filter(([k]) => k !== "location")
-				.map(([k, v]) => `<b>${k}</b>: ${v}`)
-				.join("<br>");
-		else
-			return `<div>${String(item.lu).padStart(9, "0")} <b>${item.partnumber}</b> <i>${item.quantity.toLocaleString()} ${item.um}</i></div>`;
+customElements.define("wms-map", WMSMap);
+
+class WMSStorageUnit extends HTMLElement {
+	constructor() {
+		super();
 	}
 
-	#openStorageUnitDialog(target, storageUnit, inventory, context = {}) {
+	/**
+	 * Call this method to show the storage unit dialog.
+	 * @param {Object} options - { target, storageUnit, inventory, context }
+	 */
+	showDialog({ target, storageUnit, inventory, context = {} }) {
 		const { mode, locationStates = {} } = context;
-		const partnumber = this.#getQueryPartnumber();
-		const requestedSize = this.#getRequestedSize();
-		const maxAllowedOccupancy = requestedSize == null ? null : 5 - requestedSize;
+		const partnumber = this.getAttribute("partnumber") || '';
+		const requestedSentiment = this.getAttribute("requestedSentiment") || null;
+		const maxAllowedSentiment = requestedSentiment == null ? null : 5 - requestedSentiment;
 
 		const bay = Number(target.firstChild?.textContent.substring(4, 7));
 		const bays = Array.from({ length: storageUnit.bays }, (_, i) => bay + i);
@@ -906,53 +945,57 @@ class WMSMap extends HTMLElement {
 					const locCode = `${prefix}${String(b).padStart(3, "0")}${String(j).padStart(2, "0")}`;
 					const items = byLoc.get(locCode) ?? [];
 					const hasPartnumber = partnumber
-						? items.some(item => this.#norm(item?.partnumber) === partnumber)
+						? items.some(item => String(item?.partnumber).toLowerCase() === partnumber.toLowerCase())
 						: false;
-					const rawOccupancy = locationStates?.[locCode];
-					const occupancy = rawOccupancy == null ? Number.NaN : Number(rawOccupancy);
-					const validOccupancy = this.#isValidOccupancy(occupancy);
-					const isAvailable = mode === "putaway" && maxAllowedOccupancy !== null &&
-						validOccupancy && occupancy <= maxAllowedOccupancy;
-					const isUnavailable = mode === "putaway" && maxAllowedOccupancy !== null &&
-						validOccupancy && occupancy > maxAllowedOccupancy;
-					const content = items.map(item => this.#binContent(item)).join("");
-					const occupancyAttr = validOccupancy ? ` data-occupancy="L${occupancy}"` : "";
+					const rawSentiment = locationStates?.[locCode];
+					const sentiment = rawSentiment == null ? Number.NaN : Number(rawSentiment);
+					const validSentiment = Number.isFinite(sentiment) && sentiment >= 0 && sentiment <= 5;
+					const isAvailable = mode === "putaway" && maxAllowedSentiment !== null &&
+						validSentiment && sentiment <= maxAllowedSentiment;
+					const isUnavailable = mode === "putaway" && maxAllowedSentiment !== null &&
+						validSentiment && sentiment > maxAllowedSentiment;
+					const content = items.map(item => this._binContent(item)).join("");
+					const sentimentAttr = validSentiment ? ` data-sentiment="${sentiment}"` : "";
 					const putawayAttr = mode === "putaway" ? ` data-location="${locCode}"` : "";
 					const putawayClass = mode === "putaway" ? "putaway" : "";
 					const allClasses = [hasPartnumber ? "selected" : "", isAvailable ? "available" : isUnavailable ? "unavailable" : "", putawayClass]
 						.filter(Boolean)
 						.join(" ");
-					return `<td class="${allClasses}"${occupancyAttr}${putawayAttr}>${content}</td>`;
+					return `<td class="${allClasses}"${sentimentAttr}${putawayAttr}>${content}</td>`;
 				}).join("");
 				return `<tr>${cells}<th style="width:2em">${String(j).padStart(2, "0")}</th></tr>`;
 			}).join("");
 
-		const html = `
-			<dialog class="vStorageUnit">
-				<table><tr>${ths}<th style="cursor:pointer;font-size:xx-large" onclick="this.closest('dialog').close()">&times;</th></tr>${rows}</table>
-			</dialog>`;
+		this.innerHTML = `<dialog><table><tr>${ths}<th style="cursor:pointer;font-size:xx-large" onclick="this.closest('dialog').close()">&times;</th></tr>${rows}</table></dialog>`;
 
-		const tpl = document.createElement("div");
-		tpl.innerHTML = html;
-		const dialog = tpl.firstElementChild;
-		this.shadowRoot.appendChild(dialog);
+		const dialog = this.querySelector("dialog");
 		dialog.showModal();
-		dialog.addEventListener("close", () => dialog.remove());
+		dialog.addEventListener("close", () => this.remove());
 
 		if (mode === "putaway") {
 			dialog.addEventListener("click", e => {
 				const td = e.target.closest("td[data-location]");
 				if (!td) return;
 				const location = td.dataset.location;
-				const occupancy = prompt(`Quanto è piena l'ubicazione ${this.#formatLocation(location)}? [0-5] N.B. Se non è utlizzata lasciare vuoto.`, td.dataset.occupancy);
-				if (occupancy === null) return;
-				const n = Number.parseInt(occupancy, 10);
+				const sentiment = prompt(`Quanto è piena l'ubicazione ${this._formatLocation(location)}? [0-5] N.B. Se non è utlizzata lasciare vuoto.`, td.dataset.sentiment);
+				if (sentiment === null) return;
+				const n = Number.parseInt(sentiment, 10);
 				if (Number.isNaN(n) || n < 0 || n > 5) return;
 				locationStates[location] = n;
-				this.#colorizeSUs(inventory, locationStates);
+				// Optionally emit event or update UI
 			});
 		}
 	}
+
+	_binContent(item) {
+		if (typeof item !== "object" || item === null)
+			return String(item);
+		return `<div>${String(item.lu).padStart(9, "0")} <b>${item.partnumber}</b> <i>${item.quantity.toLocaleString()} ${item.um}</i></div>`;
+	}
+
+	_formatLocation(loc) {
+		return loc.replace(/^(.{3})(.{3})(.{2})$/, "$1 $2 $3");
+	}
 }
 
-customElements.define("wms-map", WMSMap);
+customElements.define("wms-storage-unit", WMSStorageUnit);
