@@ -7,12 +7,17 @@ const StorageUnits = [
 
 class WMSMap extends HTMLElement {
 	// viewBox state
-	#Vx = 0; #Vy = 0; #Vw = 0; #Vh = 0; 
+	#Vx = 0; #Vy = 0; #Vw = 0; #Vh = 0;
 	#vx = 0; #vy = 0; #vw = 0; #vh = 0;
 
 	constructor() {
 		super();
-		this.insertAdjacentHTML("afterbegin", `<textarea id="SVG" name="SVG" style="display:block">SVG</textarea>`);
+		let formAttr = '';
+		const form = this.closest && this.closest('form');
+		if (form && form.id) {
+			formAttr = `form=\"${form.id}\"`;
+		}
+		this.insertAdjacentHTML("afterbegin", `<input id="${this.constructor.name}" type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>`);
 
 		this.attachShadow({ mode: "open" });
 
@@ -61,13 +66,13 @@ class WMSMap extends HTMLElement {
 			if (obj) obj.data = newValue ?? "";
 		}
 		if (name === "inventory" && this._svgLoaded) {
-			this.#localizeRack();
+			this.#localizeSU();
 		}
 		if (name === "locations" && this._svgLoaded && this.getAttribute("mode") === "putaway") {
-			this.#localizeRack();
+			this.#localizeSU();
 		}
 		if (name === "data" && this._svgLoaded) {
-			this.#localizeRack();
+			this.#localizeSU();
 		}
 		if (name === "mode") {
 			this.#syncSizeControlVisibility();
@@ -82,7 +87,7 @@ class WMSMap extends HTMLElement {
 			}
 			this.#setup();
 			this.#syncViewBox();
-			this.#localizeRack();
+			this.#localizeSU();
 		}
 	}
 
@@ -122,7 +127,7 @@ class WMSMap extends HTMLElement {
 				this.#setup();
 			this.#init();
 			this._svgLoaded = true;
-			this.#localizeRack();
+			this.#localizeSU();
 		});
 	}
 
@@ -136,7 +141,7 @@ class WMSMap extends HTMLElement {
 		history.replaceState(null, "", url);
 
 		if (this.getAttribute("mode") === "putaway" && this._svgLoaded)
-			this.#localizeRack();
+			this.#localizeSU();
 	}
 
 	#syncSizeControlVisibility() {
@@ -154,13 +159,13 @@ class WMSMap extends HTMLElement {
 	}
 
 	get SVG() {
-		return this.querySelector("#SVG").value;
+		return this.querySelector(`#${this.constructor.name}`).value;
 	}
 	get SVGDocument() {
 		return this.#svgDoc ?? null;
 	}
 
-	// The #setup method transforms a raw SVG into a structured format with <rect> elements for racks and a clean viewBox.
+	// The #setup method transforms a raw SVG into a structured format with <rect> elements for SUs and a clean viewBox.
 	// In this case a DWG→SVG conversion with consistent path formats is assumed, but this can be adapted as needed.
 	// https://anyconv.com/dwg-to-svg-converter/
 	#setup() {
@@ -168,16 +173,16 @@ class WMSMap extends HTMLElement {
 		if (!svgDoc) return;
 
 		// Inject SVG styles
-//		svgDoc.querySelectorAll("style").forEach(s => s.remove());
+		//		svgDoc.querySelectorAll("style").forEach(s => s.remove());
 		const style = svgDoc.createElement("style");
 		style.textContent = `
 			:root { color-scheme: light dark; }
 			svg { background: Canvas; color: CanvasText; stroke: gray; }
 			path { stroke-width: 0.25; stroke: gray; fill: Canvas; }
-			.rack { stroke: CanvasText; fill: Canvas; stroke-width: 0.25; }
-			.rack.selected { fill: Mark; }
-			.rack.available { stroke: Highlight; stroke-width: 0.5; }
-			.rack.unavailable { stroke: red; stroke-width: 0.5; }
+			.SU { stroke: CanvasText; fill: Canvas; stroke-width: 0.25; }
+			.SU.selected { fill: Mark; }
+			.SU.available { stroke: Highlight; stroke-width: 0.5; }
+			.SU.unavailable { stroke: red; stroke-width: 0.5; }
 		`;
 
 		// Wrap SVG content in a <g> if needed (required for rotate transform)
@@ -185,11 +190,11 @@ class WMSMap extends HTMLElement {
 			const inner = svgDoc.documentElement.innerHTML;
 			svgDoc.documentElement.innerHTML = `<g>${inner}</g>`;
 		}
-//		svgDoc.documentElement.firstElementChild.insertAdjacentElement("afterbegin", style);
+		//		svgDoc.documentElement.firstElementChild.insertAdjacentElement("afterbegin", style);
 
 		const svg = this.#svg;
 
-		// Convert matching paths → rack <rect> elements and compute bounding box
+		// Convert matching paths → SU <rect> elements and compute bounding box
 		let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
 		svg.querySelectorAll("path").forEach(path => {
 			const pts = path.getAttribute("d").split(/[ML ]/).map(parseFloat).filter(n => !isNaN(n));
@@ -200,7 +205,7 @@ class WMSMap extends HTMLElement {
 				for (const unit of StorageUnits) {
 					if (w * h === unit.w * unit.h) {
 						path.insertAdjacentHTML("afterend",
-							`<rect class="rack ${unit.name}" x="${pts[0]}" y="${pts[1]}" width="${w}" height="${h}"><title></title></rect>`);
+							`<rect class="SU ${unit.name}" x="${pts[0]}" y="${pts[1]}" width="${w}" height="${h}"><title></title></rect>`);
 						path.remove();
 						break;
 					}
@@ -262,31 +267,31 @@ class WMSMap extends HTMLElement {
 		const map = svg.outerHTML.replace(` xmlns=""`, "").replaceAll(/\s+/g, " ").trim();
 		this.dispatchEvent(new CustomEvent("svgchange", { detail: map, bubbles: true }));
 		if (this.getAttribute("mode") === "edit")
-			this.querySelector("#SVG").value = map;
+			this.querySelector(`#${this.constructor.name}`).value = map;
 	}
 
 	#assignTitles(svg) {
-		svg.querySelectorAll("rect.rack").forEach(rack => {
-			if (!rack.querySelector("title"))
-				rack.insertAdjacentHTML("afterbegin", `<title></title>`);
-			const type = StorageUnits.find(unit => rack.classList.contains(unit.name));
+		svg.querySelectorAll("rect.SU").forEach(SU => {
+			if (!SU.querySelector("title"))
+				SU.insertAdjacentHTML("afterbegin", `<title></title>`);
+			const type = StorageUnits.find(unit => SU.classList.contains(unit.name));
 			if (type?.layout === "vertical")
-				rack.querySelector("title").textContent = rack.id;
+				SU.querySelector("title").textContent = SU.id;
 		});
 	}
 
-	#lastRack(selectedRack) {
-		let rackId = selectedRack.id || "";
-		for (const rack of selectedRack.ownerDocument.querySelectorAll(".rack[id]")) {
-			if (rackId === "" ||
-				rack.id.substring(0, 4) > rackId.substring(0, 4) ||
-				(rack.id.substring(0, 4) === rackId.substring(0, 4) &&
-					Number(rack.id.substring(4)) > Number(rackId.substring(4)))) {
-				rackId = rack.id;
+	#lastSU(selectedSU) {
+		let SUId = selectedSU.id || "";
+		for (const SU of selectedSU.ownerDocument.querySelectorAll(".SU[id]")) {
+			if (SUId === "" ||
+				SU.id.substring(0, 4) > SUId.substring(0, 4) ||
+				(SU.id.substring(0, 4) === SUId.substring(0, 4) &&
+					Number(SU.id.substring(4)) > Number(SUId.substring(4)))) {
+				SUId = SU.id;
 			}
 		}
-		if (!rackId) return "B01 1";
-		return rackId.substring(0, 4) + (Number(rackId.substring(4)) + 1);
+		if (!SUId) return "B01 1";
+		return SUId.substring(0, 4) + (Number(SUId.substring(4)) + 1);
 	}
 
 	#attachSVGEvents(svg) {
@@ -310,11 +315,11 @@ class WMSMap extends HTMLElement {
 			let target = event.target;
 			if (target?.tagName === "svg") {
 				const hit = this.#svgDoc?.elementFromPoint?.(event.clientX, event.clientY);
-				target = hit?.closest?.("rect.rack") ?? target;
+				target = hit?.closest?.("rect.SU") ?? target;
 			}
 			if (target?.tagName === "rect") {
 				if (this.getAttribute("mode") === "edit")
-					this.#editRack(target, event.ctrlKey);
+					this.#editSU(target, event.ctrlKey);
 				else
 					this.#showStorageUnit({ target });
 			} else if (event.target.tagName === "DIALOG" && event.target.open) {
@@ -458,7 +463,7 @@ class WMSMap extends HTMLElement {
 			svg.getAttribute("viewBox").split(" ").map(Number);
 	}
 
-	async #localizeRack(inventory) {
+	async #localizeSU(inventory) {
 		const svgDoc = this.#svgDoc;
 		if (!svgDoc) return;
 
@@ -472,7 +477,7 @@ class WMSMap extends HTMLElement {
 				? inventory
 				: await this.#loadDataAttribute("inventory", [], requestParams);
 			const locationsData = await this.#loadDataAttribute("locations", {}, requestParams);
-			this.#colorizeRacks(
+			this.#colorizeSUs(
 				this.#asArray(inventoryData),
 				locationsData && typeof locationsData === "object" && !Array.isArray(locationsData) ? locationsData : {}
 			);
@@ -527,27 +532,27 @@ class WMSMap extends HTMLElement {
 			const storageUnit = StorageUnits.find(unit => unit.alias === location[0]);
 			if (!storageUnit) return;
 
-			let rack;
+			let SU;
 			if (storageUnit.layout === "horizontal") {
-				for (rack of svgDoc.querySelectorAll(`rect[id^='${location[0]}']`)) {
-					if (Number(rack.id.substring(1, 3)) <= Number(location.substring(1, 3)) &&
-						Number(location.substring(1, 3)) <= Number(rack.id.substring(4, 6)))
+				for (SU of svgDoc.querySelectorAll(`rect[id^='${location[0]}']`)) {
+					if (Number(SU.id.substring(1, 3)) <= Number(location.substring(1, 3)) &&
+						Number(location.substring(1, 3)) <= Number(SU.id.substring(4, 6)))
 						break;
-					rack = undefined;
+					SU = undefined;
 				}
 			} else {
-				for (rack of svgDoc.querySelectorAll(`rect[id^='${location.substring(0, 3)}']`)) {
-					const bay = Number(rack.firstChild?.textContent.substring(4, 7));
+				for (SU of svgDoc.querySelectorAll(`rect[id^='${location.substring(0, 3)}']`)) {
+					const bay = Number(SU.firstChild?.textContent.substring(4, 7));
 					if (bay <= Number(location.substring(3, 6)) &&
 						Number(location.substring(3, 6)) < bay + storageUnit.bays)
 						break;
-					rack = undefined;
+					SU = undefined;
 				}
 			}
 
 			svgDoc.firstElementChild.style.border = ""
-			if (rack)
-				svgDoc.getElementById(rack.id)?.classList.add("selected");
+			if (SU)
+				svgDoc.getElementById(SU.id)?.classList.add("selected");
 			else
 				// alert(`Ubicazione ${this.#formatLocation(location)} non trovata.`);
 				svgDoc.firstElementChild.style.border = "thick solid red"
@@ -670,13 +675,13 @@ class WMSMap extends HTMLElement {
 	}
 
 	/**
-	 * Returns all location codes belonging to a vertical rack rect.
-	 * e.g. rack id "A01 043 01" → ["A0104301","A0104302",...,"A0104805"]
+	 * Returns all location codes belonging to a vertical SU rect.
+	 * e.g. SU id "A01 043 01" → ["A0104301","A0104302",...,"A0104805"]
 	 */
-	#rackLocations(rack) {
-		const storageUnit = StorageUnits.find(u => u.alias === rack.id[0]);
+	#SULocations(SU) {
+		const storageUnit = StorageUnits.find(u => u.alias === SU.id[0]);
 		if (!storageUnit || storageUnit.layout !== "vertical") return [];
-		const m = rack.id.match(/^([A-Z])(\d{2}) (\d{3}) \d{2}$/);
+		const m = SU.id.match(/^([A-Z])(\d{2}) (\d{3}) \d{2}$/);
 		if (!m) return [];
 		const [, alias, row, bayStr] = m;
 		const startBay = parseInt(bayStr);
@@ -690,11 +695,11 @@ class WMSMap extends HTMLElement {
 	}
 
 	/**
-	 * Putaway mode rack colorization.
-	 * - selected: rack has at least one location containing querystring partnumber
-	 * - available: rack has at least one location with occupancy + requestedSize <= 5
+	 * Putaway mode SU colorization.
+	 * - selected: SU has at least one location containing querystring partnumber
+	 * - available: SU has at least one location with occupancy + requestedSize <= 5
 	 */
-	#colorizeRacks(inventory, locations) {
+	#colorizeSUs(inventory, locations) {
 		const svgDoc = this.#svgDoc;
 		if (!svgDoc) return;
 
@@ -711,14 +716,14 @@ class WMSMap extends HTMLElement {
 				.map(item => item.location.trim())
 		);
 
-		svgDoc.querySelectorAll("rect.rack").forEach(rack => {
-			rack.classList.remove("available", "unavailable", "selected");
+		svgDoc.querySelectorAll("rect.SU").forEach(SU => {
+			SU.classList.remove("available", "unavailable", "selected");
 
-			const codes = this.#rackLocations(rack);
+			const codes = this.#SULocations(SU);
 			if (!codes.length) return;
 
-			// selected = rack contains requested partnumber
-			if (partnumber && codes.some(c => hitSet.has(c))) rack.classList.add("selected");
+			// selected = SU contains requested partnumber
+			if (partnumber && codes.some(c => hitSet.has(c))) SU.classList.add("selected");
 
 			// available = at least one location can hold requested size
 			// occupancy value is 0..5 where 5 means full
@@ -733,8 +738,8 @@ class WMSMap extends HTMLElement {
 					hasKnown = true;
 					if (v <= maxAllowedOccupancy) { canFit = true; break; }
 				}
-				if (canFit) rack.classList.add("available");
-				else if (hasKnown) rack.classList.add("unavailable");
+				if (canFit) SU.classList.add("available");
+				else if (hasKnown) SU.classList.add("unavailable");
 			}
 		});
 	}
@@ -766,20 +771,20 @@ class WMSMap extends HTMLElement {
 	}
 
 	/**
-	 * Label a rack in edit mode.
+	 * Label a SU in edit mode.
 	 * Plain click  → prompt (pre-filled with current label or next sequential ID).
 	 * Ctrl+click   → auto-assign next sequential ID without prompting.
 	 */
-	#editRack(target, autoAssign = false) {
+	#editSU(target, autoAssign = false) {
 		if (!target.querySelector("title"))
 			target.insertAdjacentHTML("afterbegin", `<title></title>`);
 
-		const suggested = this.#lastRack(target);
+		const suggested = this.#lastSU(target);
 		const current = target.querySelector("title").textContent;
 		const currentDirection = target.getAttribute("direction") || "ltr";
 		// Create dialog
 		const dialog = document.createElement("dialog");
-		dialog.className = "vRackEdit";
+		dialog.className = "vSUEdit";
 		dialog.innerHTML = `
 			<h3>Prima ubicazione</h3>
 			<form method="dialog" style="display:flex;flex-direction:column;gap:1em">
@@ -832,10 +837,10 @@ class WMSMap extends HTMLElement {
 		if (!storageUnit) return;
 
 		if (storageUnit.layout === "horizontal") {
-			for (const rack of this.#svgDoc.querySelectorAll(`rect[id^='${target.id[0]}']`)) {
-				if (Number(rack.id.substring(1, 3)) <= Number(target.id.substring(1, 3)) &&
-					Number(target.id.substring(1, 3)) <= Number(rack.id.substring(4, 6)))
-					rack.classList.toggle("selected");
+			for (const SU of this.#svgDoc.querySelectorAll(`rect[id^='${target.id[0]}']`)) {
+				if (Number(SU.id.substring(1, 3)) <= Number(target.id.substring(1, 3)) &&
+					Number(target.id.substring(1, 3)) <= Number(SU.id.substring(4, 6)))
+					SU.classList.toggle("selected");
 			}
 		} else {
 			const mode = this.getAttribute("mode");
@@ -944,7 +949,7 @@ class WMSMap extends HTMLElement {
 				const n = Number.parseInt(occupancy, 10);
 				if (Number.isNaN(n) || n < 0 || n > 5) return;
 				locationStates[location] = n;
-				this.#colorizeRacks(inventory, locationStates);
+				this.#colorizeSUs(inventory, locationStates);
 			});
 		}
 	}
