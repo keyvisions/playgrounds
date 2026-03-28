@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>WMS</title>
 
-	<script defer src="./wms-structure.js"></script>
 	<script defer src="./wms-map.js"></script>
+	<script defer src="./wms-structure.js"></script>
 	<script defer src="./wms-loading-units.js"></script>
 	<script defer src="./wms.js"></script>
 
@@ -18,6 +18,7 @@
 
 	<style>
 		:root {
+			color-scheme: dark light;
 			font-family: Arial, Helvetica, sans-serif;
 			--special-backcolor: lightgreen;
 			--special-color: black;
@@ -26,53 +27,49 @@
 
 	<script>
 		let _URL;
-		fetch(".data")
-			.then(res => res.text())
-			.then(res => { 
-				_URL = res.match(/^URL=(.*)$/m)[1]
-			})
-			.catch(err => console.log("No .data file"));
-		
-		function putaway(event) {
+		document.addEventListener("DOMContentLoaded", () => {
+			fetch(".data")
+				.then(res => res.text())
+				.then(res => {
+					_URL = res.match(/^URL=(.*)$/m)[1];
+					const planimetry = document.querySelector("wms-map");
+					if (planimetry) {
+						planimetry.setAttribute("inventory", _URL + "?*r=5515");
+					}
+				})
+				.catch(err => console.log("No .data file"));
+		});
+
+		function put(event) {
 			console.clear();
 			document.querySelectorAll("wms-loading-units input[type=hidden]").forEach(el => {
 				console.log(el.value);
 			});
 			return false;
 		}
-		function printLULabels(data) {
-			alert("Print: " + JSON.stringify(data));
-			return true;
-		}
-		function printSULabels(data) {
-			let url = `${_URL}filldocx.asp?type=labels&layout=${data.layout}&set=${data.prefix}&count=${data.count}&rows=${data.grid.split("x")[0]}&cols=${data.grid.split("x")[1]}&offset=${data.offset}&destfile=Labels${data.prefix}.docx`;
+		function printLabelsSU(d) {
+			let url = `${_URL}filldocx.asp?type=LabelsSU${d.prefix.length === 1 ? 'H' + parseInt(d.grid) : 'V'}&prefix=${d.prefix}&offset=${d.offset}&count=${d.count}&lpr=${parseInt(d.grid)}`;
 			window.location = url;
 			return false;
 		}
-		function highlightMap(event) {
-			const prefix = event.target.closest("tr")?.querySelector(".unit-prefix")?.innerText;
-			if (prefix) {
-				event.target.closest("table").querySelector("tr.selected")?.classList.remove("selected");
-				event.target.closest("tr").classList.add("selected");
-				const svg = document.querySelector("wms-map").SVGDocument;
-				if (svg) {
-					svg.querySelectorAll(".selected").forEach(el => el.classList.remove("selected"));
-					svg.querySelectorAll(`[id*=${prefix}]`).forEach(el => el.classList.add("selected"));
-				}
-			}
+		async function printLabelLU(d) {
+			fetch(`${_URL}?*r=5522`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(d)
+			});
 		}
 		async function verifyCode(code) {
 			try {
-				const response = await fetch(`${_URL}?*r=5514&code=${encodeURIComponent(code)}`, {
+				const response = await fetch(`${_URL}?*r=5514&code=${encodeURIComponent(code.toUpperCase())}`, {
 					headers: { 'Accept': 'application/json' }
 				});
-				const data = await response.json();
-				return !!data.exists;
+				return await response.json();
 			} catch (_err) {
-				return false;
+				return { exists: 0 };
 			}
 		}
-		async function placeLU(data) {
+		async function putLU(data) {
 			try {
 				const response = await fetch(`${_URL}?*r=5517&data=${encodeURIComponent(JSON.stringify(data))}`);
 				await response.text();
@@ -81,24 +78,15 @@
 				return false;
 			}
 		}
+		async function pickLU(data) { }
 	</script>
 </head>
 
 <body>
-	<wms-place oncheck="verifyCode" onsubmit="placeLU()"></wms-place>
-
-	<div style="display: flex; gap: 1rem;">
-		<input type="hidden" id="structure" name="fData" value="./data/wms-structure.json">
-		<wms-structure refinput="structure" onclick="highlightMap(event)" onprint="printSULabels(data)"></wms-structure>
-		<wms-map style="flex: 1 1 0; min-width:0;" mode="putting" map="./media/warehouse.svg"
-			inventory="./data/wms-inventory.json" locations="./data/wms-locations.json">
-		</wms-map>
-	</div>
-
-	<div>
+	<div style="display: flex; gap: 1rem; justify-content: space-evenly;">
 		<form class="wms">
 			<table>
-				<thead>	
+				<thead>
 					<tr>
 						<th>Codice</th>
 						<th>Quantità</th>
@@ -107,11 +95,11 @@
 				<tbody>
 					<tr>
 						<td>ABC</td>
-						<td><wms-loading-units name="qty" itemid="ABC" onprint="printLULabels()">100</wms-loading-units></td>
+						<td><wms-loading-units name="qty" itemid="ABC" onprint="printLabelLU()">100</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>DEF</td>
-						<td><wms-loading-units name="qty" itemid="DEF" onprint="printLULabels()">200</wms-loading-units></td>
+						<td><wms-loading-units name="qty" itemid="DEF" onprint="printLabelLU()">200</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>GHI</td>
@@ -119,8 +107,15 @@
 					</tr>
 				</tbody>
 			</table>
-			<button onclick="return putaway(event)">Status</button>
+			<button onclick="return put(event)">Status</button>
 		</form>
+		<wms-put oncheck="verifyCode()" onsubmit="putLU()" refmap="planimetry"></wms-put>
+		<wms-pick oncheck="verifyCode()" onsubmit="pickLU()" refmap="planimetry"></wms-pick>
+	</div>
+
+	<div style="display: flex; gap: 1rem;">
+		<wms-structure onprint="printLabelsSU(data)" refmap="planimetry">./data/wms-structure.json</wms-structure>
+		<wms-map id="planimetry" name="fMap" style="flex: 1 1 0; min-width:0;">./media/warehouse.svg</wms-map>
 	</div>
 </body>
 

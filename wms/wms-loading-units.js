@@ -53,7 +53,7 @@ class WMSLoadingUnits extends HTMLElement {
 					</thead>
 					<tbody></tbody>
 					<tfoot>
-						<tr style="font-size:smaller; text-align: center">
+						<tr style="font-size:smaller; text-align: center; font-weight: bolder">
 							<td><output name="totalUnits"></output></td>
 							<td><output name="totalQuantity"></output></td>
 						</tr>
@@ -156,28 +156,8 @@ class WMSLoadingUnits extends HTMLElement {
 		dialog.querySelector("tbody").addEventListener('change', (e) => {
 			e.target.closest("tr").querySelector("[name=coded]").value = false; // Labels need to be reprinted
 			switch (e.target.name) {
-				case "units": {
-/*
-					const oldvalue = parseFloat(e.target.oldvalue),
-						newvalue = parseFloat(e.target.value),
-						quantity = parseFloat(e.target.closest("tr").querySelector("[name=quantity]").value);
-					e.target.closest("tr").querySelector("[name=quantity]").value = parseInt(quantity * oldvalue / newvalue);
-					e.target.oldvalue = newvalue;
-*/
-					const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
-/*
-					// Add residue row
-					if (quantity % newvalue > 0) {
-						const lastElement = luRows[luRows.length - 1];
-						const luResidue = { ...lastElement };
-						luResidue.units = 1;
-						luResidue.quantity = quantity % newvalue;
-						luRows.push(luResidue);
-					}
-*/
-					this._renderLUs(dialog, { lu: luRows });
-				}
-
+				case "units":
+					this._renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => this._rowToData(tr)) });
 				case "quantity":
 					this._summary();
 			}
@@ -190,16 +170,16 @@ class WMSLoadingUnits extends HTMLElement {
 			this.querySelector('#WMSLoadingUnitsRealQty').textContent = realQty || '—';
 		});
 
-		// Toggle putaway status
+		// Toggle put status
 		endCheckbox.addEventListener('change', (e) => {
 			const disabled = e.target.checked;
 
 			const dialog = document.getElementById("WMSLoadingUnitsDialog");
 			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
-			dialog.querySelectorAll('.putaway').forEach(putaway => {
-				const lu = this._rowToData(putaway);
+			dialog.querySelectorAll('.put').forEach(put => {
+				const lu = this._rowToData(put);
 				if (!(lu.units && lu.quantity))
-					putaway.remove();
+					put.remove();
 			});
 
 			dialog.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.disabled = disabled);
@@ -234,8 +214,8 @@ class WMSLoadingUnits extends HTMLElement {
 			const dialog = document.getElementById("WMSLoadingUnitsDialog");
 
 			this.putawayData.lu = [];
-			dialog.querySelectorAll('.putaway').forEach(putaway => {
-				const lu = this._rowToData(putaway);
+			dialog.querySelectorAll('.put').forEach(put => {
+				const lu = this._rowToData(put);
 				if (lu.units && lu.quantity)
 					this.putawayData.lu.push(lu)
 			});
@@ -262,7 +242,7 @@ class WMSLoadingUnits extends HTMLElement {
 			const disabled = i !== lus.length - 1;
 
 			const tr = document.createElement('tr');
-			tr.className = 'putaway';
+			tr.className = 'put';
 			tr.innerHTML = `
 				<td><input name="units" type="number" onfocus="this.oldvalue = this.value" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${disabled || barcode ? "disabled" : ""}></td>
 				<td><input name="quantity" type="number" min="1" max="99999999" value="${lu.quantity || ''}" style="width:5em" required ${disabled || barcode ? "disabled" : ""}></td>
@@ -295,14 +275,15 @@ class WMSLoadingUnits extends HTMLElement {
 		const dialog = document.getElementById("WMSLoadingUnitsDialog");
 
 		let totalUnits = 0, totalQuantity = 0;
-		dialog.querySelectorAll('.putaway').forEach(putaway => {
-			const units = parseInt(putaway.querySelector('[name=units]').value) || 0;
-			const quantity = parseInt(putaway.querySelector('[name=quantity]').value) || 0;
+		dialog.querySelectorAll('.put').forEach(put => {
+			const units = parseInt(put.querySelector('[name=units]').value) || 0;
+			const quantity = parseInt(put.querySelector('[name=quantity]').value) || 0;
 			totalUnits += units;
 			totalQuantity += units * quantity;
 		});
 		dialog.querySelector('[name=totalUnits]').value = totalUnits;
 		dialog.querySelector('[name=totalQuantity]').value = totalQuantity;
+		dialog.querySelector('[name=totalQuantity]').style.color = this.putawayData.quantity == totalQuantity ? "inherit" : "red";
 	};
 }
 customElements.define('wms-loading-units', WMSLoadingUnits);

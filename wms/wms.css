@@ -25,6 +25,7 @@
 }
 
 .wms .selected,
+.wms .selected td,
 .wms .lu_selected {
 	background-color: var(--special-backcolor, Highlight) !important;
 	color: var(--special-color, HighlightText) !important;
@@ -32,6 +33,10 @@
 
 .wms dialog button {
 	min-width: 5em;
+}
+
+.wms label {
+	padding: 0 0;
 }
 
 .wms dialog header {
@@ -57,16 +62,21 @@
 }
 
 .wms [aria-disabled=true] .sentiment {
-	background-color: lightgray;
+	background-color: GrayText;
 }
 
-wms-place {
+.wms-place {
 	display: flex;
 	flex-direction: column;
 	gap: 1em;
 	padding: 0.5em 0;
 	font-size: x-large;
 	align-items: center;
+	text-align: center;
+}
+
+.wms-place input {
+	text-align: center;
 }
 
 .wms i {
@@ -110,16 +120,19 @@ wms-storage-unit table tr:last-child td {
 }
 
 wms-storage-unit th {
-	font-size: small;
+	padding: 0.5em;
 }
 
 wms-storage-unit td {
+	position: relative;
 	border: thin solid CanvasText;
 	padding: 0.25em;
-	height: 4em;
+	height: 4em !important;
 	vertical-align: top;
-	overflow: auto;
-	position: relative;
+	max-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 wms-storage-unit td[data-sentiment]::after {
@@ -136,6 +149,7 @@ wms-storage-unit td[data-sentiment]::after {
 	line-height: 1.5em;
 	border-radius: 50%;
 	text-align: center;
+	margin: 0.25em;
 }
 
 wms-storage-unit td.selected {
@@ -153,6 +167,6 @@ wms-storage-unit td.unavailable {
 	outline-offset: -4px;
 }
 
-wms-storage-unit td.putaway {
+wms-storage-unit td.put {
 	cursor: pointer;
 }

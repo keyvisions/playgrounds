@@ -1,160 +1,135 @@
 [
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 10,
 		"grid": "1x10",
 		"ref": 1000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 10,
 		"grid": "2x10",
 		"ref": 1000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 10,
 		"grid": "3x10",
 		"ref": 1000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 1,
 		"grid": "1x6",
 		"ref": 1000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 1,
 		"grid": "4x20",
 		"ref": 1000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 10,
 		"grid": "1x10",
 		"ref": 2000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 10,
 		"grid": "2x10",
 		"ref": 2000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 10,
 		"grid": "3x10",
 		"ref": 2000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 1,
 		"grid": "1x6",
 		"ref": 2000
 	},
 	{
-		"layout": "H",
 		"prefix": "D",
 		"count": 1,
 		"grid": "4x20",
 		"ref": 2000
 	},
 	{
-		"layout": "V",
 		"prefix": "B01",
 		"count": 14,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "B02",
 		"count": 10,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "B03",
 		"count": 10,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "B04",
 		"count": 10,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "B05",
 		"count": 6,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "B06",
 		"count": 5,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "B07",
 		"count": 3,
 		"grid": "3x3"
 	},
 	{
-		"layout": "V",
 		"prefix": "A01",
 		"count": 25,
 		"grid": "5x6"
 	},
 	{
-		"layout": "V",
 		"prefix": "A02",
 		"count": 24,
 		"grid": "5x6"
 	},
 	{
-		"layout": "V",
 		"prefix": "A03",
 		"count": 9,
 		"grid": "5x6"
 	},
 	{
-		"layout": "V",
 		"prefix": "A04",
 		"count": 10,
 		"grid": "5x6"
 	},
 	{
-		"layout": "V",
 		"prefix": "A05",
 		"count": 10,
 		"grid": "5x6"
 	},
 	{
-		"layout": "V",
 		"prefix": "A06",
 		"count": 10,
 		"grid": "5x6"
 	},
 	{
-		"layout": "V",
 		"prefix": "A07",
 		"count": 11,
 		"grid": "5x6"
 	},
 	{
-		"layout": "H",
 		"prefix": "C",
 		"count": 5,
 		"grid": "1x1"

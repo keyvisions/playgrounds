@@ -1,37 +1,24 @@
 // deno-lint-ignore-file
 const StorageUnits = [
-	{ name: "small", alias: "A", layout: "V", w: 3, h: 7, bays: 6, shelves: 5 },
-	{ name: "medium", alias: "B", layout: "V", w: 7, h: 17, bays: 3, shelves: 3 },
-	{ name: "large", alias: "D", layout: "H", w: 18, h: 26, default: { cols: 20, rows: 2 }, drawers: [] }
+	{ name: "small", alias: "A", layout: "V", w: 3, h: 7 },
+	{ name: "medium", alias: "B", layout: "V", w: 7, h: 17 },
+	{ name: "large", alias: "D", layout: "H", w: 18, h: 26 }
 ];
 
 class WMSMap extends HTMLElement {
+	#map
+
 	// viewBox state
 	#Vx = 0; #Vy = 0; #Vw = 0; #Vh = 0;
 	#vx = 0; #vy = 0; #vw = 0; #vh = 0;
 
+	static get observedAttributes() {
+		return ["map", "mode", "inventory", "highlight"];
+	}
+
 	constructor() {
 		super();
 		this.classList.add("wms");
-
-		let formAttr = '';
-		const form = this.closest && this.closest('form');
-		if (form && form.id) {
-			formAttr = `form=\"${form.id}\"`;
-		}
-
-		this.insertAdjacentHTML("afterbegin", `
-			<input id="${this.constructor.name}" type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>
-			<div id="sentiments" style="display: flex; gap: 1em; padding: 0.5em; justify-content: center;">
-				<div style="line-height:2em">Ingombro UdC</div> 
-				<div id="S1" class="sentiment">1</div>
-				<div id="S2" class="sentiment">2</div>
-				<div id="S3" class="sentiment">3</div>
-				<div id="S4" class="sentiment">4</div>
-				<div id="S5" class="sentiment">5</div>
-			</div>
-			<object type="image/svg+xml" style="display: block; width: 100%; height: 100%; border: thin solid gray; box-sizing: border-box;"></object>
-		`);
 
 		// pan state
 		this._isPanning = false;
@@ -43,105 +30,100 @@ class WMSMap extends HTMLElement {
 		this._pinch = null; // { dist, vw, vh }
 
 		this._svgLoaded = false;
-		this._eventsAttached = false;
+		this._sentiment = 1;
 
-		this.onResize = () => this.#alignSVG();
+		if (this.innerHTML.trim().startsWith("<svg")) {
+			const blob = new Blob([this.innerHTML.trim()], { type: "image/svg+xml" });
+			this.#map = URL.createObjectURL(blob);
+		} else
+			this.#map = this.textContent.trim();
+
+		// Extract lu, location, and partnumber from the URL query string and set highlight attribute as a query string
+		try {
+			const params = new URLSearchParams(window.location.search);
+			const highlightParams = new URLSearchParams();
+			["lu", "location", "partnumber"].forEach(key => {
+				if (params.has(key)) highlightParams.set(key, params.get(key));
+			});
+			const highlightStr = highlightParams.toString();
+			if (highlightStr) {
+				this.setAttribute("highlight", highlightStr);
+			}
+		} catch (_err) {
+			// Fail silently if URL parsing fails
+		}
 	}
 
-	static get observedAttributes() {
-		return ["map", "inventory", "locations", "data", "mode"];
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (!this._svgLoaded || oldValue === newValue) return;
+
+		if (name === "map") {
+			this.querySelector("object").data = newValue ?? "";
+		}
+
+		if (name === "mode") {
+			this.querySelector("#sentiments").style.display = this.getAttribute("mode") === "pick" ? "none" : "flex";
+
+			switch (newValue) {
+				case "normalize":
+					this.#setup();
+				case "put":
+					break;
+				default:
+					this.setAttribute("mode", "pick");
+			}
+			this.#syncViewBox();
+		}
+
+		this.#highlight();
 	}
 
 	connectedCallback() {
-		const validModes = ["picking", "putaway", "edit"];
-		const queryMode = this.#norm(this.#queryParams.get("mode"));
-		const attrMode = this.#norm(this.getAttribute("mode"));
+		if (!["pick", "put", "normalize"].includes(this.getAttribute("mode")))
+			this.setAttribute("mode", "pick");
 
-		if (validModes.includes(queryMode))
-			this.setAttribute("mode", queryMode);
-		else if (!validModes.includes(attrMode))
-			this.setAttribute("mode", "picking");
+		this.innerHTML = `
+			<div id="sentiments" style="display: flex; gap: 1em; padding: 0.5em; justify-content: center;">
+				<div style="line-height:2em">Ingombro UdC</div> 
+				<div id="S1" class="sentiment selected">1</div>
+				<div id="S2" class="sentiment">2</div>
+				<div id="S3" class="sentiment">3</div>
+				<div id="S4" class="sentiment">4</div>
+				<div id="S5" class="sentiment">5</div>
+			</div>
+			${this.getAttribute("name") ? `<input type="hidden" name="${this.getAttribute("name")}">` : ""}
+			<object type="image/svg+xml" style="display: block; width: 100%; height: 100%; border: thin solid gray; box-sizing: border-box;" data="${this.getAttribute("map") || this.#map}"></object>
+		`;
 
-		this.#render();
+		this.querySelector("#sentiments").addEventListener("click", (event) => {
+			const target = event.target;
+			if (target.className === "sentiment") {
+				this.querySelector("#sentiments .selected").classList.remove("selected");
+				target.classList.add("selected");
+				this._sentiment = parseInt(target.textContent);
+				this.#highlight(true);
+			}
+		});
+
+		this.querySelector("object").addEventListener("load", () => {
+			if (this.#map.startsWith("blob:file"))
+				URL.revokeObjectURL(this.#map);
+			const hiddenInput = this.querySelector('input[type="hidden"]');
+			if (hiddenInput) hiddenInput.value = this.#svg.outerHTML;
+
+			if (this.getAttribute("mode") === "normalize")
+				this.#setup();
+			this.#init();
+			this._svgLoaded = true;
+			this.#highlight();
+		}, { once: true });
+
+		this.onResize = () => this.#alignSVG();
 		window.addEventListener("resize", this.onResize);
 	}
 
 	disconnectedCallback() {
 		window.removeEventListener("resize", this.onResize);
-	}
-
-	attributeChangedCallback(name, oldValue, newValue) {
-		if (oldValue === newValue) return;
-
-		if (name === "map") {
-			const obj = this.querySelector("object");
-			if (obj) obj.data = newValue ?? "";
-		}
-		if (name === "inventory" && this._svgLoaded) {
-			this.#localizeSU();
-		}
-		if (name === "locations" && this._svgLoaded && this.getAttribute("mode") === "putaway") {
-			this.#localizeSU();
-		}
-		if (name === "data" && this._svgLoaded) {
-			this.#localizeSU();
-		}
-		if (name === "mode") {
-			this.#syncSentimentControlVisibility();
-		}
-		if (name === "mode" && this._svgLoaded) {
-			switch (newValue) {
-				case "putaway":
-				case "edit":
-					break;
-				default:
-					this.setAttribute("mode", "picking");
-			}
-			this.#setup();
-			this.#syncViewBox();
-			this.#localizeSU();
-		}
-	}
-
-	#render() {
-		this.querySelector("#sentiments")?.addEventListener("click", (event) => this.#onSentimentChange(event));
-
-		this.#syncSentimentControlVisibility();
-
-		const obj = this.querySelector("object");
-		const map = this.getAttribute("map");
-		if (map) obj.data = map;
-
-		obj.addEventListener("load", () => {
-			if (this.getAttribute("mode") === "edit")
-				this.#setup();
-			this.#init();
-			this._svgLoaded = true;
-			this.#localizeSU();
-		});
-	}
-
-	#onSentimentChange(event) {
-		this.querySelectorAll("#sentiments .sentiment").forEach(sentiment => sentiment.classList.remove("lu_selected"));
-		if (event.target.classList.contains("sentiment"))
-			event.target.classList.add("lu_selected");
-		const requestedSentiment = this.#getRequestedSentiment();
-
-		const url = new URL(window.location.href);
-		if (requestedSentiment === null)
-			url.searchParams.delete("sentiment");
-		else
-			url.searchParams.set("sentiment", String(requestedSentiment));
-		history.replaceState(null, "", url);
-
-		if (this.getAttribute("mode") === "putaway" && this._svgLoaded)
-			this.#localizeSU();
-	}
-
-	#syncSentimentControlVisibility() {
-		const sizeControl = this.querySelector("#sentiment-control");
-		if (!sizeControl) return;
-		sizeControl.hidden = this.getAttribute("mode") !== "putaway";
 	}
 
 	get #svgDoc() {
@@ -175,7 +157,7 @@ class WMSMap extends HTMLElement {
 			path { stroke-width: 0.25; stroke: gray; fill: Canvas; }
 			.SU { stroke: CanvasText; fill: Canvas; stroke-width: 0.25; }
 			.SU.selected { fill: Mark; }
-			.SU.available { stroke: Highlight; stroke-width: 0.5; }
+			.SU.available { stroke: var(--special-backcolor, Highlight); stroke-width: 0.5; }
 			.SU.unavailable { stroke: red; stroke-width: 0.5; }
 		`;
 
@@ -260,8 +242,9 @@ class WMSMap extends HTMLElement {
 		if (!svg) return;
 		const map = svg.outerHTML.replace(` xmlns=""`, "").replaceAll(/\s+/g, " ").trim();
 		this.dispatchEvent(new CustomEvent("svgchange", { detail: map, bubbles: true }));
-		if (this.getAttribute("mode") === "edit")
-			this.querySelector(`#${this.constructor.name}`).value = map;
+
+		const hiddenInput = this.querySelector('input[type="hidden"]');
+		if (hiddenInput) hiddenInput.value = map;
 	}
 
 	#assignTitles(svg) {
@@ -292,42 +275,11 @@ class WMSMap extends HTMLElement {
 		// Prevent browser-native touch scrolling/zooming inside SVG area
 		svg.style.touchAction = "none";
 
-		// Distinguish between single and double click on SU in edit mode
-		let clickTimer = null;
-		svg.addEventListener("dblclick", event => {
-			if (this.getAttribute("mode") !== "edit") {
-				this.#alignSVG(true);
-				return;
-			}
-			// Cancel single click timer if double click occurs
-			if (clickTimer) {
-				clearTimeout(clickTimer);
-				clickTimer = null;
-			}
-			let target = event.target;
-			if (target?.tagName === "svg") {
-				const hit = this.#svgDoc?.elementFromPoint?.(event.clientX, event.clientY);
-				target = hit?.closest?.("rect.SU") ?? target;
-			}
-			if (target?.tagName === "rect" && target.classList.contains("SU")) {
-				const storageUnit = StorageUnits.find(unit => unit.alias === target.id[0]);
-				if (!storageUnit) return;
-
-				let storageUnitComponent = document.body.querySelector("wms-storage-unit");
-				if (!storageUnitComponent) {
-					storageUnitComponent = document.createElement("wms-storage-unit");
-					document.body.appendChild(storageUnitComponent);
-				}
-				storageUnitComponent.showDialog({
-					target,
-					storageUnit,
-					inventory: [],
-					context: { mode: "edit" }
-				});
-			}
+		svg.addEventListener("dblclick", async (event) => {
+			this.#alignSVG(true);
 		});
 
-		svg.addEventListener("click", event => {
+		svg.addEventListener("click", async event => {
 			if (this._didPan || this._isPanning) {
 				this._didPan = false;
 				this._isPanning = false;
@@ -341,16 +293,23 @@ class WMSMap extends HTMLElement {
 				const hit = this.#svgDoc?.elementFromPoint?.(event.clientX, event.clientY);
 				target = hit?.closest?.("rect.SU") ?? target;
 			}
-			if (target?.tagName === "rect") {
-				if (this.getAttribute("mode") === "edit") {
-					// Wait to see if double click occurs
-					if (clickTimer) clearTimeout(clickTimer);
-					clickTimer = setTimeout(() => {
-						this.#editSU(target, event.ctrlKey);
-						clickTimer = null;
-					}, 250);
+			if (target?.tagName === "rect" && target.classList.contains("SU")) {
+				if (this.hasAttribute("name") && event.ctrlKey) {
+					this.#editSU(target);
 				} else {
-					this.#showStorageUnit({ target });
+					const url = new URL(this.getAttribute("inventory"));
+					url.searchParams.set("details", 1);
+					url.searchParams.set("location", target.id.replaceAll(' ', ''));
+
+					const response = await fetch(url);
+					const storageUnit = await response.json() || [];
+
+					let storageUnitComponent = document.body.querySelector("wms-storage-unit");
+					if (!storageUnitComponent) {
+						storageUnitComponent = document.createElement("wms-storage-unit");
+						document.body.appendChild(storageUnitComponent);
+					}
+					storageUnitComponent.showDialog(storageUnit, this._sentiment, target.getAttribute("dir") ?? "ltr");
 				}
 			} else if (event.target.tagName === "DIALOG" && event.target.open) {
 				event.target.close();
@@ -358,7 +317,7 @@ class WMSMap extends HTMLElement {
 		});
 
 		svg.addEventListener("wheel", event => {
-			if (this.getAttribute("mode") === "edit") return;
+			//			if (this.hasAttribute("name")) return;
 			this._isPanning = false;
 			event.preventDefault();
 
@@ -377,7 +336,7 @@ class WMSMap extends HTMLElement {
 		}, { passive: false });
 
 		svg.addEventListener("pointerdown", event => {
-			if (this.getAttribute("mode") === "edit") return;
+			//			if (this.hasAttribute("name")) return;
 
 			this._pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
@@ -410,7 +369,7 @@ class WMSMap extends HTMLElement {
 		});
 
 		svg.addEventListener("pointermove", event => {
-			if (this.getAttribute("mode") === "edit") return;
+			//			if (this.hasAttribute("name")) return;
 			if (!this._pointers.has(event.pointerId)) return;
 
 			this._pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
@@ -493,325 +452,56 @@ class WMSMap extends HTMLElement {
 			svg.getAttribute("viewBox").split(" ").map(Number);
 	}
 
-	async #localizeSU(inventory) {
+	async #highlight(sentiment = false) {
 		const svgDoc = this.#svgDoc;
-		if (!svgDoc) return;
+		if (!(svgDoc && this.hasAttribute("inventory"))) return;
 
-		svgDoc.querySelectorAll(".selected,.available").forEach(el => {
-			el.classList.remove("selected", "available");
-		});
+		if (!sentiment)
+			svgDoc.querySelectorAll("rect").forEach(el => el.classList.remove("selected"));
 
-		if (this.getAttribute("mode") === "putaway") {
-			const requestParams = this.#requestApiParams();
-			const inventoryData = Array.isArray(inventory)
-				? inventory
-				: await this.#loadDataAttribute("inventory", [], requestParams);
-			const locationsData = await this.#loadDataAttribute("locations", {}, requestParams);
-			this.#colorizeSUs(
-				this.#asArray(inventoryData),
-				locationsData && typeof locationsData === "object" && !Array.isArray(locationsData) ? locationsData : {}
-			);
-			return;
-		}
-
-		if (!Array.isArray(inventory)) {
-			const requestParams = this.#requestApiParams();
-			const loadedInventory = await this.#loadDataAttribute("inventory", [], requestParams);
-			inventory = this.#asArray(loadedInventory);
-		}
-		if (this.getAttribute("mode") === "picking") {
-			const requestParams = this.#requestApiParams();
-			const pickingData = await this.#loadDataAttribute("data", null, requestParams);
-
-			if (pickingData != null) {
-				const pickRows = this.#normalizePickingDataRows(pickingData);
-				const matchedLocations = new Set();
-
-				for (const row of pickRows) {
-					if (typeof row !== "object" || row === null) continue;
-
-					this.#splitCSVValues(row.location).forEach(loc => matchedLocations.add(loc));
-
-					const partnumbers = this.#splitCSVValues(row.partnumber).map(v => v.toLowerCase());
-					const lus = this.#splitCSVValues(row.lu).map(v => v.toLowerCase());
-					if (!partnumbers.length && !lus.length) continue;
-
-					this.#matchInventoryLocations(inventory, partnumbers, lus, matchedLocations);
-				}
-
-				inventory = [...matchedLocations];
-			} else {
-				const qs = this.#queryParams;
-				const qsLocations = this.#splitCSVValues(qs.get("location"));
-				const qsPartnumbers = this.#splitCSVValues(qs.get("partnumber")).map(v => v.toLowerCase());
-				const qsLus = this.#splitCSVValues(qs.get("lu")).map(v => v.toLowerCase());
-
-				if (qsPartnumbers.length || qsLus.length) {
-					inventory = [...this.#matchInventoryLocations(inventory, qsPartnumbers, qsLus, new Set(qsLocations))];
-				} else {
-					inventory = qsLocations;
+		const inventoryUrl = new URL(this.getAttribute("inventory"));
+		const highlight = this.getAttribute("highlight");
+		if (highlight) {
+			const params = new URLSearchParams(highlight);
+			for (const [key, value] of params.entries()) {
+				if (["location", "partnumber", "lu"].includes(key)) {
+					inventoryUrl.searchParams.set(key, value);
 				}
 			}
 		}
+		console.log(inventoryUrl.toString());
 
-		inventory.forEach(location => {
-			if (typeof location === "object" && location !== null)
-				location = location.location;
-			if (!location) return;
+		const response = await fetch(inventoryUrl);
+		const inventory = await response.json();
 
-			const storageUnit = StorageUnits.find(unit => unit.alias === location[0]);
-			if (!storageUnit) return;
+		let selected = false;
+		inventory.forEach(su => {
+			let el = svgDoc.querySelector(`rect[id='${su.location.toUpperCase()}']`);
 
-			let SU;
-			if (storageUnit.layout === "H") {
-				for (SU of svgDoc.querySelectorAll(`rect[id^='${location[0]}']`)) {
-					if (Number(SU.id.substring(1, 3)) <= Number(location.substring(1, 3)) &&
-						Number(location.substring(1, 3)) <= Number(SU.id.substring(4, 6)))
-						break;
-					SU = undefined;
+			if (el) {
+				if (su.location[0] === su.location[0].toUpperCase()) {
+					el.classList.add("selected");
+					selected = true;
 				}
-			} else {
-				for (SU of svgDoc.querySelectorAll(`rect[id^='${location.substring(0, 3)}']`)) {
-					const bay = Number(SU.firstChild?.textContent.substring(4, 7));
-					if (bay <= Number(location.substring(3, 6)) &&
-						Number(location.substring(3, 6)) < bay + storageUnit.bays)
-						break;
-					SU = undefined;
-				}
-			}
 
-			svgDoc.firstElementChild.style.border = "";
-			if (SU)
-				svgDoc.getElementById(SU.id)?.classList.add("selected");
-			else
-				// alert(`Ubicazione ${this.#formatLocation(location)} non trovata.`);
-				svgDoc.firstElementChild.style.border = "thick solid red"
-		});
-	}
-
-	#normalizePickingDataRows(data) {
-		if (Array.isArray(data)) return data;
-		if (typeof data === "string") {
-			try {
-				const parsed = JSON.parse(data);
-				if (Array.isArray(parsed)) return parsed;
-				if (parsed && typeof parsed === "object") return [parsed];
-			} catch {
-				return [];
-			}
-			return [];
-		}
-		if (data && typeof data === "object") {
-			if (Array.isArray(data.items)) return data.items;
-			return [data];
-		}
-		return [];
-	}
-
-	#splitCSVValues(value) {
-		if (Array.isArray(value))
-			return value
-				.flatMap(v => this.#splitCSVValues(v))
-				.filter(Boolean);
-		if (value == null) return [];
-		return String(value)
-			.split(",")
-			.map(s => s.trim())
-			.filter(Boolean);
-	}
-
-	get #queryParams() {
-		return new URL(window.location.href).searchParams;
-	}
-
-	#norm(value) {
-		return String(value ?? "").trim().toLowerCase();
-	}
-
-	#formatLocation(loc) {
-		return loc.replace(/^(.{3})(.{3})(.{2})$/, "$1 $2 $3");
-	}
-
-	#isValidSentiment(v) {
-		return Number.isFinite(v) && v >= 0 && v <= 5;
-	}
-
-	#asArray(value) {
-		return Array.isArray(value) ? value : [];
-	}
-
-	#matchInventoryLocations(inventory, partnumbers, lus, seed = new Set()) {
-		for (const item of this.#asArray(inventory)) {
-			if (typeof item !== "object" || item === null) continue;
-			const loc = String(item.location ?? "").trim();
-			if (!loc) continue;
-			if ((partnumbers.length ? partnumbers.includes(this.#norm(item.partnumber)) : true) &&
-				(lus.length ? lus.includes(this.#norm(item.lu)) : true))
-				seed.add(loc);
-		}
-		return seed;
-	}
-
-	#requestApiParams(extra = {}) {
-		const query = this.#queryParams;
-		const mode = query.get("mode") ?? this.getAttribute("mode");
-		const location = query.get("location");
-		const partnumber = query.get("partnumber");
-		const lu = query.get("lu");
-		const sentiment = query.get("sentiment");
-
-		return {
-			...(mode ? { mode } : {}),
-			...(location ? { location } : {}),
-			...(partnumber ? { partnumber } : {}),
-			...(lu ? { lu } : {}),
-			...(sentiment ? { sentiment } : {}),
-			...extra
-		};
-	}
-
-	#buildApiUrl(value, extraParams = {}) {
-		const url = new URL(value, window.location.href);
-		const params = this.#requestApiParams(extraParams);
-		for (const [key, val] of Object.entries(params)) {
-			if (val == null || val === "") continue;
-			url.searchParams.set(key, String(val));
-		}
-		return url;
-	}
-
-	async #loadDataAttribute(name, fallback, extraParams = {}) {
-		const attr = this.getAttribute(name);
-		if (!attr) return fallback;
-		const value = attr.trim();
-		if (!value) return fallback;
-
-		if (!/^(https?:\/\/|\.|\/)/i.test(value)) {
-			console.error(`Invalid ${name} attribute: expected URL/path, received non-URL value.`);
-			return fallback;
-		}
-
-		const url = this.#buildApiUrl(value, extraParams);
-		const key = url.href;
-		const cached = sessionStorage.getItem(key);
-		if (cached !== null)
-			return JSON.parse(cached);
-		const response = await fetch(url);
-		if (!response.ok)
-			throw new Error(`Failed to fetch ${name}: ${response.status} ${response.statusText}`);
-		const data = await response.json();
-		try { sessionStorage.setItem(key, JSON.stringify(data)); } catch { /* quota exceeded */ }
-		return data;
-	}
-
-	/**
-	 * Returns all location codes belonging to a V SU rect.
-	 * e.g. SU id "A01 043 01" → ["A0104301","A0104302",...,"A0104805"]
-	 */
-	#SULocations(SU) {
-		const storageUnit = StorageUnits.find(u => u.alias === SU.id[0]);
-		if (!storageUnit || storageUnit.layout !== "V") return [];
-		const m = SU.id.match(/^([A-Z])(\d{2}) (\d{3}) \d{2}$/);
-		if (!m) return [];
-		const [, alias, row, bayStr] = m;
-		const startBay = parseInt(bayStr);
-		const codes = [];
-		for (let b = 0; b < storageUnit.bays; b++) {
-			const bay = String(startBay + b).padStart(3, "0");
-			for (let s = 1; s <= storageUnit.shelves; s++)
-				codes.push(`${alias}${row}${bay}${String(s).padStart(2, "0")}`);
-		}
-		return codes;
-	}
-
-	/**
-	 * Putaway mode SU colorization.
-	 * - selected: SU has at least one location containing querystring partnumber
-	 * - available: SU has at least one location with sentiment + requestedSentiment <= 5
-	 */
-	#colorizeSUs(inventory, locations) {
-		const svgDoc = this.#svgDoc;
-		if (!svgDoc) return;
-
-		const partnumber = this.#getQueryPartnumber();
-		const requestedSentiment = this.#getRequestedSentiment();
-
-		const hitSet = new Set(
-			(partnumber
-				? inventory.filter(item =>
-					typeof item === "object" && item !== null &&
-					this.#norm(item.partnumber) === partnumber &&
-					typeof item.location === "string")
-				: [])
-				.map(item => item.location.trim())
-		);
-
-		svgDoc.querySelectorAll("rect.SU").forEach(SU => {
-			SU.classList.remove("available", "unavailable", "selected");
-
-			const codes = this.#SULocations(SU);
-			if (!codes.length) return;
-
-			// selected = SU contains requested partnumber
-			if (partnumber && codes.some(c => hitSet.has(c))) SU.classList.add("selected");
-
-			// available = at least one location can hold the requested sentiment
-			// sentiment value is 0..5 where 5 means full
-			if (requestedSentiment !== null) {
-				const maxAllowedSentiment = 5 - requestedSentiment;
-				let hasKnown = false;
-				let canFit = false;
-				for (const c of codes) {
-					const raw = locations?.[c];
-					const v = raw == null ? Number.NaN : Number(raw);
-					if (!this.#isValidSentiment(v)) continue;
-					hasKnown = true;
-					if (v <= maxAllowedSentiment) { canFit = true; break; }
-				}
-				if (canFit) SU.classList.add("available");
-				else if (hasKnown) SU.classList.add("unavailable");
+				el.classList.remove("available", "unavailable")
+				if (su.sentiment !== null)
+					el.classList.add(su.sentiment + this._sentiment <= 5 ? "available" : "unavailable");
 			}
 		});
+
+		svgDoc.firstElementChild.style.border = "";
+		if (!selected)
+			svgDoc.firstElementChild.style.border = "thin solid red"
 	}
 
-	#getQueryPartnumber() {
-		return this.#norm(this.#queryParams.get("partnumber"));
-	}
-
-	#getRequestedSentimentFromQuery() {
-		const raw = this.#queryParams.get("sentiment");
-		if (raw == null || raw === "") return null;
-		const n = Number.parseInt(raw, 10);
-		if (Number.isNaN(n)) return null;
-		return Math.max(1, Math.min(5, n));
-	}
-
-	/**
-	 * Requested sentiment in range 1..5.
-	 * Returns null if not provided.
-	 */
-	#getRequestedSentiment() {
-		const selected = this.querySelector('.sentiment.selected');
-		if (selected) {
-			const inputSentiment = Number.parseInt(selected.id[1], 10);
-			if (!Number.isNaN(inputSentiment))
-				return Math.max(1, Math.min(5, inputSentiment));
-		}
-		return this.#getRequestedSentimentFromQuery();
-	}
-
-	/**
-	 * Label a SU in edit mode.
-	 * Plain click  → prompt (pre-filled with current label or next sequential ID).
-	 * Ctrl+click   → auto-assign next sequential ID without prompting.
-	 */
-	#editSU(target, autoAssign = false) {
+	#editSU(target) {
 		if (!target.querySelector("title"))
 			target.insertAdjacentHTML("afterbegin", `<title></title>`);
 
 		const suggested = this.#lastSU(target);
 		const current = target.querySelector("title").textContent;
-		const currentDirection = target.getAttribute("direction") || "ltr";
+		const currentDirection = target.getAttribute("dir") || "ltr";
 		// Create dialog
 		const dialog = document.createElement("dialog");
 		dialog.className = "vSUEdit";
@@ -819,7 +509,7 @@ class WMSMap extends HTMLElement {
 			<h3>Prima ubicazione</h3>
 			<form method="dialog" style="display:flex;flex-direction:column;gap:1em">
 				<label><span>Posizione</span><br>
-					<select name="direction">
+					<select name="dir">
 						<option value="ltr" ${currentDirection === "ltr" ? "selected" : ""}>In basso a sinistra</option>
 						<option value="rtl" ${currentDirection === "rtl" ? "selected" : ""}>In basso a destra</option>
 					</select>
@@ -842,63 +532,22 @@ class WMSMap extends HTMLElement {
 			e.preventDefault();
 			const form = e.target;
 			const label = form.label.value.trim();
-			const direction = form.direction.value;
+			const dir = form.dir.value;
 			if (!label) { dialog.close(); return; }
 			target.querySelector("title").textContent = label;
 			// Sync all non-empty titles → element ids
 			this.#svg.querySelectorAll("title").forEach(t => {
 				if (t.textContent !== "") t.parentElement.setAttribute("id", t.textContent);
 			});
-			// Update direction attribute
-			target.setAttribute("direction", direction);
+			// Update dir attribute
+			target.setAttribute("dir", dir);
 			this.#emitSVGChange();
 			dialog.close();
 		});
-		// Auto-assign
-		if (autoAssign) {
+
+		if (!dialog.querySelector("input[name='label']").value) {
 			dialog.querySelector("input[name='label']").value = suggested;
-			dialog.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true }));
-		}
-	}
-
-	async #showStorageUnit(event) {
-		const target = event.target;
-		const storageUnit = StorageUnits.find(unit => unit.alias === target.id[0]);
-		if (!storageUnit) return;
-
-		if (storageUnit.layout === "H") {
-			for (const SU of this.#svgDoc.querySelectorAll(`rect[id^='${target.id[0]}']`)) {
-				if (Number(SU.id.substring(1, 3)) <= Number(target.id.substring(1, 3)) &&
-					Number(target.id.substring(1, 3)) <= Number(SU.id.substring(4, 6)))
-					SU.classList.toggle("selected");
-			}
-		} else {
-			const mode = this.getAttribute("mode");
-			const extraParams = { location: target.id };
-			let inventory = [];
-			let locationStates = {};
-			try {
-				inventory = await this.#loadDataAttribute("inventory", [], extraParams);
-				if (mode === "putaway") {
-					const loaded = await this.#loadDataAttribute("locations", {}, extraParams);
-					if (loaded && typeof loaded === "object" && !Array.isArray(loaded))
-						locationStates = loaded;
-				}
-			} catch (err) {
-				console.error("Error fetching storage unit data", err);
-			}
-
-			let storageUnitComponent = document.body.querySelector("wms-storage-unit");
-			if (!storageUnitComponent) {
-				storageUnitComponent = document.createElement("wms-storage-unit");
-				document.body.appendChild(storageUnitComponent);
-			}
-			storageUnitComponent.showDialog({
-				target,
-				storageUnit,
-				inventory: this.#asArray(inventory),
-				context: { mode, locationStates }
-			});
+			// dialog.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true }));
 		}
 	}
 }
@@ -910,91 +559,48 @@ class WMSStorageUnit extends HTMLElement {
 		super();
 	}
 
-	/**
-	 * Call this method to show the storage unit dialog.
-	 * @param {Object} options - { target, storageUnit, inventory, context }
-	 */
-	showDialog({ target, storageUnit, inventory, context = {} }) {
-		const { mode, locationStates = {} } = context;
-		const partnumber = this.getAttribute("partnumber") || '';
-		const requestedSentiment = this.getAttribute("requestedSentiment") || null;
+	showDialog(storageUnit, requestedSentiment, dir) {
 		const maxAllowedSentiment = requestedSentiment == null ? null : 5 - requestedSentiment;
 
-		const bay = Number(target.firstChild?.textContent.substring(4, 7));
-		const bays = Array.from({ length: storageUnit.bays }, (_, i) => bay + i);
-		if (target.getAttribute("direction") === "rtl") bays.reverse();
+		const prefix = storageUnit.location.substring(0, 3) ?? "";
 
-		const prefix = target.firstChild?.textContent.substring(0, 3) ?? "";
+		const col = Number(storageUnit.location.substring(3, 6));
+		const cols = Array.from({ length: storageUnit.cols }, (_, i) => col + i);
+		if (dir === "rtl") cols.reverse();
 
-		// Index fetched inventory by location code for O(1) cell lookup
-		const byLoc = new Map();
-		for (const item of inventory) {
-			const loc = typeof item === "object" && item !== null ? item.location : item;
-			if (!loc) continue;
-			if (!byLoc.has(loc)) byLoc.set(loc, []);
-			byLoc.get(loc).push(item);
-		}
+		let colLabels = `${dir === "ltr" ? `<th style="width:2em"></th>` : ""}${cols.map(col => `<th style="width:${100 / storageUnit.cols}%">${prefix} ${String(col).padStart(3, "0")}</th>`).join("")}${dir === "rtl" ? `<th style="width:2em"></th>` : ""}`;
 
-		const ths = bays.map(b =>
-			`<th style="width:${100 / bays.length}%">${prefix} ${String(b).padStart(3, "0")}</th>`
-		).join("");
+		const rows = Array.from({ length: storageUnit.rows }, (_, row) => storageUnit.rows - row)
+			.map(row => {
+				const cells = cols.map(col => {
+					const location = storageUnit.units.find(unit => unit.location === `${prefix}${String(col).padStart(3, "0")}${String(row).padStart(2, "0")}`);
+					const sentiment = location.sentiment;
+					const sentimentAttr = Number.isFinite(sentiment) ? ` data-sentiment="${sentiment}"` : "";
 
-		const rows = Array.from({ length: storageUnit.shelves }, (_, i) => storageUnit.shelves - i)
-			.map(j => {
-				const cells = bays.map(b => {
-					const locCode = `${prefix}${String(b).padStart(3, "0")}${String(j).padStart(2, "0")}`;
-					const items = byLoc.get(locCode) ?? [];
-					const hasPartnumber = partnumber
-						? items.some(item => String(item?.partnumber).toLowerCase() === partnumber.toLowerCase())
-						: false;
-					const rawSentiment = locationStates?.[locCode];
-					const sentiment = rawSentiment == null ? Number.NaN : Number(rawSentiment);
-					const validSentiment = Number.isFinite(sentiment) && sentiment >= 0 && sentiment <= 5;
-					const isAvailable = mode === "putaway" && maxAllowedSentiment !== null &&
-						validSentiment && sentiment <= maxAllowedSentiment;
-					const isUnavailable = mode === "putaway" && maxAllowedSentiment !== null &&
-						validSentiment && sentiment > maxAllowedSentiment;
-					const content = items.map(item => this._binContent(item)).join("");
-					const sentimentAttr = validSentiment ? ` data-sentiment="${sentiment}"` : "";
-					const putawayAttr = mode === "putaway" ? ` data-location="${locCode}"` : "";
-					const putawayClass = mode === "putaway" ? "putaway" : "";
-					const allClasses = [hasPartnumber ? "selected" : "", isAvailable ? "available" : isUnavailable ? "unavailable" : "", putawayClass]
+					const isAvailable = maxAllowedSentiment !== null && Number.isFinite(sentiment) && sentiment <= maxAllowedSentiment;
+					const isUnavailable = maxAllowedSentiment !== null && Number.isFinite(sentiment) && sentiment > maxAllowedSentiment;
+
+					const allClasses = [location.highlight ? "selected" : "", isAvailable ? "available" : isUnavailable ? "unavailable" : ""]
 						.filter(Boolean)
 						.join(" ");
-					return `<td class="${allClasses}"${sentimentAttr}${putawayAttr}>${content}</td>`;
+
+					const content = location.items?.map(item => this._binContent(item)).join("<br>") ?? "";
+
+					return `<td class="${allClasses}"${sentimentAttr}>${content}</td>`;
 				}).join("");
-				return `<tr>${cells}<th style="width:2em">${String(j).padStart(2, "0")}</th></tr>`;
+
+				return `<tr>${dir === "ltr" ? `<th>${String(row).padStart(2, "0")}</th>` : ""}${cells}${dir === "rtl" ? `<th>${String(row).padStart(2, "0")}</th>` : ""}</tr>`;
 			}).join("");
 
-		this.innerHTML = `<dialog><table><tr>${ths}<th style="cursor:pointer;font-size:xx-large" onclick="this.closest('dialog').close()">&times;</th></tr>${rows}</table></dialog>`;
+		this.innerHTML = `<dialog><i class="fa-solid fa-times" onclick="this.parentElement.remove()" style="cursor:pointer; position:absolute; right:1em; top:0.5em; font-size:x-large;"></i><table><thead><tr>${colLabels}</tr></thead><tbody>${rows}</tbody></table></dialog>`;
 
 		const dialog = this.querySelector("dialog");
-		dialog.showModal();
 		dialog.addEventListener("close", () => this.remove());
-
-		if (mode === "putaway") {
-			dialog.addEventListener("click", e => {
-				const td = e.target.closest("td[data-location]");
-				if (!td) return;
-				const location = td.dataset.location;
-				const sentiment = prompt(`Quanto è piena l'ubicazione ${this._formatLocation(location)}? [0-5] N.B. Se non è utlizzata lasciare vuoto.`, td.dataset.sentiment);
-				if (sentiment === null) return;
-				const n = Number.parseInt(sentiment, 10);
-				if (Number.isNaN(n) || n < 0 || n > 5) return;
-				locationStates[location] = n;
-				// Optionally emit event or update UI
-			});
-		}
+		dialog.showModal();
 	}
 
 	_binContent(item) {
-		if (typeof item !== "object" || item === null)
-			return String(item);
-		return `<div>${String(item.lu).padStart(9, "0")} <b>${item.partnumber}</b> <i>${item.quantity.toLocaleString()} ${item.um}</i></div>`;
-	}
-
-	_formatLocation(loc) {
-		return loc.replace(/^(.{3})(.{3})(.{2})$/, "$1 $2 $3");
+		return `<span${item.highlight ? ` class="selected"` : ""}><b title="${String(item.lu).padStart(9, "0")}">${item.partnumber}</b> <i>${item.quantity.toLocaleString()} ${item.um}</i></span>`;
 	}
 }
 

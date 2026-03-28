@@ -4,7 +4,6 @@ class WMSStructure extends HTMLElement {
 		super();
 		this.classList.add("wms");
 		this.storageUnits = [];
-		this.refInput = document.querySelector(`#${this.getAttribute('refinput')}`);
 	}
 
 	async connectedCallback() {
@@ -15,12 +14,7 @@ class WMSStructure extends HTMLElement {
 			}
 		}
 
-		let value = null;
-		if (this.refInput && this.refInput.value != null && this.refInput.value !== "") {
-			value = this.refInput.value;
-		} else {
-			value = this.getAttribute("data");
-		}
+		const value = this.textContent;
 		this.loadError = null;
 		if (value) {
 			try {
@@ -38,26 +32,28 @@ class WMSStructure extends HTMLElement {
 				}
 			} catch (_e) {
 				this.loadError = `Could not load ${value}`;
-				this.storageUnits = [];
 			}
 		} else
-			throw new Error(`The element must have either a refinput or a data attribute`);
+			throw new Error(`Error loading wms-structure.`);
 
 		this.#render();
+
+		if (this.hasAttribute("name"))
+			this.querySelector('input[type="hidden"]').value = JSON.stringify(this.storageUnits);
 	}
 
 	#render() {
-		const contenteditable = this.hasAttribute("refinput");
+		const edit = this.hasAttribute("name");
 
 		this.innerHTML = `
 		${this.loadError ? `<div class="warning">${this.loadError}</div>` : ''}
+		${this.hasAttribute("name") ? `<input type="hidden" name="${this.getAttribute("name")}">` : ""}
 		<table class="editor" id="storage-table">
 		<thead>
-			<tr><th></th><th>Prefisso</th><th colspan="2">Unità</th><th>Griglia</th><th>Rif.</th><th>${contenteditable ? '<i class="fa-solid fa-plus add-btn" id="add-unit"></i>' : ''}</th></tr>
+			<tr><th></th><th>Prefisso</th><th>Unità</th><th>Griglia</th><th>Rif.</th><th>${edit ? '<i class="fa-solid fa-plus add-btn" id="add-unit"></i>' : ''}</th></tr>
 		</thead>
 		<tbody>
 			${(() => {
-				// Show cumulative index for units with same prefix
 				const prefixCounts = {};
 				return this.storageUnits.map((u, idx) => {
 					const prevCount = prefixCounts[u.prefix] || 0;
@@ -67,12 +63,11 @@ class WMSStructure extends HTMLElement {
 					return `
 					<tr data-offset="${u.offset}" style="text-align:center">
 						<td data-idx="${idx}" class="unit-labels"><i class="fa-solid fa-barcode"></i></td>
-						<td contenteditable="${contenteditable}" data-idx="${idx}" class="unit-prefix">${u.prefix}</td>
-						<td contenteditable="${contenteditable}" data-idx="${idx}" class="unit-count">${u.count}</td>
-						<td data-idx="${idx}" class="unit-layout" style="cursor: nesw-resize" title="Tipologia unità: verticale (V) o orizzontale (H)">${u.layout}</td>
-						<td contenteditable="${contenteditable}" data-idx="${idx}" class="unit-grid">${u.grid || '1x1'}</td>
-						<td contenteditable="${contenteditable}" data-idx="${idx}" class="unit-ref">${u.ref || ''}</td>
-						<td>${contenteditable ? '<i class="fa-solid fa-fw fa-trash remove-btn unit-remove" data-idx="${idx}"></i>' : ''}</td>
+						<td contenteditable="${edit}" data-idx="${idx}" class="unit-prefix">${u.prefix}</td>
+						<td contenteditable="${edit}" data-idx="${idx}" class="unit-count">${u.count}</td>
+						<td contenteditable="${edit}" data-idx="${idx}" class="unit-grid">${u.grid || '1x1'}</td>
+						<td contenteditable="${edit}" data-idx="${idx}" class="unit-ref">${u.ref || ''}</td>
+						<td>${edit ? `<i class="fa-solid fa-fw fa-trash remove-btn unit-remove" data-idx="${idx}"></i>` : ''}</td>
 					</tr>
 					`;
 				}).join('');
@@ -80,15 +75,12 @@ class WMSStructure extends HTMLElement {
 		</tbody>
 		</table>
 		<footer style="font-size:smaller; padding:0.5rem 0" title="Unità di deposito"></footer>`;
-		this.#setupEvents(contenteditable);
+		this.#setupEvents(edit);
 
-		if (contenteditable)
-			this.refInput.value = JSON.stringify(this.storageUnits);
-		
 		this.countBins();
 	}
 
-	#setupEvents(editable) {
+	#setupEvents(edit) {
 		this.querySelectorAll('.unit-labels').forEach(barcode => {
 			if (this.onprint)
 				barcode.onclick = () => {
@@ -97,40 +89,49 @@ class WMSStructure extends HTMLElement {
 				}
 		});
 
-		if (editable) {
-			this.querySelectorAll('.unit-layout').forEach(cell => {
-				cell.onclick = () => {
+		this.addEventListener('click', (event) => {
+			const map = document.querySelector(`#${this.getAttribute("refmap")}`);
+			if (map) {
+				const tr = event.target.closest('tr');
+				this.querySelector('.selected')?.classList.remove('selected');
+				tr.classList.add('selected');
+				map.setAttribute('highlight', `location=${tr.querySelector('.unit-prefix').textContent + tr.querySelector('.unit-ref').textContent}`);
+			}
+		});
+
+		if (edit) {
+			this.querySelectorAll('.unit-prefix').forEach(cell => {
+				cell.addEventListener('input', () => {
 					const idx = Number(cell.getAttribute('data-idx'));
-					cell.textContent = cell.textContent === "V" ? "H" : "V";
-					this.storageUnits[idx].layout = cell.textContent;
-				};
+					cell.textContent = cell.textContent.replace(/\W/g, "");
+					this.storageUnits[idx].prefix = cell.textContent;
+					this.countBins();
+				});
 			});
-			   this.querySelectorAll('.unit-prefix').forEach(cell => {
-				   cell.addEventListener('input', () => {
-					   const idx = Number(cell.getAttribute('data-idx'));
-					   this.storageUnits[idx].prefix = cell.textContent.replace(/\s+/g, "");
-				   });
-			   });
-			   this.querySelectorAll('.unit-count').forEach(cell => {
-				   cell.addEventListener('input', () => {
-					   const idx = Number(cell.getAttribute('data-idx'));
-					   this.storageUnits[idx].count = parseInt(cell.textContent.replace(/\s+/g, ""), 10);
-						this.countBins();
-				   });
-			   });
-			   this.querySelectorAll('.unit-grid').forEach(cell => {
-				   cell.addEventListener('input', () => {
-					   const idx = Number(cell.getAttribute('data-idx'));
-					   this.storageUnits[idx].grid = cell.textContent.replace(/\s+/g, "");
-						this.countBins();
-				   });
-			   });
-			   this.querySelectorAll('.unit-ref').forEach(cell => {
-				   cell.addEventListener('input', () => {
-					   const idx = Number(cell.getAttribute('data-idx'));
-					   this.storageUnits[idx].ref = parseInt(cell.textContent.replace(/\s+/g, ""), 10);
-				   });
-			   });
+			this.querySelectorAll('.unit-count').forEach(cell => {
+				cell.addEventListener('input', () => {
+					const idx = Number(cell.getAttribute('data-idx'));
+					cell.textContent = cell.textContent.replace(/\W/g, "");
+					this.storageUnits[idx].count = parseInt(cell.textContent, 10);
+					this.countBins();
+				});
+			});
+			this.querySelectorAll('.unit-grid').forEach(cell => {
+				cell.addEventListener('input', () => {
+					const idx = Number(cell.getAttribute('data-idx'));
+					cell.textContent = cell.textContent.replace(/\W/g, "");
+					this.storageUnits[idx].grid = cell.textContent;
+					this.countBins();
+				});
+			});
+			this.querySelectorAll('.unit-ref').forEach(cell => {
+				cell.addEventListener('input', () => {
+					const idx = Number(cell.getAttribute('data-idx'));
+					cell.textContent = cell.textContent.replace(/\W/g, "");
+					this.storageUnits[idx].ref = parseInt(cell.textContent, 10);
+					this.countBins();
+				});
+			});
 			this.querySelectorAll('.unit-remove').forEach(btn => {
 				btn.onclick = () => {
 					if (confirm(`Sicuri di voler eliminare l'unità di deposito?`)) {
@@ -141,7 +142,7 @@ class WMSStructure extends HTMLElement {
 				};
 			});
 			this.querySelector('#add-unit').onclick = () => {
-				this.storageUnits.push({ layout: 'V', prefix: '', count: 1, grid: '1x1' });
+				this.storageUnits.push({ prefix: '', count: 1, grid: '1x1' });
 				this.#render();
 			};
 		}
@@ -155,7 +156,10 @@ class WMSStructure extends HTMLElement {
 			total += count * rows * cols;
 		});
 
-		this.querySelector('footer').textContent = `UdD totali: ${total}`;
+		this.querySelector('footer').textContent = `Ubicazioni totali: ${total}`;
+
+		if (this.getAttribute("name"))
+			this.querySelector('input[type="hidden"]').value = JSON.stringify(this.storageUnits);
 
 		return total;
 	}
