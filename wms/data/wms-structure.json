@@ -1,13 +1,7 @@
 [
 	{
 		"prefix": "D",
-		"count": 10,
-		"grid": "1x10",
-		"ref": 1000
-	},
-	{
-		"prefix": "D",
-		"count": 10,
+		"count": 20,
 		"grid": "2x10",
 		"ref": 1000
 	},
@@ -26,18 +20,12 @@
 	{
 		"prefix": "D",
 		"count": 1,
-		"grid": "4x20",
+		"grid": "4x19",
 		"ref": 1000
 	},
 	{
 		"prefix": "D",
-		"count": 10,
-		"grid": "1x10",
-		"ref": 2000
-	},
-	{
-		"prefix": "D",
-		"count": 10,
+		"count": 20,
 		"grid": "2x10",
 		"ref": 2000
 	},
@@ -56,7 +44,7 @@
 	{
 		"prefix": "D",
 		"count": 1,
-		"grid": "4x20",
+		"grid": "4x19",
 		"ref": 2000
 	},
 	{

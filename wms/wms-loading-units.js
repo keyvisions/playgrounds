@@ -12,6 +12,7 @@ class WMSLoadingUnits extends HTMLElement {
 				throw new Error();
 		} catch {
 			this.putawayData = {
+				refid: this.getAttribute("refid"),
 				itemid: this.getAttribute("itemid"),
 				quantity: parseInt(this.textContent) || null,
 				lu: [{ units: 1, quantity: parseInt(this.textContent), batch: "", origin: "", coded: false }]
@@ -20,11 +21,11 @@ class WMSLoadingUnits extends HTMLElement {
 
 		this.textContent = "";
 
-		// Setup custom onprint event if attribute exists
-		if (this.hasAttribute("onprint")) {
-			const fnName = this.getAttribute("onprint").replace(/\(.*\)/, "").trim();
+		// Setup custom onaction event if attribute exists
+		if (this.hasAttribute("onaction")) {
+			const fnName = this.getAttribute("onaction").replace(/\(.*\)/, "").trim();
 			if (typeof window[fnName] === "function") {
-				this.onprint = window[fnName];
+				this.onaction = window[fnName];
 			}
 		}
 
@@ -38,15 +39,16 @@ class WMSLoadingUnits extends HTMLElement {
 
 		const dialog = document.createElement("dialog");
 		dialog.id = "WMSLoadingUnitsDialog";
+		dialog.className = "wms";
 		dialog.innerHTML = `
 			<header><span></span><span style="float: right; cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-fw fa-xmark"></i></span></header>
-			<form style="padding: 0.5em;">
+			<form style="padding: 0.5em 0;">
 				<table>
 					<thead>
 						<tr>
 							<th>Imballi</th>
-							<th>Qt.à</th>
-							<th>Lotto</th>
+							<th>Quantità</th>
+							<th>Data code</th>
 							<th>Origine</th>
 							<th class="addUnits" style="cursor: pointer"><i class="fa-solid fa-fw fa-plus" title="Aggiungi riga"></i></th>
 						</tr>
@@ -54,8 +56,8 @@ class WMSLoadingUnits extends HTMLElement {
 					<tbody></tbody>
 					<tfoot>
 						<tr style="font-size:smaller; text-align: center; font-weight: bolder">
-							<td><output name="totalUnits"></output></td>
-							<td><output name="totalQuantity"></output></td>
+							<td name="totalUnits"></td>
+							<td name="totalQuantity"></td>
 						</tr>
 						<tr>
 							<td colspan="5"><label><input type="checkbox" name="end">Fine carico</label></td>
@@ -68,7 +70,7 @@ class WMSLoadingUnits extends HTMLElement {
 			</form>`;
 		document.body.appendChild(dialog);
 
-		this._dialogEvents(dialog);
+		WMSLoadingUnits._dialogEvents(dialog);
 	}
 
 	_render() {
@@ -80,8 +82,8 @@ class WMSLoadingUnits extends HTMLElement {
 		this.insertAdjacentHTML("afterbegin", `
 			<style>.warning { color: red; }</style>
 			<input type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>
-			<span title="Quantità dichiarata">${this.putawayData.quantity || ''}</span> / <span id="WMSLoadingUnitsRealQty" title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0) || ''}</span>
-			<i class="fa-solid fa-fw fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
+			<span title="Quantità dichiarata">${this.putawayData.quantity.toLocaleString() || ''}</span>/<span data-realquantity title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0).toLocaleString() || ''}</span>
+			<i class="fa-solid fa-fw fa-2x fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
 		`);
 
 		this.addEventListener('click', (e) => {
@@ -97,10 +99,11 @@ class WMSLoadingUnits extends HTMLElement {
 					putawayData.lu.push({ coded: false, units: 1, quantity: putawayData.quantity, batch: null, origin: null });
 
 				const dialog = document.getElementById('WMSLoadingUnitsDialog');
+				dialog.refComponent = e.currentTarget;
 
-				this._renderLUs(dialog, putawayData);
+				WMSLoadingUnits._renderLUs(dialog, putawayData);
 
-				dialog.querySelector("header>span").innerHTML = `${this.getAttribute("itemid")}: ${this.putawayData.quantity}`;
+				dialog.querySelector("header>span").innerHTML = this.getAttribute("itemid");
 				dialog.showModal();
 			}
 		});
@@ -108,11 +111,12 @@ class WMSLoadingUnits extends HTMLElement {
 		this.querySelector("input").value = JSON.stringify(this.putawayData);
 
 		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
-		const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
-		this.querySelector('#WMSLoadingUnitsRealQty').style.color = ['', 'green', 'red'].at(statusQty);
+		const statusQty = Math.sign(realQty - this.putawayData.quantity);
+		this.querySelector('[data-realquantity]').style.color = ['red', 'green', 'red'].at(statusQty);
+		this.querySelector('.fa-boxes-stacked').style.color = this.putawayData.totalLU && this.putawayData.lu.find(lu => !lu.coded) ? 'orange' : '';
 	}
 
-	_dialogEvents(dialog) {
+	static _dialogEvents(dialog) {
 		const form = dialog.querySelector('form');
 		const saveBtn = dialog.querySelector('#saveData');
 
@@ -123,9 +127,9 @@ class WMSLoadingUnits extends HTMLElement {
 				return;
 			e.preventDefault();
 
-			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => this._rowToData(tr));
+			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => WMSLoadingUnits._rowToData(tr));
 			luRows.push({ units: 1, quantity: null, batch: '', origin: '', coded: false });
-			this._renderLUs(dialog, { lu: luRows });
+			WMSLoadingUnits._renderLUs(dialog, { lu: luRows });
 		});
 
 		dialog.querySelector("tbody").addEventListener('click', (e) => {
@@ -134,21 +138,21 @@ class WMSLoadingUnits extends HTMLElement {
 				return;
 			e.preventDefault();
 
+			const refComponent = dialog.refComponent;
+
 			if (action.classList.contains("fa-xmark") && confirm('Sicuri di voler eliminare la riga?')) {
 				action.closest('tr').remove();
-				this._summary();
+				WMSLoadingUnits._summary(dialog);
 
-			} else if (action.classList.contains("fa-barcode") && this.onprint) {
+			} else if (action.classList.contains("fa-barcode") && refComponent.onaction) {
 				const i = parseInt(action.closest("td").dataset.i);
-
-				this.putawayData.lu[i].coded = this.onprint(this.putawayData, i);
-				action.closest("tr").querySelector("[name=coded]").value = this.putawayData.lu[i].coded; // Labels printed
-				if (this.putawayData.lu[i].coded)
+				refComponent.putawayData.lu[i].coded = refComponent.onaction(refComponent.putawayData, i);
+				action.closest("tr").querySelector("[name=coded]").value = refComponent.putawayData.lu[i].coded; // Labels printed
+				if (refComponent.putawayData.lu[i].coded)
 					action.closest("td").classList.remove(`warning`);
 				else
 					action.closest("td").classList.add(`warning`);
-
-				this.querySelector("input").value = JSON.stringify(this.putawayData);
+				refComponent.querySelector("input").value = JSON.stringify(refComponent.putawayData);
 			}
 		});
 
@@ -157,17 +161,21 @@ class WMSLoadingUnits extends HTMLElement {
 			e.target.closest("tr").querySelector("[name=coded]").value = false; // Labels need to be reprinted
 			switch (e.target.name) {
 				case "units":
-					this._renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => this._rowToData(tr)) });
+					WMSLoadingUnits._renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => WMSLoadingUnits._rowToData(tr)) });
 				case "quantity":
-					this._summary();
+					WMSLoadingUnits._summary(dialog);
 			}
 		});
 
 		dialog.addEventListener(`close`, (_e) => {
-			const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
-			const statusQty = this.putawayData.lu.find(lu => !lu.coded) ? -1 : Math.sign(realQty - this.putawayData.quantity);
-			this.querySelector('#WMSLoadingUnitsRealQty').style.color = ['', 'green', 'red'].at(statusQty);
-			this.querySelector('#WMSLoadingUnitsRealQty').textContent = realQty || '—';
+			const refComponent = dialog.refComponent;
+			delete dialog.refComponent;
+
+			const realQty = refComponent.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
+			const statusQty = Math.sign(realQty - refComponent.putawayData.quantity);
+			refComponent.querySelector('[data-realquantity]').style.color = ['red', 'green', 'red'].at(statusQty);
+			refComponent.querySelector('[data-realquantity]').textContent = realQty.toLocaleString() || '—';
+			refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.putawayData.totalLU && refComponent.putawayData.lu.find(lu => !lu.coded) ? 'orange' : '';
 		});
 
 		// Toggle put status
@@ -177,7 +185,7 @@ class WMSLoadingUnits extends HTMLElement {
 			const dialog = document.getElementById("WMSLoadingUnitsDialog");
 			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
 			dialog.querySelectorAll('.put').forEach(put => {
-				const lu = this._rowToData(put);
+				const lu = WMSLoadingUnits._rowToData(put, disabled);
 				if (!(lu.units && lu.quantity))
 					put.remove();
 			});
@@ -188,49 +196,65 @@ class WMSLoadingUnits extends HTMLElement {
 				if (!disabled && el.closest("tr").previousElementSibling) {
 					el.className = "action deleteUnits";
 					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-fw fa-xmark" title="Elimina riga"></i>`);
-					el.querySelector("i").remove();
-				} else if (disabled && this.onprint) {
+				} else if (disabled && dialog.refComponent.onaction) {
 					el.className = `action printLabels ${el.querySelector("input").value === "false" ? "warning" : ""}`;
-					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i>`);
-					el.querySelector("i").remove();
+					el.querySelector("i").insertAdjacentHTML("afterend", `<i class="fa-solid fa-barcode" title="Genera etichette"></i>`);
 				} else {
 					el.className = "action";
 					el.querySelector("i").insertAdjacentHTML("afterend", `<i></i>`);
-					el.querySelector("i").remove();
 				}
+				el.querySelector("i").remove();
 			});
 
-			if (disabled && !this.putawayData.hasOwnProperty("totalLU")) {
-				this.putawayData.totalLU = 1;
+			if (disabled && !dialog.refComponent.putawayData.hasOwnProperty("totalLU")) {
+				dialog.refComponent.putawayData.totalLU = 1;
+				if (typeof dialog.refComponent.onaction === "function") {
+					dialog.refComponent.onaction(dialog.refComponent.putawayData, -1);
+				}
 			} else if (!disabled) {
-				delete this.putawayData.totalLU;
+				delete dialog.refComponent.putawayData.totalLU;
 			}
+
+			WMSLoadingUnits._saveData(dialog);
 		});
 
-		// Save data
 		saveBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 
 			const dialog = document.getElementById("WMSLoadingUnitsDialog");
-
-			this.putawayData.lu = [];
-			dialog.querySelectorAll('.put').forEach(put => {
-				const lu = this._rowToData(put);
-				if (lu.units && lu.quantity)
-					this.putawayData.lu.push(lu)
-			});
-
-			delete this.putawayData.totalLU;
-			if (dialog.querySelector("[type=checkbox]").checked)
-				this.putawayData.totalLU = this.putawayData.lu.reduce((a, b) => a + b.units, 0);
-
-			this.querySelector("input").value = JSON.stringify(this.putawayData);
-
-			document.getElementById("WMSLoadingUnitsDialog").close();
+			WMSLoadingUnits._saveData(dialog);
+			dialog.close();
 		});
 	}
 
-	_renderLUs = (dialog, data) => {
+	static _saveData = (dialog) => {
+		const refComponent = dialog.refComponent;
+
+		refComponent.putawayData.lu = [];
+		dialog.querySelectorAll('.put').forEach(put => {
+			const lu = WMSLoadingUnits._rowToData(put);
+			if (lu.units && lu.quantity)
+				refComponent.putawayData.lu.push(lu)
+		});
+
+		delete refComponent.putawayData.totalLU;
+		if (dialog.querySelector("[type=checkbox]").checked)
+			refComponent.putawayData.totalLU = refComponent.putawayData.lu.reduce((a, b) => a + b.units, 0);
+
+		refComponent.querySelector("input").value = JSON.stringify(refComponent.putawayData);
+
+		if (typeof dialog.refComponent.onaction === "function") {
+			dialog.refComponent.onaction(refComponent.putawayData, -1);
+		}
+
+		const realQty = refComponent.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
+		const statusQty = Math.sign(realQty - refComponent.putawayData.quantity);
+		refComponent.querySelector('[data-realquantity]').style.color = ['red', 'green', 'red'].at(statusQty);
+		refComponent.querySelector('[data-realquantity]').textContent = realQty.toLocaleString() || '—';
+		refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.putawayData.totalLU && refComponent.putawayData.lu.find(lu => !lu.coded) ? 'orange' : '';
+	}
+
+	static _renderLUs = (dialog, data) => {
 		const tbody = dialog.querySelector("tbody");
 
 		const barcode = data.hasOwnProperty("totalLU");
@@ -239,18 +263,16 @@ class WMSLoadingUnits extends HTMLElement {
 
 		tbody.innerHTML = '';
 		data.lu.forEach((lu, i, lus) => {
-			const disabled = i !== lus.length - 1;
-
 			const tr = document.createElement('tr');
 			tr.className = 'put';
 			tr.innerHTML = `
-				<td><input name="units" type="number" onfocus="this.oldvalue = this.value" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${disabled || barcode ? "disabled" : ""}></td>
-				<td><input name="quantity" type="number" min="1" max="99999999" value="${lu.quantity || ''}" style="width:5em" required ${disabled || barcode ? "disabled" : ""}></td>
-				<td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em" ${disabled || barcode ? "disabled" : ""}></td>
-				<td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em" ${disabled || barcode ? "disabled" : ""}></td>`;
-			if (!barcode && !disabled && tbody.children.length > 0)
+				   <td><input name="units" type="number" onfocus="this.oldvalue = this.value" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${barcode ? "disabled" : ""}></td>
+				   <td><input name="quantity" type="number" min="1" max="99999999" value="${lu.quantity || ''}" style="width:5em" required ${barcode ? "disabled" : ""}></td>
+				   <td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em" ${barcode ? "disabled" : ""}></td>
+				   <td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em" ${barcode ? "disabled" : ""}></td>`;
+			if (!barcode && tbody.children.length > 0)
 				tr.innerHTML += `<td data-i="${i}" class="action deleteUnits" style="cursor: pointer"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-xmark" title="Elimina riga"></i></td>`;
-			else if (barcode && this.onprint)
+			else if (barcode && dialog.refComponent.onaction)
 				tr.innerHTML += `<td data-i="${i}" class="action printLabels ${lu.coded ? `` : `warning`}" style="cursor: pointer"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i></td>`;
 			else
 				tr.innerHTML += `<td data-i="${i}" class="action"><input type="hidden" name="coded" value="false"><i></i></td>`;
@@ -258,21 +280,21 @@ class WMSLoadingUnits extends HTMLElement {
 			if (lu.units > 0)
 				tbody.appendChild(tr);
 		});
-		this._summary();
+		WMSLoadingUnits._summary(dialog);
 	};
 
-	_rowToData = (tr) => {
+	static _rowToData = (tr, disabled) => {
 		return {
 			units: parseInt(tr.querySelector('[name=units]').value) || 1,
 			quantity: parseInt(tr.querySelector('[name=quantity]').value) || null,
 			batch: tr.querySelector('[name=batch]').value || '',
 			origin: tr.querySelector('[name=origin]').value || '',
-			coded: tr.querySelector('[name=coded]').value === "true" ? true : false
+			coded: disabled === false ? false : tr.querySelector('[name=coded]').value === "true"
 		};
 	};
 
-	_summary = () => {
-		const dialog = document.getElementById("WMSLoadingUnitsDialog");
+	static _summary = (dialog) => {
+		const putawayData = dialog.refComponent.putawayData;
 
 		let totalUnits = 0, totalQuantity = 0;
 		dialog.querySelectorAll('.put').forEach(put => {
@@ -281,9 +303,8 @@ class WMSLoadingUnits extends HTMLElement {
 			totalUnits += units;
 			totalQuantity += units * quantity;
 		});
-		dialog.querySelector('[name=totalUnits]').value = totalUnits;
-		dialog.querySelector('[name=totalQuantity]').value = totalQuantity;
-		dialog.querySelector('[name=totalQuantity]').style.color = this.putawayData.quantity == totalQuantity ? "inherit" : "red";
+		dialog.querySelector('[name=totalUnits]').innerHTML = totalUnits;
+		dialog.querySelector('[name=totalQuantity]').innerHTML = `${putawayData.quantity}/<span style="color:${putawayData.quantity == totalQuantity ? "inherit" : "red"}">${totalQuantity}</span>`;
 	};
 }
 customElements.define('wms-loading-units', WMSLoadingUnits);

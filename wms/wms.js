@@ -12,9 +12,10 @@ class WMSPut extends HTMLElement {
 
 	connectedCallback() {
 		this.innerHTML = `
-			<label><span><i class="fa-solid fa-fw fa-box"></i> Unità di Carico (UdC)</span><br><input form name="lu" placeholder="es. 123456789" style="font-size: x-large" readonly></label>
-			<label><span><i class="fa-solid fa-fw fa-warehouse"></i> Ubicazioni (UdD)</span><br><input form name="location" placeholder="es. A01 001 01" style="font-size: x-large" readonly></label>
-			<input form name="code" placeholder="codice" style="font-size: x-large" autofocus>
+			<div style="text-align: start; background-color: var(--special-backcolor, GrayText); color: var(--special-color, white); padding: 0.25em;"></div>
+			<label><span><i class="fa-solid fa-fw fa-barcode"></i> Unità di Carico (UdC)</span><br><input form name="lu" placeholder="es. 123456789" style="font-size: inherit" readonly></label>
+			<label><span><i class="fa-solid fa-fw fa-warehouse"></i> Ubicazione (UdD)</span><br><input form name="location" placeholder="es. A01 001 01" style="font-size: inherit" readonly></label>
+			<input form name="code" placeholder="codice" style="font-size: inherit" virtualkeyboardpolicy="manual" autofocus>
 			<div id="sentiments" aria-disabled="true" style="display: flex; column-gap: 0.4em;">
 				<div id="S1" class="sentiment">1</div>
 				<div id="S2" class="sentiment">2</div>
@@ -72,8 +73,14 @@ class WMSPut extends HTMLElement {
 			el.classList.add('failureBox');
 		}
 
-		if (this.hasAttribute("refmap"))
-			document.querySelector(`#${this.getAttribute("refmap")}`).setAttribute("highlight", `lu=${this.#luInput.value}`);
+		if (!this.#luInput.value)
+			this.firstElementChild.innerHTML = "";
+		if (response.partnumber)
+			this.firstElementChild.innerHTML = `<b>${response.partnumber}</b><br><span style="font-size:smaller">${response.description}</span><br>${response.quantity} ${response.um}`;
+
+		console.log(response);
+		if (this.hasAttribute("refmap") && response.exists)
+			document.querySelector(`#${this.getAttribute("refmap")}`).setAttribute("highlight", `lu=${response.lu || ""}&partnumber=${response.partnumber || ""}`);
 
 		if (this.#locationInput.value && this.#luInput.value)
 			this.#sentiments.setAttribute('aria-disabled', 'false');
@@ -121,8 +128,9 @@ class WMSPick extends HTMLElement {
 
 	connectedCallback() {
 		this.innerHTML = `
-			<label><span><i class="fa-solid fa-fw fa-box"></i> Codice</span><br><input form type="number" name="code" style="font-size: x-large" autofocus></label>
-			<label><span><i class="fa-solid fa-comment-medical"></i> Quantità</span><br><input form type="number" step="any" name="quantity" style="font-size: x-large"></label>
+			<div style="text-align: start; background-color: var(--special-backcolor, GrayText); color: var(--special-color, white); padding: 0.25em;"></div>
+			<label><span><i class="fa-solid fa-fw fa-barcode"></i> Unità di Carico (UdC)</span><br><input form type="number" name="code" style="font-size: inherit" placeholder="es. 123456789" autofocus></label>
+			<label><span><i class="fa-solid fa-comment-medical"></i> Quantità</span><br><input form type="number" step="any" name="quantity" style="font-size: inherit"></label>
 			<div id="sentiments" aria-disabled="true" style="display: flex; column-gap: 0.4em;">
 				<div id="S1" class="sentiment">1</div>
 				<div id="S2" class="sentiment">2</div>
@@ -151,6 +159,7 @@ class WMSPick extends HTMLElement {
 		this.#codeInput.addEventListener('change', async (event) => {
 			this.#check(event, this.#codeInput, await this.oncheck(this.#codeInput.value));
 		});
+		this.#codeInput.addEventListener('focus', () => this.#codeInput.select());
 		this.#sentiments.addEventListener('click', (event) => this.#allocate(event));
 		this.#codeInput.focus();
 	}
@@ -160,24 +169,29 @@ class WMSPick extends HTMLElement {
 		if (/^[0-5]$/.test(el.value)) {
 			if (this.#quantityInput.value && this.#codeInput.value)
 				this.querySelector(`#S${el.value}`).click();
-			el.value = '';
+			this.#codeInput.focus()
 
 		} else if (response.exists && response.lu) {
 			this.#codeInput.value = el.value.padStart(9, '0');
 			this.#codeInput.className = response.exists ? 'successBox' : 'warningBox';
-			this.#quantityInput.value = response.quantity;
-			el.value = '';
+			this.#quantityInput.value = "";
+			this.#quantityInput.setAttribute("placeholder", response.quantity);
+			this.#quantityInput.focus();
 
 		} else {
 			el.classList.add('failureBox');
+			this.#quantityInput.value = "";
+			this.#quantityInput.removeAttribute("placeholder");
+			this.#codeInput.select()
 		}
+
+		if (response.partnumber)
+			this.firstElementChild.innerHTML = `<b>${response.partnumber}</b><br><span style="font-size:smaller">${response.description}</span><br>${response.quantity} ${response.um}`;
 
 		if (this.#quantityInput.value && this.#codeInput.value)
 			this.#sentiments.setAttribute('aria-disabled', 'false');
 		else
 			this.#sentiments.setAttribute('aria-disabled', 'true');
-
-		this.#codeInput.focus()
 	}
 
 	#allocate(event) {

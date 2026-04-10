@@ -52,12 +52,29 @@
 			window.location = url;
 			return false;
 		}
-		async function printLabelLU(d) {
-			fetch(`${_URL}?*r=5522`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(d)
-			});
+		function manageLU(d, r) {
+			const params = new URLSearchParams();
+			params.append("row", r);
+			params.append("data", JSON.stringify(d));
+
+			fetch(`${_URL}?*r=5509`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/x-www-form-urlencoded"
+				},
+				body: params.toString()
+			})
+				.then(res => {
+					if (!res.ok) throw new Error("HTTP " + res.status);
+					return res.text();
+				})
+				.then(res =>
+					console.log
+				).catch(res =>
+					console.error
+				);
+
+			return true;
 		}
 		async function verifyCode(code) {
 			try {
@@ -95,28 +112,28 @@
 				<tbody>
 					<tr>
 						<td>ABC</td>
-						<td><wms-loading-units name="qty" itemid="ABC" onprint="printLabelLU()">100</wms-loading-units></td>
+						<td><wms-loading-units name="qty" data-refid="123" itemid="ABC" onaction="manageLU()">100</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>DEF</td>
-						<td><wms-loading-units name="qty" itemid="DEF" onprint="printLabelLU()">200</wms-loading-units></td>
+						<td><wms-loading-units name="qty" data-refid="456" itemid="DEF" onaction="manageLU()">200</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>GHI</td>
-						<td><wms-loading-units name="qty" itemid="GHI"></wms-loading-units></td>
+						<td><wms-loading-units name="qty" data-refid="789" itemid="GHI"></wms-loading-units></td>
 					</tr>
 				</tbody>
 			</table>
 			<button onclick="return put(event)">Status</button>
 		</form>
-		<wms-put oncheck="verifyCode()" onsubmit="putLU()" refmap="planimetry"></wms-put>
-		<wms-pick oncheck="verifyCode()" onsubmit="pickLU()" refmap="planimetry"></wms-pick>
+		<!--wms-put oncheck="verifyCode()" onsubmit="putLU()" refmap="planimetry"></wms-put-->
+		<!--wms-pick oncheck="verifyCode()" onsubmit="pickLU()" refmap="planimetry"></wms-pick-->
 	</div>
 
-	<div style="display: flex; gap: 1rem;">
+	<!--div style="display: flex; gap: 1rem;">
 		<wms-structure onprint="printLabelsSU(data)" refmap="planimetry">./data/wms-structure.json</wms-structure>
 		<wms-map id="planimetry" name="fMap" style="flex: 1 1 0; min-width:0;">./media/warehouse.svg</wms-map>
-	</div>
+	</div-->
 </body>
 
 </html>

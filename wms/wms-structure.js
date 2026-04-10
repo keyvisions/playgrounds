@@ -62,12 +62,12 @@ class WMSStructure extends HTMLElement {
 					u.offset = prevCount;
 					return `
 					<tr data-offset="${u.offset}" style="text-align:center">
-						<td data-idx="${idx}" class="unit-labels"><i class="fa-solid fa-barcode"></i></td>
+						<td data-idx="${idx}" class="unit-labels" title="Stampa etichette"><i class="fa-solid fa-barcode"></i></td>
 						<td contenteditable="${edit}" data-idx="${idx}" class="unit-prefix">${u.prefix}</td>
 						<td contenteditable="${edit}" data-idx="${idx}" class="unit-count">${u.count}</td>
 						<td contenteditable="${edit}" data-idx="${idx}" class="unit-grid">${u.grid || '1x1'}</td>
 						<td contenteditable="${edit}" data-idx="${idx}" class="unit-ref">${u.ref || ''}</td>
-						<td>${edit ? `<i class="fa-solid fa-fw fa-trash remove-btn unit-remove" data-idx="${idx}"></i>` : ''}</td>
+						<td title="Elimina UdD">${edit ? `<i class="fa-solid fa-fw fa-trash remove-btn unit-remove" data-idx="${idx}"></i>` : ''}</td>
 					</tr>
 					`;
 				}).join('');

@@ -31,16 +31,26 @@
 	color: var(--special-color, HighlightText) !important;
 }
 
-.wms dialog button {
-	min-width: 5em;
-}
-
 .wms label {
 	padding: 0 0;
 }
 
-.wms dialog header {
-	padding: 0.5em;
+@media (max-width: 600px) {
+	dialog.wms[open] {
+		position: fixed !important;
+		inset: auto !important;
+		margin: 0 !important;
+		top: 50px !important;
+		display: block !important;
+	}
+}
+
+dialog.wms[open] button {
+	min-width: 5em;
+}
+
+dialog.wms[open] header {
+	font-weight: bold;
 }
 
 .wms .sentiment {
@@ -68,9 +78,9 @@
 .wms-place {
 	display: flex;
 	flex-direction: column;
-	gap: 1em;
+	gap: 0.5em;
 	padding: 0.5em 0;
-	font-size: x-large;
+	font-size: large;
 	align-items: center;
 	text-align: center;
 }
@@ -88,14 +98,14 @@
 }
 
 .wms thead>tr>th {
-	padding: 0.5em;
+	padding: 0.25em;
 	border-bottom: thin solid gray;
 	font-size: smaller;
 	color: initial;
 }
 
 .wms tbody>tr>td {
-	padding: 0.5em;
+	padding: 0.25em;
 	border-bottom: thin solid gray;
 	color: initial;
 }

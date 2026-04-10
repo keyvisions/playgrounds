@@ -113,6 +113,9 @@ class WMSMap extends HTMLElement {
 
 			if (this.getAttribute("mode") === "normalize")
 				this.#setup();
+			else if (this.getAttribute("mode") !== "put")
+				this.firstElementChild.remove();
+
 			this.#init();
 			this._svgLoaded = true;
 			this.#highlight();
@@ -469,7 +472,8 @@ class WMSMap extends HTMLElement {
 				}
 			}
 		}
-		console.log(inventoryUrl.toString());
+		
+		console.debug(inventoryUrl.toString());
 
 		const response = await fetch(inventoryUrl);
 		const inventory = await response.json();
@@ -562,37 +566,46 @@ class WMSStorageUnit extends HTMLElement {
 	showDialog(storageUnit, requestedSentiment, dir) {
 		const maxAllowedSentiment = requestedSentiment == null ? null : 5 - requestedSentiment;
 
-		const prefix = storageUnit.location.substring(0, 3) ?? "";
+		let prefix, col, cols, colLabels = "", rows = "";
+		if (storageUnit.location.length === 8) {
+			prefix = storageUnit.location.substring(0, 3) ?? "";
 
-		const col = Number(storageUnit.location.substring(3, 6));
-		const cols = Array.from({ length: storageUnit.cols }, (_, i) => col + i);
-		if (dir === "rtl") cols.reverse();
+			col = Number(storageUnit.location.substring(3, 6));
+			cols = Array.from({ length: storageUnit.cols }, (_, i) => col + i);
+			if (dir === "rtl") cols.reverse();
 
-		let colLabels = `${dir === "ltr" ? `<th style="width:2em"></th>` : ""}${cols.map(col => `<th style="width:${100 / storageUnit.cols}%">${prefix} ${String(col).padStart(3, "0")}</th>`).join("")}${dir === "rtl" ? `<th style="width:2em"></th>` : ""}`;
+			colLabels = `${dir === "ltr" ? `<th style="width:2em"></th>` : ""}${cols.map(col => `<th style="width:${100 / storageUnit.cols}%">${prefix} ${String(col).padStart(3, "0")}</th>`).join("")}${dir === "rtl" ? `<th style="width:2em"></th>` : ""}`;
 
-		const rows = Array.from({ length: storageUnit.rows }, (_, row) => storageUnit.rows - row)
-			.map(row => {
-				const cells = cols.map(col => {
-					const location = storageUnit.units.find(unit => unit.location === `${prefix}${String(col).padStart(3, "0")}${String(row).padStart(2, "0")}`);
-					const sentiment = location.sentiment;
-					const sentimentAttr = Number.isFinite(sentiment) ? ` data-sentiment="${sentiment}"` : "";
+			rows = Array.from({ length: storageUnit.rows }, (_, row) => storageUnit.rows - row)
+				.map(row => {
+					const cells = cols.map(col => {
+						const location = storageUnit.units.find(unit => unit.location === `${prefix}${String(col).padStart(3, "0")}${String(row).padStart(2, "0")}`);
+						const sentiment = location.sentiment;
+						const sentimentAttr = Number.isFinite(sentiment) ? ` data-sentiment="${sentiment}"` : "";
 
-					const isAvailable = maxAllowedSentiment !== null && Number.isFinite(sentiment) && sentiment <= maxAllowedSentiment;
-					const isUnavailable = maxAllowedSentiment !== null && Number.isFinite(sentiment) && sentiment > maxAllowedSentiment;
+						const isAvailable = maxAllowedSentiment !== null && Number.isFinite(sentiment) && sentiment <= maxAllowedSentiment;
+						const isUnavailable = maxAllowedSentiment !== null && Number.isFinite(sentiment) && sentiment > maxAllowedSentiment;
 
-					const allClasses = [location.highlight ? "selected" : "", isAvailable ? "available" : isUnavailable ? "unavailable" : ""]
-						.filter(Boolean)
-						.join(" ");
+						const allClasses = [location.highlight ? "selected" : "", isAvailable ? "available" : isUnavailable ? "unavailable" : ""]
+							.filter(Boolean)
+							.join(" ");
 
-					const content = location.items?.map(item => this._binContent(item)).join("<br>") ?? "";
+						const content = location.items?.map(item => this._binContent(item)).join("<br>") ?? "";
 
-					return `<td class="${allClasses}"${sentimentAttr}>${content}</td>`;
+						return `<td class="${allClasses}"${sentimentAttr}>${content}</td>`;
+					}).join("");
+
+					return `<tr>${dir === "ltr" ? `<th>${String(row).padStart(2, "0")}</th>` : ""}${cells}${dir === "rtl" ? `<th>${String(row).padStart(2, "0")}</th>` : ""}</tr>`;
 				}).join("");
+		} else {
+			prefix = storageUnit.location.substring(0, 1) ?? "";
 
-				return `<tr>${dir === "ltr" ? `<th>${String(row).padStart(2, "0")}</th>` : ""}${cells}${dir === "rtl" ? `<th>${String(row).padStart(2, "0")}</th>` : ""}</tr>`;
-			}).join("");
+			colLabels = `<th style="width:2em"></th><th>${prefix}</th>`;
+			for (let row = 1; row <= 32; ++row)
+				rows += `<tr><th>D${String(row).padStart(2, "0")}</th><td></td></tr>`
+		}
 
-		this.innerHTML = `<dialog><i class="fa-solid fa-times" onclick="this.parentElement.remove()" style="cursor:pointer; position:absolute; right:1em; top:0.5em; font-size:x-large;"></i><table><thead><tr>${colLabels}</tr></thead><tbody>${rows}</tbody></table></dialog>`;
+		this.innerHTML = `<dialog class="wms"><i class="fa-solid fa-times" onclick="this.parentElement.remove()" style="cursor:pointer; position:absolute; right:1em; top:0.5em; font-size:x-large;"></i><table><thead><tr>${colLabels}</tr></thead><tbody>${rows}</tbody></table></dialog>`;
 
 		const dialog = this.querySelector("dialog");
 		dialog.addEventListener("close", () => this.remove());
