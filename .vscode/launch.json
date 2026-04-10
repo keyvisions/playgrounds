@@ -5,6 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug fringe",
+            "request": "launch",
+            "type": "msedge",
+            "file": "${workspaceFolder}/kv-fringe/index.html",
+            "runtimeArgs": [
+                "--disable-web-security" // Allow CORS
+            ]
+        },
+        {
             "name": "Debug wms",
             "request": "launch",
             "type": "msedge",
