@@ -8,6 +8,8 @@ kv-organogram/
 kv-form/
 wms/.data
 
+menu.html
+
 # Build artifacts
 .lastbuild
 **/deploy/
