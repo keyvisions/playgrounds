@@ -19,6 +19,9 @@ class WMSLoadingUnits extends HTMLElement {
 			}
 		}
 
+		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
+		this.putawayData.status = Math.sign(realQty - this.putawayData.quantity);
+
 		this.textContent = "";
 
 		// Setup custom onaction event if attribute exists
@@ -32,7 +35,7 @@ class WMSLoadingUnits extends HTMLElement {
 		if (!(this.putawayData.quantity > 0))
 			return;
 
-		this._render();
+		this.#render();
 
 		if (document.getElementById("WMSLoadingUnitsDialog"))
 			return;
@@ -70,10 +73,10 @@ class WMSLoadingUnits extends HTMLElement {
 			</form>`;
 		document.body.appendChild(dialog);
 
-		WMSLoadingUnits._dialogEvents(dialog);
+		WMSLoadingUnits.#dialogEvents(dialog);
 	}
 
-	_render() {
+	#render() {
 		let formAttr = '';
 		const form = this.closest('form');
 		if (form && form.id) {
@@ -81,8 +84,7 @@ class WMSLoadingUnits extends HTMLElement {
 		}
 		this.insertAdjacentHTML("afterbegin", `
 			<style>.warning { color: red; }</style>
-			<input type="hidden" name="${this.getAttribute("name") || this.constructor.name}" ${formAttr}>
-			<span title="Quantità dichiarata">${this.putawayData.quantity.toLocaleString() || ''}</span>/<span data-realquantity title="Quantità riscontrata">${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0).toLocaleString() || ''}</span>
+			<span title="Quantità dichiarata">${this.putawayData.quantity.toLocaleString() || ''}</span>/<span data-realquantity title="Quantità riscontrata"${this.putawayData.totalLU ? '' : 'style="color:red"'}>${this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0).toLocaleString() || '—'}</span>
 			<i class="fa-solid fa-fw fa-2x fa-boxes-stacked openDialog" title="Crea UDC" stype="cursor:pointer"></i>
 		`);
 
@@ -101,22 +103,24 @@ class WMSLoadingUnits extends HTMLElement {
 				const dialog = document.getElementById('WMSLoadingUnitsDialog');
 				dialog.refComponent = e.currentTarget;
 
-				WMSLoadingUnits._renderLUs(dialog, putawayData);
+				WMSLoadingUnits.#renderLUs(dialog, putawayData);
 
 				dialog.querySelector("header>span").innerHTML = this.getAttribute("itemid");
 				dialog.showModal();
 			}
 		});
 
-		this.querySelector("input").value = JSON.stringify(this.putawayData);
-
 		const realQty = this.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 		const statusQty = Math.sign(realQty - this.putawayData.quantity);
-		this.querySelector('[data-realquantity]').style.color = ['red', 'green', 'red'].at(statusQty);
+		this.putawayData.status = statusQty;
+
+		this.querySelector('[data-realquantity]').style.color = ['', 'red', 'red'].at(this.putawayData.totalLU ? statusQty : -1);
 		this.querySelector('.fa-boxes-stacked').style.color = this.putawayData.totalLU && this.putawayData.lu.find(lu => !lu.coded) ? 'orange' : '';
+
+		WMSLoadingUnits.#updateAggregatedInput(form, this.getAttribute("name") || this.constructor.name);
 	}
 
-	static _dialogEvents(dialog) {
+	static #dialogEvents(dialog) {
 		const form = dialog.querySelector('form');
 		const saveBtn = dialog.querySelector('#saveData');
 
@@ -127,9 +131,9 @@ class WMSLoadingUnits extends HTMLElement {
 				return;
 			e.preventDefault();
 
-			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => WMSLoadingUnits._rowToData(tr));
+			const luRows = Array.from(dialog.querySelector("tbody").querySelectorAll('tr')).map(tr => WMSLoadingUnits.#rowToData(tr));
 			luRows.push({ units: 1, quantity: null, batch: '', origin: '', coded: false });
-			WMSLoadingUnits._renderLUs(dialog, { lu: luRows });
+			WMSLoadingUnits.#renderLUs(dialog, { lu: luRows });
 		});
 
 		dialog.querySelector("tbody").addEventListener('click', (e) => {
@@ -142,7 +146,7 @@ class WMSLoadingUnits extends HTMLElement {
 
 			if (action.classList.contains("fa-xmark") && confirm('Sicuri di voler eliminare la riga?')) {
 				action.closest('tr').remove();
-				WMSLoadingUnits._summary(dialog);
+				WMSLoadingUnits.#summary(dialog);
 
 			} else if (action.classList.contains("fa-barcode") && refComponent.onaction) {
 				const i = parseInt(action.closest("td").dataset.i);
@@ -152,7 +156,7 @@ class WMSLoadingUnits extends HTMLElement {
 					action.closest("td").classList.remove(`warning`);
 				else
 					action.closest("td").classList.add(`warning`);
-				refComponent.querySelector("input").value = JSON.stringify(refComponent.putawayData);
+				WMSLoadingUnits.#updateAggregatedInput(refComponent.closest('form'), refComponent.getAttribute("name"));
 			}
 		});
 
@@ -161,9 +165,9 @@ class WMSLoadingUnits extends HTMLElement {
 			e.target.closest("tr").querySelector("[name=coded]").value = false; // Labels need to be reprinted
 			switch (e.target.name) {
 				case "units":
-					WMSLoadingUnits._renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => WMSLoadingUnits._rowToData(tr)) });
+					WMSLoadingUnits.#renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => WMSLoadingUnits.#rowToData(tr)) });
 				case "quantity":
-					WMSLoadingUnits._summary(dialog);
+					WMSLoadingUnits.#summary(dialog);
 			}
 		});
 
@@ -173,9 +177,13 @@ class WMSLoadingUnits extends HTMLElement {
 
 			const realQty = refComponent.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 			const statusQty = Math.sign(realQty - refComponent.putawayData.quantity);
-			refComponent.querySelector('[data-realquantity]').style.color = ['red', 'green', 'red'].at(statusQty);
+			refComponent.putawayData.status = statusQty;
+
+			refComponent.querySelector('[data-realquantity]').style.color = ['', 'red', 'red'].at(refComponent.putawayData.totalLU ? statusQty : -1);
 			refComponent.querySelector('[data-realquantity]').textContent = realQty.toLocaleString() || '—';
 			refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.putawayData.totalLU && refComponent.putawayData.lu.find(lu => !lu.coded) ? 'orange' : '';
+
+			WMSLoadingUnits.#updateAggregatedInput(refComponent.closest('form'), refComponent.getAttribute("name"));
 		});
 
 		// Toggle put status
@@ -185,7 +193,7 @@ class WMSLoadingUnits extends HTMLElement {
 			const dialog = document.getElementById("WMSLoadingUnitsDialog");
 			dialog.querySelector(".addUnits i").style.display = disabled ? "none" : "";
 			dialog.querySelectorAll('.put').forEach(put => {
-				const lu = WMSLoadingUnits._rowToData(put, disabled);
+				const lu = WMSLoadingUnits.#rowToData(put);
 				if (!(lu.units && lu.quantity))
 					put.remove();
 			});
@@ -215,24 +223,24 @@ class WMSLoadingUnits extends HTMLElement {
 				delete dialog.refComponent.putawayData.totalLU;
 			}
 
-			WMSLoadingUnits._saveData(dialog);
+			WMSLoadingUnits.#saveData(dialog);
 		});
 
 		saveBtn.addEventListener('click', (e) => {
 			e.preventDefault();
 
 			const dialog = document.getElementById("WMSLoadingUnitsDialog");
-			WMSLoadingUnits._saveData(dialog);
+			WMSLoadingUnits.#saveData(dialog);
 			dialog.close();
 		});
 	}
 
-	static _saveData = (dialog) => {
+	static #saveData = (dialog) => {
 		const refComponent = dialog.refComponent;
 
 		refComponent.putawayData.lu = [];
 		dialog.querySelectorAll('.put').forEach(put => {
-			const lu = WMSLoadingUnits._rowToData(put);
+			const lu = WMSLoadingUnits.#rowToData(put);
 			if (lu.units && lu.quantity)
 				refComponent.putawayData.lu.push(lu)
 		});
@@ -241,20 +249,22 @@ class WMSLoadingUnits extends HTMLElement {
 		if (dialog.querySelector("[type=checkbox]").checked)
 			refComponent.putawayData.totalLU = refComponent.putawayData.lu.reduce((a, b) => a + b.units, 0);
 
-		refComponent.querySelector("input").value = JSON.stringify(refComponent.putawayData);
-
 		if (typeof dialog.refComponent.onaction === "function") {
 			dialog.refComponent.onaction(refComponent.putawayData, -1);
 		}
 
 		const realQty = refComponent.putawayData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 		const statusQty = Math.sign(realQty - refComponent.putawayData.quantity);
-		refComponent.querySelector('[data-realquantity]').style.color = ['red', 'green', 'red'].at(statusQty);
+		refComponent.putawayData.status = statusQty;
+
+		refComponent.querySelector('[data-realquantity]').style.color = ['', 'red', 'red'].at(refComponent.putawayData.totalLU ? statusQty : -1);
 		refComponent.querySelector('[data-realquantity]').textContent = realQty.toLocaleString() || '—';
 		refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.putawayData.totalLU && refComponent.putawayData.lu.find(lu => !lu.coded) ? 'orange' : '';
+
+		WMSLoadingUnits.#updateAggregatedInput(refComponent.closest('form'), refComponent.getAttribute("name"));
 	}
 
-	static _renderLUs = (dialog, data) => {
+	static #renderLUs = (dialog, data) => {
 		const tbody = dialog.querySelector("tbody");
 
 		const barcode = data.hasOwnProperty("totalLU");
@@ -275,25 +285,25 @@ class WMSLoadingUnits extends HTMLElement {
 			else if (barcode && dialog.refComponent.onaction)
 				tr.innerHTML += `<td data-i="${i}" class="action printLabels ${lu.coded ? `` : `warning`}" style="cursor: pointer"><input type="hidden" name="coded" value="${lu.coded}"><i class="fa-solid fa-fw fa-barcode" title="Genera etichette"></i></td>`;
 			else
-				tr.innerHTML += `<td data-i="${i}" class="action"><input type="hidden" name="coded" value="false"><i></i></td>`;
+				tr.innerHTML += `<td data-i="${i}" class="action"><input type="hidden" name="coded" value="${lu.coded}"><i></i></td>`;
 
 			if (lu.units > 0)
 				tbody.appendChild(tr);
 		});
-		WMSLoadingUnits._summary(dialog);
+		WMSLoadingUnits.#summary(dialog);
 	};
 
-	static _rowToData = (tr, disabled) => {
+	static #rowToData = (tr) => {
 		return {
 			units: parseInt(tr.querySelector('[name=units]').value) || 1,
 			quantity: parseInt(tr.querySelector('[name=quantity]').value) || null,
 			batch: tr.querySelector('[name=batch]').value || '',
 			origin: tr.querySelector('[name=origin]').value || '',
-			coded: disabled === false ? false : tr.querySelector('[name=coded]').value === "true"
+			coded: tr.querySelector('[name=coded]').value === "true"
 		};
 	};
 
-	static _summary = (dialog) => {
+	static #summary = (dialog) => {
 		const putawayData = dialog.refComponent.putawayData;
 
 		let totalUnits = 0, totalQuantity = 0;
@@ -306,5 +316,24 @@ class WMSLoadingUnits extends HTMLElement {
 		dialog.querySelector('[name=totalUnits]').innerHTML = totalUnits;
 		dialog.querySelector('[name=totalQuantity]').innerHTML = `${putawayData.quantity}/<span style="color:${putawayData.quantity == totalQuantity ? "inherit" : "red"}">${totalQuantity}</span>`;
 	};
+
+	static #updateAggregatedInput(form, name) {
+		if (!form || !name) return;
+		const elements = form.querySelectorAll(`wms-loading-units[name="${name}"]`);
+		const aggregated = {};
+		elements.forEach(el => {
+			if (el.putawayData && el.getAttribute("refid")) {
+				aggregated[el.getAttribute("refid")] = el.putawayData;
+			}
+		});
+		let input = form.querySelector(`input[type="hidden"][name="${name}"]`);
+		if (!input) {
+			input = document.createElement("input");
+			input.type = "hidden";
+			input.name = name;
+			form.appendChild(input);
+		}
+		input.value = JSON.stringify(aggregated);
+	}
 }
 customElements.define('wms-loading-units', WMSLoadingUnits);

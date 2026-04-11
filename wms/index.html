@@ -42,9 +42,11 @@
 
 		function put(event) {
 			console.clear();
-			document.querySelectorAll("wms-loading-units input[type=hidden]").forEach(el => {
-				console.log(el.value);
-			});
+			const form = document.querySelector("form.wms");
+			const input = form.querySelector('input[type="hidden"][name="qty"]');
+			if (input) {
+				console.log(input.value);
+			}
 			return false;
 		}
 		function printLabelsSU(d) {
@@ -112,15 +114,17 @@
 				<tbody>
 					<tr>
 						<td>ABC</td>
-						<td><wms-loading-units name="qty" data-refid="123" itemid="ABC" onaction="manageLU()">100</wms-loading-units></td>
+						<td><wms-loading-units name="qty" refid="123" itemid="ABC"
+								onaction="manageLU()">100</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>DEF</td>
-						<td><wms-loading-units name="qty" data-refid="456" itemid="DEF" onaction="manageLU()">200</wms-loading-units></td>
+						<td><wms-loading-units name="qty" refid="456" itemid="DEF"
+								onaction="manageLU()">200</wms-loading-units></td>
 					</tr>
 					<tr>
 						<td>GHI</td>
-						<td><wms-loading-units name="qty" data-refid="789" itemid="GHI"></wms-loading-units></td>
+						<td><wms-loading-units name="qty" refid="789" itemid="GHI"></wms-loading-units></td>
 					</tr>
 				</tbody>
 			</table>
