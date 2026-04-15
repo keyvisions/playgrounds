@@ -42,8 +42,7 @@
 
 		function put(event) {
 			console.clear();
-			const form = document.querySelector("form.wms");
-			const input = form.querySelector('input[type="hidden"][name="qty"]');
+			const input = document.getElementById("qty");
 			if (input) {
 				console.log(input.value);
 			}
@@ -54,29 +53,21 @@
 			window.location = url;
 			return false;
 		}
-		function manageLU(d, r) {
+		async function manageLU(d, r) {
 			const params = new URLSearchParams();
 			params.append("row", r);
 			params.append("data", JSON.stringify(d));
 
-			fetch(`${_URL}?*r=5509`, {
+			console.log(d, r);
+
+			const res = await fetch(`${_URL}?*r=5509`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/x-www-form-urlencoded"
 				},
 				body: params.toString()
-			})
-				.then(res => {
-					if (!res.ok) throw new Error("HTTP " + res.status);
-					return res.text();
-				})
-				.then(res =>
-					console.log
-				).catch(res =>
-					console.error
-				);
-
-			return true;
+			});
+			try { return res.json(); } catch (_err) { return d; }
 		}
 		async function verifyCode(code) {
 			try {
@@ -103,7 +94,7 @@
 
 <body>
 	<div style="display: flex; gap: 1rem; justify-content: space-evenly;">
-		<form class="wms">
+		<div>
 			<table>
 				<thead>
 					<tr>
@@ -114,22 +105,25 @@
 				<tbody>
 					<tr>
 						<td>ABC</td>
-						<td><wms-loading-units name="qty" refid="123" itemid="ABC"
-								onaction="manageLU()">100</wms-loading-units></td>
+						<td><wms-loading-units for="qty" refid="123" itemid="ABC" onaction="manageLU()"></wms-loading-units>
+						</td>
 					</tr>
 					<tr>
 						<td>DEF</td>
-						<td><wms-loading-units name="qty" refid="456" itemid="DEF"
-								onaction="manageLU()">200</wms-loading-units></td>
+						<td><wms-loading-units for="qty" refid="456" itemid="DEF"
+								onaction="manageLU()">200</wms-loading-units>
+						</td>
 					</tr>
 					<tr>
 						<td>GHI</td>
-						<td><wms-loading-units name="qty" refid="789" itemid="GHI"></wms-loading-units></td>
+						<td><wms-loading-units for="qty" refid="789" itemid="GHI"></wms-loading-units></td>
 					</tr>
 				</tbody>
 			</table>
+			<input id="qty" name="qty"
+				value='{"123":{"refid":"123","itemid":"ABC","quantity":100,"lu":[{"units":1,"quantity":102,"batch":"2026+","origin":"ITA","coded":true}],"status":1,"totalLU":1},"456":{"refid":"456","itemid":"DEF","quantity":200,"lu":[{"units":1,"quantity":200,"batch":"","origin":"","coded":false}],"status":0}}'>
 			<button onclick="return put(event)">Status</button>
-		</form>
+		</div>
 		<!--wms-put oncheck="verifyCode()" onsubmit="putLU()" refmap="planimetry"></wms-put-->
 		<!--wms-pick oncheck="verifyCode()" onsubmit="pickLU()" refmap="planimetry"></wms-pick-->
 	</div>
