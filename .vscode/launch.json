@@ -5,6 +5,24 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Debug stw-element",
+            "request": "launch",
+            "type": "msedge",
+            "file": "${workspaceFolder}/stw-element/index.html",
+            "runtimeArgs": [
+                "--disable-web-security" // Allow CORS
+            ]
+        },
+        {
+            "name": "Debug kv-jsonform",
+            "request": "launch",
+            "type": "msedge",
+            "file": "${workspaceFolder}/kv-jsonform/index.html",
+            "runtimeArgs": [
+                "--disable-web-security" // Allow CORS
+            ]
+        },
+        {
             "name": "Debug fringe",
             "request": "launch",
             "type": "msedge",
