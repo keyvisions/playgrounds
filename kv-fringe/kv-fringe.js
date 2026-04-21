@@ -1,19 +1,20 @@
 class KvFringe extends HTMLElement {
 	constructor() {
 		super();
+
 		const caption = this.getAttribute('caption') || '';
 		this.innerHTML = `
       <style>.selected * {background-color:SelectedItem;color:SelectedItemText;}</style>
-      <input form type="hidden" name="data"/>
+      <input form type="hidden" name="kv-fringe"/>
 		<table>
-			<caption>${caption}</caption>
+			${caption ? `<caption>${caption}</caption>` : ''}
 			<thead>
 			<tr>
 				<th>Data</th>
 				<th>Tipo</th>
 				<th>Importo</th>
 				<th>Tessere</th>
-				<th style="width:1em"><i class="far fa-fw fa-plus" style="cursor:pointer"></i></th>
+				<th style="width:1em"><i class="fas fa-fw fa-plus" style="cursor:pointer"></i></th>
 			</tr>
 			</thead>
 			<tbody>
@@ -32,11 +33,10 @@ class KvFringe extends HTMLElement {
 				<td></td>
 			</tr>
 			</tfoot>
-		</table>
-    `;
+		</table>`;
 	}
 	connectedCallback() {
-		this.data = [];
+		this.data = [{ data: null, tipo: null, importo: null, tessere: null }];
 		this.tbody = this.querySelector("tbody");
 		this.output = this.querySelector('output');
 
@@ -45,7 +45,7 @@ class KvFringe extends HTMLElement {
 			this.dataInput = document.getElementById(forAttr);
 		}
 		if (!this.dataInput) {
-			this.dataInput = this.querySelector('[name="data"]');
+			this.dataInput = this.querySelector('[name="kv-fringe"]');
 		}
 		this.querySelector('.fa-plus').onclick = () => this.#insertRow();
 		this.tbody.addEventListener('click', e => {
@@ -57,12 +57,19 @@ class KvFringe extends HTMLElement {
 			}
 			this.#saveTable(true);
 		});
-
+		this.#render();
+	}
+	#render() {
 		try {
-			this.data = JSON.parse(this.dataInput.value);
+			if (!isNaN(Number(this.dataInput.value))) {
+				this.data = [{ data: null, tipo: this.dataInput.value, importo: null, tessere: null }];
+			} else {
+				this.data = JSON.parse(this.dataInput.value);
+			}
 		} catch {
 			this.data = [{ data: null, tipo: null, importo: null, tessere: null }];
 			this.dataInput.value = JSON.stringify(this.data);
+			this.dataInput.dispatchEvent(new Event('change', { bubbles: true }));
 		}
 		let tr = this.tbody.firstElementChild;
 		this.data.forEach((row, i) => {
@@ -85,11 +92,11 @@ class KvFringe extends HTMLElement {
 		const tr = event.target.closest('tr');
 		tr.classList.add('selected');
 		setTimeout(() => {
-			if (tr !== this.tbody.firstElementChild && confirm('Sicuri di voler eliminare la riga?'))
+			if (tr !== this.tbody.firstElementChild && (event.ctrlKey || confirm('Sicuri di voler eliminare la riga?')))
 				tr.remove();
 			else
 				tr.classList.remove('selected');
-			this.#saveTable();
+			this.#saveTable(true);
 		}, 0);
 	}
 	#saveTable(save = false) {
@@ -101,6 +108,7 @@ class KvFringe extends HTMLElement {
 			this.data.push(r);
 		});
 		this.dataInput.value = JSON.stringify(this.data);
+		this.dataInput.dispatchEvent(new Event('change', { bubbles: true }));
 		this.output.value = this.data.reduce((acc, r) => acc + Number(r.importo || 0), 0).toFixed(2);
 	}
 }
