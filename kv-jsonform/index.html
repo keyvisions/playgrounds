@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Form</title>
+    <link rel="stylesheet" href="./kv-jsonform.css">
+    <script defer src="./kv-jsonform.js"></script>
+</head>
+
+<body>
+    <form class="kvJSONForm">
+        <kv-jsonform name="myform" for="dati" content-type="application/xml"></kv-jsonform>
+
+        <!--textarea id="dati" name="dati"
+            style="display:block; width: 100%; height: 10rem;">{"text":"How are youwerwerwrwr","number":1232,"color":"#e22222","email":"name@email.it","checkbox":"","radio":"b","datetime-local":"2026-04-23T11:01","date":"2026-04-15","select":"green","multiple":"small,medium","aree":"506","bcheckbox":2}</textarea-->
+        <textarea id="dati" name="dati" style="display:block; width: 100%; height: 10rem;"><dataset><text>ciao</text><number>123</number><email>erewrewr</email><bcheckbox>7</bcheckbox><checkbox>c</checkbox><multiple>small,medium,large</multiple><aree>504,505,506,507</aree><radio>c</radio><datetime-local>2026-04-16T17:17</datetime-local><date>2026-04-15</date><range>82</range><url>asdasdads</url></dataset></textarea>
+
+        <label><span>text</span> <input form="myform" name="text"></label>
+        <label><span>number</span> <input form="myform" type="number" name="number"></label>
+        <label><span>color</span> <input form="myform" type="color" name="color" required></label>
+        <label><span>email</span> <input form="myform" type="email" name="email"></label>
+        <fieldset><span>checkbox</span>
+            <input form="myform" type="checkbox" name="bcheckbox">
+            <input form="myform" type="checkbox" name="bcheckbox">
+            <input form="myform" type="checkbox" name="bcheckbox">
+        </fieldset>
+        <fieldset><span>checkbox</span>
+            <input form="myform" type="checkbox" name="checkbox" value="a">
+            <input form="myform" type="checkbox" name="checkbox" value="b">
+            <input form="myform" type="checkbox" name="checkbox" value="c">
+        </fieldset>
+        <fieldset><span>radio</span>
+            <input form="myform" type="radio" name="radio" value="a">
+            <input form="myform" type="radio" name="radio" value="b">
+            <input form="myform" type="radio" name="radio" value="c">
+        </fieldset>
+        <label><span>datetime-local</span> <input form="myform" type="datetime-local" name="datetime-local"
+                required></label>
+        <label><span>date</span> <input form="myform" type="date" name="date" required></label>
+        <label><span>select</span> <select form="myform" name="*select">
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="blu">Blu</option>
+            </select></label>\
+        <label><span>multiple</span> <select form="myform" name="*multiple" multiple>
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+            </select></label>
+
+        <label><span>Area</span><input type="hidden" name="aree" value="28/05/2025 15:55:15"><select form="myform"
+                name="*aree" multiple="multiple" size="4">
+                <option value="504">Sicurezza</option>
+                <option value="505">Ambiente - Sistemi di Gestione</option>
+                <option value="506">Prevenzione incendi</option>
+                <option value="507">Altro</option>
+            </select></label>
+        <input form="myform" type="range" name="range">
+        <input form="myform" type="url" name="url">
+        <input form="myform" name="readonly" readonly>
+    </form>
+    <!--
+    <input x-webkit-speech><br>
+    <textarea x-webkit-speech></textarea>
+    -->
+</body>
+
+</html>
