@@ -35,7 +35,7 @@
             "name": "Debug wms",
             "request": "launch",
             "type": "msedge",
-            "file": "${workspaceFolder}/wms/index.html",
+            "file": "${workspaceFolder}/wms/index.html?lu=36590",
             "runtimeArgs": [
                 "--disable-web-security" // Allow CORS
             ]
