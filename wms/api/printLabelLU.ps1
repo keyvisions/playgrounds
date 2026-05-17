@@ -20,7 +20,7 @@ param(
 $connectionString = "Server=VMWEB;Database=DataDELCO;Integrated Security=True;"
 $query = @"
 SELECT 
-    LU.fPartNumber, LU.fDescription, LU.fLU, LU.fBatch, LU.fOrigin,
+    LU.fPartNumber, LU.fDescription, LU.fLU, LU.fBatch, LU.fOrigin, LU.fQuantity,
     JSON_VALUE(S.fData, '$.ip') AS PrinterIP,
     JSON_VALUE(S.fData, '$.port') AS PrinterPort
 FROM wms.vWarehouseLU LU
@@ -55,11 +55,10 @@ if ($result.fBatch -and $result.fOrigin) {
     $batchOrigin = "Origin: $($result.fOrigin)"
 }
 
-# Build ZPL using a here-string and embedded expressions for clarity and minimal concatenation
 $zpl = @"
 ^XA
-^PW799 ; 10 cm × 203 dpi / 2.54
-^LL400 ; 5 cm × 203 dpi / 2.54
+^PW799 ; 10 cm x 203 dpi / 2.54
+^LL400 ; 5 cm x 203 dpi / 2.54
 ^CF0,50
 ^FO25,50^FD$($result.fPartNumber)^FS
 ^CF0,30
@@ -72,6 +71,7 @@ $(if ($desc3) {"^FO25,165^FD$desc3^FS"})
 ^FO360,215^BC,100,N,N,N,A^FD$luStr^FS
 ^CF0,30
 $(if ($batchOrigin) {"^FO25,340^FD$batchOrigin^FS"})
+^FO799,340^FD$($result.fQuantity)^FS
 ^XZ
 "@
 

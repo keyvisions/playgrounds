@@ -99,22 +99,32 @@
 	},
 	{
 		"prefix": "A04",
-		"count": 10,
+		"count": 4,
 		"grid": "5x6"
 	},
 	{
 		"prefix": "A05",
-		"count": 10,
+		"count": 6,
 		"grid": "5x6"
 	},
 	{
 		"prefix": "A06",
-		"count": 10,
+		"count": 8,
 		"grid": "5x6"
 	},
 	{
 		"prefix": "A07",
-		"count": 11,
+		"count": 8,
+		"grid": "5x6"
+	},
+	{
+		"prefix": "A08",
+		"count": 9,
+		"grid": "5x6"
+	},
+	{
+		"prefix": "A09",
+		"count": 10,
 		"grid": "5x6"
 	},
 	{

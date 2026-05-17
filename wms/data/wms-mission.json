@@ -1,0 +1,110 @@
+{
+	"state": "working",
+	"notes": "Verifica data code",
+	"items": [
+		{
+			"partnumber": "-APV-12-24_LAINOX",
+			"description": "ALIMENTATORE APV-12-24 + FASTON + CONN MINI-M",
+			"docId": "SO-2026-00456",
+			"docNum": 456,
+			"docRow": 1,
+			"docDate": "2026-05-14",
+			"deliveryDate": "2026-05-17",
+			"requestedQty": 500,
+			"availableQty": 1000,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-COB480W2466-1550",
+			"description": "STRIP LED COB L=1550mm 3000k 24V IP66 11W CRI90",
+			"docId": "SO-2026-00456",
+			"docNum": 456,
+			"docRow": 2,
+			"docDate": "2026-05-14",
+			"deliveryDate": "2026-05-17",
+			"requestedQty": 25,
+			"availableQty": 30,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-COB480W2466-2350",
+			"description": "STRIP LED COB L=2350mm 3000k 24V IP66 11W CRI90",
+			"docId": "SO-2026-00456",
+			"docNum": 456,
+			"docRow": 3,
+			"docDate": "2026-05-14",
+			"deliveryDate": "2026-05-17",
+			"requestedQty": 40,
+			"availableQty": 35,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-CR900OP4",
+			"description": "BARRA L=900MM CRONO OP + STRIP LED 14,4W 4000K 24V",
+			"docId": "SO-2026-00456",
+			"docNum": 456,
+			"docRow": 4,
+			"docDate": "2026-05-14",
+			"deliveryDate": "2026-05-17",
+			"requestedQty": 52,
+			"availableQty": 52,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-KIT CABL HUT2",
+			"description": "Kit Cablaggio Pensilina HUT2",
+			"docId": "SO-2026-00456",
+			"docNum": 456,
+			"docRow": 5,
+			"docDate": "2026-05-14",
+			"deliveryDate": "2026-05-17",
+			"requestedQty": 100,
+			"availableQty": 133,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-KIT CABL HUT3/GPDUE",
+			"description": "Kit Cablaggio Pensilina HUT3/GPDUE",
+			"docId": "SO-2026-00789",
+			"docNum": 789,
+			"docRow": 1,
+			"docDate": "2026-05-15",
+			"deliveryDate": "2026-05-18",
+			"requestedQty": 75,
+			"availableQty": 80,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-KIT CABL HUT3/GPDUE",
+			"description": "Kit Cablaggio Pensilina HUT3/GPDUE",
+			"docId": "SO-2026-00789",
+			"docNum": 789,
+			"docRow": 2,
+			"docDate": "2026-05-15",
+			"deliveryDate": "2026-05-18",
+			"requestedQty": 67,
+			"availableQty": 67,
+			"pickQty": 0,
+			"luPicks": []
+		},
+		{
+			"partnumber": "-KIT I-BOX 2300X600",
+			"description": "Kit illum. I-Box Panca 2300x600 - Strip 5300mm",
+			"docId": "SO-2026-00321",
+			"docNum": 321,
+			"docRow": 1,
+			"docDate": "2026-05-12",
+			"deliveryDate": "2026-05-19",
+			"requestedQty": 15,
+			"availableQty": 15,
+			"pickQty": 0,
+			"luPicks": []
+		}
+	]
+}

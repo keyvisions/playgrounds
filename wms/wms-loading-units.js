@@ -1,11 +1,69 @@
 // deno-lint-ignore-file
 class WMSLoadingUnits extends HTMLElement {
+	#lang = "en";
+	#translations = {
+		dlg_head_packages: { it: "Imballi", en: "Packages", fr: "Emballages" },
+		dlg_head_quantity: { it: "Quantita", en: "Quantity", fr: "Quantite" },
+		dlg_head_batch: { it: "Data code", en: "Batch", fr: "Lot" },
+		dlg_head_origin: { it: "Origine", en: "Origin", fr: "Origine" },
+		dlg_add_row: { it: "Aggiungi riga", en: "Add row", fr: "Ajouter ligne" },
+		dlg_save: { it: "OK", en: "Save", fr: "Enregistrer" },
+		declared_qty: { it: "Quantita dichiarata", en: "Declared quantity", fr: "Quantite declaree" },
+		actual_qty: { it: "Quantita riscontrata", en: "Actual quantity", fr: "Quantite constatee" },
+		manage_lu: { it: "Gestisci UDC", en: "Manage LU", fr: "Gerer UL" },
+		generate_labels: { it: "Genera etichette", en: "Generate labels", fr: "Generer etiquettes" }
+	};
+
 	constructor() {
 		super();
 		this.classList.add('wms');
 	}
 
-	connectedCallback() {
+	#normalizeLang(rawLang, fallback = "en") {
+		const normalized = String(rawLang || "").trim().toLowerCase();
+		if (!normalized) return fallback;
+		if (normalized.startsWith("it")) return "it";
+		if (normalized.startsWith("en")) return "en";
+		if (normalized.startsWith("fr")) return "fr";
+		return fallback;
+	}
+
+	#findNearestLangInDom() {
+		let node = this.parentNode || this.getRootNode?.() || null;
+		while (node && node !== document) {
+			if (node.nodeType === 1 && typeof node.getAttribute === "function") {
+				const lang = String(node.getAttribute("lang") || "").trim();
+				if (lang) return lang;
+			}
+			node = node.parentNode || node.host || null;
+		}
+		return "";
+	}
+
+	#loadTranslations() {
+		this.#lang = this.hasAttribute("lang")
+			? this.#normalizeLang(this.getAttribute("lang"), "en")
+			: this.#normalizeLang(this.#findNearestLangInDom(), "en");
+	}
+
+	t(key, params = null) {
+		const value = this.#translations[key];
+		let text = "";
+		if (value && typeof value === "object" && !Array.isArray(value)) {
+			text = value[this.#lang] || value.en || value.it || Object.values(value)[0] || key;
+		} else if (typeof value === "string") {
+			text = value;
+		} else {
+			text = key;
+		}
+
+		if (!params) return text;
+		return text.replace(/\{(\w+)\}/g, (_match, name) => String(params[name] ?? ""));
+	}
+
+	async connectedCallback() {
+		this.#loadTranslations();
+
 		try {
 			const lusData = document.getElementById(this.getAttribute('for'))?.value || '[]';
 			this.lusData = JSON.parse(lusData)[this.getAttribute('refid')] ?? JSON.parse(this.textContent);
@@ -22,6 +80,7 @@ class WMSLoadingUnits extends HTMLElement {
 
 		const realQty = this.lusData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 		this.lusData.status = Math.sign(realQty - this.lusData.quantity);
+		delete this.lusData.totalLU;
 
 		this.textContent = '';
 
@@ -50,11 +109,11 @@ class WMSLoadingUnits extends HTMLElement {
 				<table>
 					<thead>
 						<tr>
-							<th>Imballi</th>
-							<th>Quantità</th>
-							<th>Data code</th>
-							<th>Origine</th>
-							<th class="addUnits" style="cursor: pointer"><i class="fa-solid fa-plus" style="font-size:1.5em" title="Aggiungi riga"></i></th>
+							<th>${this.t("dlg_head_packages")}</th>
+							<th>${this.t("dlg_head_quantity")}</th>
+							<th>${this.t("dlg_head_batch")}</th>
+							<th>${this.t("dlg_head_origin")}</th>
+							<th class="addUnits" style="cursor: pointer"><i class="fa-solid fa-plus" style="font-size:1.5em" title="${this.t("dlg_add_row")}"></i></th>
 						</tr>
 					</thead>
 					<tbody></tbody>
@@ -65,10 +124,7 @@ class WMSLoadingUnits extends HTMLElement {
 							<td colspan="3"></td>
 						</tr>
 						<tr>
-							<td colspan="5"><label><input type="checkbox" name="end">Fine carico</label></td>
-						</tr>
-						<tr>
-							<td colspan="5" style="text-align:right"><button id="saveData">OK</button></td>
+							<td colspan="5" style="text-align:right"><button id="saveData">${this.t("dlg_save")}</button></td>
 						</tr>
 					</tfoot>
 				</table>
@@ -80,8 +136,8 @@ class WMSLoadingUnits extends HTMLElement {
 
 	#render() {
 		this.insertAdjacentHTML('afterbegin', `
-			<span title="Quantità dichiarata">${this.lusData.quantity.toLocaleString() || ''}</span>/<span data-realquantity title="Quantità riscontrata"${this.lusData.totalLU ? '' : 'style="color:red"'}>${this.lusData.lu.reduce((a, b) => a + b.units * b.quantity, 0).toLocaleString() || '—'}</span>
-			<i class="fa-solid fa-fw fa-2x fa-boxes-stacked openDialog" title="Gestisci UDC" stype="cursor:pointer"></i>
+			<span title="${this.t("declared_qty")}">${this.lusData.quantity.toLocaleString() || ''}</span>/<span data-realquantity title="${this.t("actual_qty")}"${this.lusData.totalLU ? '' : 'style="color:red"'}>${this.lusData.lu.reduce((a, b) => a + b.units * b.quantity, 0).toLocaleString() || '—'}</span>
+			<i class="fa-solid fa-fw fa-2x fa-boxes-stacked openDialog" title="${this.t("manage_lu")}" style="cursor:pointer"></i>
 		`);
 
 		this.addEventListener('click', (e) => {
@@ -110,8 +166,8 @@ class WMSLoadingUnits extends HTMLElement {
 		const statusQty = Math.sign(realQty - this.lusData.quantity);
 		this.lusData.status = statusQty;
 
-		this.querySelector('[data-realquantity]').style.color = ['', 'green', 'red'].at(this.lusData.totalLU ? statusQty : -1);
-		this.querySelector('.fa-boxes-stacked').style.color = this.lusData.totalLU && this.lusData.lu.find(lu => !lu.firstLU) ? 'orange' : '';
+		this.querySelector('[data-realquantity]').style.color = ['', 'green', 'red'].at(statusQty);
+		this.querySelector('.fa-boxes-stacked').style.color = this.onaction && this.lusData.lu.some(lu => (lu.quantity || 0) > 0 && !lu.firstLU) ? 'orange' : '';
 
 		WMSLoadingUnits.#updateAggregatedInput(this.getAttribute('for') || this.constructor.name);
 	}
@@ -119,8 +175,6 @@ class WMSLoadingUnits extends HTMLElement {
 	static #dialogEvents(dialog) {
 		const form = dialog.querySelector('form');
 		const saveBtn = dialog.querySelector('#saveData');
-
-		const endCheckbox = form.querySelector('input[name="end"]');
 
 		dialog.querySelector('thead').addEventListener('click', (e) => {
 			if (e.target.tagName !== 'I')
@@ -146,12 +200,9 @@ class WMSLoadingUnits extends HTMLElement {
 
 			const refComponent = dialog.refComponent;
 
-			if (action.classList.contains('fa-trash') && (e.ctrlKey || confirm('Sicuri di voler eliminare la riga?'))) {
-				action.closest('tr').remove();
-				WMSLoadingUnits.#summary(dialog);
-
-			} else if (action.classList.contains('fa-barcode') && refComponent.onaction) {
+			if (action.classList.contains('fa-barcode') && refComponent.onaction) {
 				const i = parseInt(action.closest('td').dataset.i);
+				if ((refComponent.lusData.lu[i]?.quantity || 0) <= 0) return;
 				refComponent.lusData = await refComponent.onaction(refComponent.lusData, i);
 				action.closest('tr').querySelector('[name=firstLU]').value = refComponent.lusData.lu[i].firstLU || '';
 				if (refComponent.lusData.lu[i].firstLU)
@@ -169,6 +220,9 @@ class WMSLoadingUnits extends HTMLElement {
 				case 'units':
 					WMSLoadingUnits.#renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => WMSLoadingUnits.#rowToData(tr)) });
 				case 'quantity':
+					WMSLoadingUnits.#renderLUs(dialog, { lu: [...dialog.querySelectorAll('tbody tr')].map(tr => WMSLoadingUnits.#rowToData(tr)) });
+					break;
+				default:
 					WMSLoadingUnits.#summary(dialog);
 			}
 		});
@@ -181,48 +235,11 @@ class WMSLoadingUnits extends HTMLElement {
 			const statusQty = Math.sign(realQty - refComponent.lusData.quantity);
 			refComponent.lusData.status = statusQty;
 
-			refComponent.querySelector('[data-realquantity]').style.color = ['', 'green', 'red'].at(refComponent.lusData.totalLU ? statusQty : -1);
+			refComponent.querySelector('[data-realquantity]').style.color = ['', 'green', 'red'].at(statusQty);
 			refComponent.querySelector('[data-realquantity]').textContent = realQty.toLocaleString() || '—';
-			refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.lusData.totalLU && refComponent.lusData.lu.find(lu => !lu.firstLU) ? 'orange' : '';
+			refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.onaction && refComponent.lusData.lu.some(lu => (lu.quantity || 0) > 0 && !lu.firstLU) ? 'orange' : '';
 
 			WMSLoadingUnits.#updateAggregatedInput(refComponent.getAttribute('for'));
-		});
-
-		// Toggle put status
-		endCheckbox.addEventListener('change', (e) => {
-			const disabled = e.target.checked;
-
-			const dialog = document.getElementById('WMSLoadingUnitsDialog');
-			dialog.querySelector('.addUnits i').style.display = disabled ? 'none' : '';
-			dialog.querySelectorAll('.put').forEach(put => {
-				const lu = WMSLoadingUnits.#rowToData(put);
-				if (!(lu.units && lu.quantity))
-					put.remove();
-			});
-
-			dialog.querySelectorAll('input[type=number], input[type=text]').forEach(input => input.disabled = disabled);
-
-			dialog.querySelectorAll('.action').forEach(el => {
-				if (!disabled && el.closest('tr').previousElementSibling) {
-					el.className = 'action deleteUnits';
-					el.querySelector('i').insertAdjacentHTML('afterend', `<i class="fa-solid fa-trash" style="font-size:1.5em" title="Elimina riga"></i>`);
-				} else if (disabled && dialog.refComponent.onaction) {
-					el.className = `action printLabels ${el.querySelector('input').value ? '' : 'warning'}`;
-					el.querySelector('i').insertAdjacentHTML('afterend', `<i class="fa-solid fa-barcode" style="font-size:1.5em" title="Genera etichette"></i>`);
-				} else {
-					el.className = 'action';
-					el.querySelector('i').insertAdjacentHTML('afterend', `<i></i>`);
-				}
-				el.querySelector('i').remove();
-			});
-
-			if (disabled && !dialog.refComponent.lusData.hasOwnProperty('totalLU')) {
-				dialog.refComponent.lusData.totalLU = 1;
-			} else if (!disabled) {
-				delete dialog.refComponent.lusData.totalLU;
-			}
-
-			WMSLoadingUnits.#saveData(dialog);
 		});
 
 		saveBtn.addEventListener('click', (e) => {
@@ -244,17 +261,13 @@ class WMSLoadingUnits extends HTMLElement {
 				refComponent.lusData.lu.push(lu)
 		});
 
-		delete refComponent.lusData.totalLU;
-		if (dialog.querySelector('[type=checkbox]').checked)
-			refComponent.lusData.totalLU = refComponent.lusData.lu.reduce((a, b) => a + b.units, 0);
-
 		const realQty = refComponent.lusData.lu.reduce((a, b) => a + b.units * b.quantity, 0);
 		const statusQty = Math.sign(realQty - refComponent.lusData.quantity);
 		refComponent.lusData.status = statusQty;
 
-		refComponent.querySelector('[data-realquantity]').style.color = ['', 'green', 'red'].at(refComponent.lusData.totalLU ? statusQty : -1);
+		refComponent.querySelector('[data-realquantity]').style.color = ['', 'green', 'red'].at(statusQty);
 		refComponent.querySelector('[data-realquantity]').textContent = realQty.toLocaleString() || '—';
-		refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.lusData.totalLU && refComponent.lusData.lu.find(lu => !lu.firstLU) ? 'orange' : '';
+		refComponent.querySelector('.fa-boxes-stacked').style.color = refComponent.onaction && refComponent.lusData.lu.some(lu => (lu.quantity || 0) > 0 && !lu.firstLU) ? 'orange' : '';
 
 		WMSLoadingUnits.#updateAggregatedInput(refComponent.getAttribute('for'));
 
@@ -265,24 +278,20 @@ class WMSLoadingUnits extends HTMLElement {
 
 	static #renderLUs = (dialog, data) => {
 		const tbody = dialog.querySelector('tbody');
-
-		const barcode = data.hasOwnProperty('totalLU');
-		dialog.querySelector('[name=end]').checked = barcode;
-		dialog.querySelector('.addUnits i').style.display = barcode ? 'none' : '';
+		const allowBarcode = Boolean(dialog.refComponent?.onaction);
+		dialog.querySelector('.addUnits i').style.display = '';
 
 		tbody.innerHTML = '';
 		data.lu.forEach((lu, i, lus) => {
 			const tr = document.createElement('tr');
 			tr.className = 'put';
 			tr.innerHTML = `
-				   <td><input name="units" type="number" onfocus="this.oldvalue = this.value" value="${lu.units || 1}" min="1" max="999" style="width:3em" required ${barcode ? 'disabled' : ''}></td>
-				   <td><input name="quantity" type="number" min="1" max="99999999" value="${lu.quantity || ''}" style="width:5em" required ${barcode ? 'disabled' : ''}></td>
-				   <td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em" ${barcode ? 'disabled' : ''}></td>
-				   <td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em" ${barcode ? 'disabled' : ''}></td>`;
-			if (!barcode && tbody.children.length > 0)
-				tr.innerHTML += `<td data-i="${i}" class="action deleteUnits" style="cursor: pointer"><input type="hidden" name="firstLU" value="${lu.firstLU || ''}"><i class="fa-solid fa-trash" style="font-size:1.5em" title="Elimina riga"></i></td>`;
-			else if (barcode && dialog.refComponent.onaction)
-				tr.innerHTML += `<td data-i="${i}" class="action printLabels ${lu.firstLU ? '' : 'warning'}" style="cursor: pointer"><input type="hidden" name="firstLU" value="${lu.firstLU || ''}"><i class="fa-solid fa-barcode" style="font-size:1.5em" title="Genera etichette"></i></td>`;
+				   <td><input name="units" type="number" onfocus="this.oldvalue = this.value" value="${lu.units || 1}" min="1" max="999" style="width:3em" required></td>
+				   <td><input name="quantity" type="number" min="1" max="99999999" value="${lu.quantity || ''}" style="width:5em" required></td>
+				   <td><input name="batch" type="text" value="${lu.batch || ''}" style="width:5em"></td>
+				   <td><input name="origin" type="text" value="${lu.origin || ''}" style="width:5em"></td>`;
+			if (allowBarcode && (lu.quantity || 0) > 0)
+				tr.innerHTML += `<td data-i="${i}" class="action printLabels ${lu.firstLU ? '' : 'warning'}" style="cursor: pointer"><input type="hidden" name="firstLU" value="${lu.firstLU || ''}"><i class="fa-solid fa-barcode" style="font-size:1.5em" title="${dialog.refComponent.t("generate_labels")}"></i></td>`;
 			else
 				tr.innerHTML += `<td data-i="${i}" class="action"><input type="hidden" name="firstLU" value="${lu.firstLU || ''}"><i></i></td>`;
 
@@ -313,7 +322,7 @@ class WMSLoadingUnits extends HTMLElement {
 			totalQuantity += units * quantity;
 		});
 		dialog.querySelector('[name=totalUnits]').innerHTML = totalUnits;
-		dialog.querySelector('[name=totalQuantity]').innerHTML = `${lusData.quantity}/<span style="color:${lusData.quantity == totalQuantity ? 'inherit' : 'red'}">${totalQuantity}</span>`;
+		dialog.querySelector('[name=totalQuantity]').innerHTML = `${lusData.quantity}/<span style="color:${lusData.quantity === totalQuantity ? 'inherit' : 'red'}">${totalQuantity}</span>`;
 	};
 
 	static #updateAggregatedInput(id) {

@@ -9,6 +9,7 @@
 	<script defer src="./wms-map.js"></script>
 	<script defer src="./wms-structure.js"></script>
 	<script defer src="./wms-loading-units.js"></script>
+	<script defer src="./wms-mission.js"></script>
 	<script defer src="./wms.js"></script>
 
 	<link rel="stylesheet" href="./wms.css" />
@@ -26,8 +27,19 @@
 	</style>
 
 	<script>
-		let _URL;
+		let _URL = 'https://portale.delco.it';
 		document.addEventListener("DOMContentLoaded", () => {
+			fetch("./data/wms-mission.json")
+				.then(res => res.ok ? res.json() : null)
+				.then(data => {
+					if (!data) return;
+					const missionInput = document.getElementById("missiondata");
+					if (!missionInput) return;
+					missionInput.value = JSON.stringify(data);
+					missionInput.dispatchEvent(new Event("input", { bubbles: true }));
+				})
+				.catch(() => console.log("Unable to load ./data/wms-mission.json"));
+
 			fetch(".data")
 				.then(res => res.text())
 				.then(res => {
@@ -70,8 +82,9 @@
 			try { return res.json(); } catch (_err) { return d; }
 		}
 		async function verifyCode(code) {
+			code = code.toUpperCase().replace(/^0+/, '');
 			try {
-				const response = await fetch(`${_URL}?*r=5514&code=${encodeURIComponent(code.toUpperCase())}`, {
+				const response = await fetch(`${_URL}?*r=5514&code=${encodeURIComponent(code)}`, {
 					headers: { 'Accept': 'application/json' }
 				});
 				return await response.json();
@@ -88,7 +101,12 @@
 				return false;
 			}
 		}
-		async function pickLU(data) { }
+		function missionConfirmed(data) {
+			console.log("Mission confirmed", data);
+			return data;
+		}
+
+
 	</script>
 </head>
 
@@ -105,7 +123,7 @@
 				<tbody>
 					<tr>
 						<td>ABC</td>
-						<td><wms-loading-units for="qty" refid="123" itemid="ABC" onaction="manageLU()"></wms-loading-units>
+						<td><wms-loading-units frefid="123" itemid="ABC" onaction="manageLU()"></wms-loading-units>
 						</td>
 					</tr>
 					<tr>
@@ -120,18 +138,23 @@
 					</tr>
 				</tbody>
 			</table>
-			<input id="qty" name="qty"
+			<input type="hidden" id="qty" name="qty"
 				value='{"123":{"refid":"123","itemid":"ABC","quantity":100,"lu":[{"units":1,"quantity":102,"batch":"2026+","origin":"ITA","coded":true}],"status":1,"totalLU":1},"456":{"refid":"456","itemid":"DEF","quantity":200,"lu":[{"units":1,"quantity":200,"batch":"","origin":"","coded":false}],"status":0}}'>
 			<button onclick="return put(event)">Status</button>
 		</div>
-		<!--wms-put oncheck="verifyCode()" onsubmit="putLU()" refmap="planimetry"></wms-put-->
-		<!--wms-pick oncheck="verifyCode()" onsubmit="pickLU()" refmap="planimetry"></wms-pick-->
+		<wms-put oncheck="verifyCode()" onsubmit="putLU()" refmap="planimetry"></wms-put>
 	</div>
 
-	<!--div style="display: flex; gap: 1rem;">
+	<div style="display: flex; gap: 1rem;">
 		<wms-structure onprint="printLabelsSU(data)" refmap="planimetry">./data/wms-structure.json</wms-structure>
-		<wms-map id="planimetry" name="fMap" style="flex: 1 1 0; min-width:0;">./media/warehouse.svg</wms-map>
-	</div-->
+		<wms-map id="planimetry" name="fMap" style="flex: 1 1 0; min-width:0;" mode="pick">./media/warehouse.svg</wms-map>
+	</div>
+
+	<div style="display: flex; gap: 1rem;">
+		<input type="hidden" id="missiondata">
+		<wms-mission for="missiondata" oncheck="verifyCode()" onconfirm="missionConfirmed()"
+			refmap="planimetry"></wms-mission>
+	</div>
 </body>
 
 </html>
