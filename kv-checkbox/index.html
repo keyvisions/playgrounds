@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<script defer src="./kv-checkbox.js"></script>
+</head>
+
+<body>
+	<form id="form">
+		<label><input type="checkbox" name="fufi"> checkbox</label>
+		<tri-checkbox name="opt"> tri-checkbox</tri-checkbox>
+		<button>Invia</button>
+	</form>
+
+	<script>
+		document.getElementById("form").addEventListener("submit", e => {
+			e.preventDefault();
+			console.log([...new FormData(e.target)]);
+		});
+	</script>
+</body>
+
+</html>
