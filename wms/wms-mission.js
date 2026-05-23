@@ -1,41 +1,45 @@
 // deno-lint-ignore-file no-window
 class WMSMission extends HTMLElement {
-	#missionData = { state: "working", notes: "", items: [] };
+	#missionData = { state: "working", notes: "", warehouseNotes: "", items: [] };
 	#translations = {
-		state_working: { it: "in lavorazione", en: "working", fr: "en cours" },
-		state_confirmed: { it: "confermata", en: "confirmed", fr: "confirmee" },
-		state_picking: { it: "in prelievo", en: "picking", fr: "en prelevement" },
-		state_closed: { it: "chiusa", en: "closed", fr: "cloturee" },
-		mission_title: { it: "Missione", en: "Mission", fr: "Mission" },
-		notes_label: { it: "Note", en: "Notes", fr: "Notes" },
-		notes_placeholder: { it: "Istruzioni per magazzino...", en: "Warehouse instructions...", fr: "Instructions entrepot..." },
-		scan_initial: { it: "Scansiona UdC", en: "Scan LU", fr: "Scannez UL" },
-		head_partnumber: { it: "Part Number", en: "Part Number", fr: "Reference" },
-		head_docinfo: { it: "Num. Doc<br>Data Doc", en: "Doc No.<br>Doc Date", fr: "Num. Doc<br>Date Doc" },
-		head_requested: { it: "Richiesti", en: "Requested", fr: "Demandes" },
-		head_available: { it: "Disponibili", en: "Available", fr: "Disponibles" },
-		head_pick: { it: "Preleva", en: "Pick", fr: "Prelever" },
-		head_picked: { it: "Prelevati", en: "Picked", fr: "Preleves" },
-		head_delivery_date: { it: "Data<br>consegna", en: "Delivery<br>date", fr: "Date<br>livraison" },
-		btn_reopen: { it: "Riapri missione", en: "Reopen mission", fr: "Rouvrir mission" },
-		rows_empty: { it: "Nessuna riga missione", en: "No mission rows", fr: "Aucune ligne de mission" },
-		lu_none: { it: "Nessun prelievo", en: "No picks", fr: "Aucun prelevement" },
-		lu_tooltip_item: { it: "{lu}: prelevato {qty}{left}", en: "{lu}: picked {qty}{left}", fr: "{lu}: preleve {qty}{left}" },
-		lu_left_suffix: { it: ", residuo {leftQty}", en: ", left {leftQty}", fr: ", reste {leftQty}" },
-		lu_tag: { it: "{lu} (prel {qty}{left})", en: "{lu} (pick {qty}{left})", fr: "{lu} (prel {qty}{left})" },
-		stock_none: { it: "Nessuna quantita", en: "No quantity", fr: "Aucune quantite" },
-		stock_sufficient: { it: "Quantita sufficiente", en: "Sufficient quantity", fr: "Quantite suffisante" },
-		stock_some: { it: "Quantita parziale", en: "Some quantity", fr: "Quantite partielle" },
-		next_confirm: { it: "Conferma missione", en: "Confirm mission", fr: "Confirmer mission" },
-		next_picking: { it: "Inizia picking", en: "Start picking", fr: "Commencer prelevement" },
-		next_close: { it: "Chiudi missione", en: "Close mission", fr: "Fermer mission" },
-		scan_move_to_picking: { it: "Porta la missione in stato prelievo per scansionare UdC", en: "Move mission to picking state to scan LU", fr: "Passez la mission en prelevement pour scanner UL" },
-		scan_picker_hint: { it: "Scansiona UdC usando il picker sotto", en: "Scan LU using the picker below", fr: "Scannez UL avec le picker ci-dessous" },
-		scan_ready: { it: "Pronto per scansione UdC", en: "Ready to scan LU", fr: "Pret a scanner UL" },
-		row_not_found: { it: "Nessuna riga missione per partnumber {partnumber}", en: "No mission row for partnumber {partnumber}", fr: "Aucune ligne mission pour partnumber {partnumber}" },
-		scan_match_ok: { it: "UdC associata a {partnumber}. Conferma prelevato e residuo reale.", en: "LU matched to {partnumber}. Confirm picked and actual left quantity.", fr: "UL associee a {partnumber}. Confirmez preleve et reste reel." },
-		picked_qty_gt_zero: { it: "La quantita prelevata deve essere maggiore di zero", en: "Picked quantity must be greater than zero", fr: "La quantite prelevee doit etre superieure a zero" },
-		scan_saved: { it: "Prelievo salvato per UdC {lu}", en: "Saved pick for LU {lu}", fr: "Prelevement enregistre pour UL {lu}" }
+		lu_acronym: { it: "UdC", en: "LU" },
+		state_working: { it: "in lavorazione", en: "working" },
+		state_confirmed: { it: "confermata", en: "confirmed" },
+		state_picking: { it: "in prelievo", en: "picking" },
+		state_closed: { it: "chiusa", en: "closed" },
+		notes_label: { it: "Note", en: "Notes" },
+		notes_placeholder: { it: "Note per magazzino...", en: "Warehouse notes..." },
+		warehouse_notes_label: { it: "Note magazzino", en: "Warehouse notes" },
+		warehouse_notes_placeholder: { it: "Note operative del magazzino...", en: "Warehouse operative notes..." },
+		scan_initial: { it: "Scansiona UdC", en: "Scan LU" },
+		head_partnumber: { it: "Part Number", en: "Part Number" },
+		head_docinfo: { it: "Ordine", en: "Order" },
+		head_requested: { it: "Quantità<br>richiesta", en: "Requested<br>quantity" },
+		head_available: { it: "Quantità<br>disponibile", en: "Available<br>quantity" },
+		head_pick: { it: "Quantità<br>da prelevare", en: "Quantity<br>to pick" },
+		head_picked: { it: "Quantità<br>prelevata", en: "Picked<br>quantity" },
+		head_delivery_date: { it: "Data<br>consegna", en: "Delivery<br>date" },
+		btn_reopen: { it: "Riapri missione", en: "Reopen mission" },
+		rows_empty: { it: "Nessuna riga missione", en: "No mission rows" },
+		lu_none: { it: "Nessun prelievo", en: "No picks" },
+		lu_tooltip_item: { it: "{lu}: prelevato {qty}{left}", en: "{lu}: picked {qty}{left}" },
+		lu_left_suffix: { it: ", residuo {leftQty}", en: ", left {leftQty}" },
+		lu_tag: { it: "{lu} (prel {qty}{left})", en: "{lu} (pick {qty}{left})" },
+		stock_none: { it: "Nessuna quantita", en: "No quantity" },
+		stock_sufficient: { it: "Quantita sufficiente", en: "Sufficient quantity" },
+		stock_some: { it: "Quantita parziale", en: "Some quantity" },
+		toggle_stock_none: { it: "Mostra righe non evadibili", en: "Show no stock rows" },
+		next_confirm: { it: "Conferma missione", en: "Confirm mission" },
+		next_picking: { it: "Inizia picking", en: "Start picking" },
+		next_close: { it: "Chiudi missione", en: "Close mission" },
+		scan_move_to_picking: { it: "Porta la missione in stato prelievo per scansionare UdC", en: "Move mission to picking state to scan LU" },
+		scan_picker_hint: { it: "Scansiona UdC usando il picker sotto", en: "Scan LU using the picker below" },
+		scan_ready: { it: "Pronto per scansione UdC", en: "Ready to scan LU" },
+		row_not_found: { it: "Nessuna riga missione per partnumber {partnumber}", en: "No mission row for partnumber {partnumber}" },
+		scan_match_ok: { it: "UdC associata a {partnumber}. Conferma prelevato e residuo reale.", en: "LU matched to {partnumber}. Confirm picked and actual left quantity." },
+		picked_qty_gt_zero: { it: "La quantita prelevata deve essere maggiore di zero", en: "Picked quantity must be greater than zero" },
+		scan_saved: { it: "Prelievo salvato per UdC {lu}", en: "Saved pick for LU {lu}" },
+		row_picked: { it: "Riga prelevata", en: "Row picked" }
 	};
 	#lang = "en";
 	#baseAvailableByPart = new Map();
@@ -44,14 +48,21 @@ class WMSMission extends HTMLElement {
 	#nextBtn;
 	#reopenBtn;
 	#notesInput;
+	#warehouseNotesInput;
 	#missionPick;
+	#missionPickDialog;
+	#pickDialog;
+	#pickDialogPartnumber;
 	#scanStatus;
+	#stockNoneToggle;
 	#onchange;
-	#onconfirm;
+	#onsubmit;
 	#outputInput;
 	#isApplyingExternalUpdate = false;
 	#activeRowIndex = -1;
 	#pendingScan = null;
+	#showStockNoneRows = false;
+	#role = "all";
 
 	constructor() {
 		super();
@@ -59,14 +70,15 @@ class WMSMission extends HTMLElement {
 	}
 
 	static get observedAttributes() {
-		return ["state", "refmap", "lang"];
+		return ["state", "refmap", "lang", "role"];
 	}
 
 	async connectedCallback() {
 		this.#onchange = this.#resolveHandler("onchange");
-		this.#onconfirm = this.#resolveHandler("onconfirm");
+		this.#onsubmit = this.#resolveHandler("onsubmit");
 		this.#ensureOutputInput();
 		this.#loadTranslations();
+		this.#role = this.#normalizeRole(this.getAttribute("role") || "all");
 
 		this.#missionData = this.#normalizeMission(await this.#loadInitialMission());
 		this.#initializeBaseAvailability();
@@ -103,6 +115,13 @@ class WMSMission extends HTMLElement {
 			return;
 		}
 
+		if (name === "role") {
+			this.#role = this.#normalizeRole(newValue || "all");
+			if (!this.#stateBadge) return;
+			this.#updateStateUI();
+			return;
+		}
+
 		if (name === "refmap") {
 			this.#applyRefmap();
 		}
@@ -122,6 +141,8 @@ class WMSMission extends HTMLElement {
 		this.#recomputeAvailability();
 		this.setAttribute("state", this.#missionData.state);
 		this.#renderRows();
+		if (this.#notesInput) this.#notesInput.value = this.#missionData.notes || "";
+		if (this.#warehouseNotesInput) this.#warehouseNotesInput.value = this.#missionData.warehouseNotes || "";
 		this.#updateStateUI();
 		this.#syncOutput();
 	}
@@ -184,6 +205,7 @@ class WMSMission extends HTMLElement {
 			this.#recomputeAvailability();
 			this.setAttribute("state", this.#missionData.state);
 			if (this.#notesInput) this.#notesInput.value = this.#missionData.notes || "";
+			if (this.#warehouseNotesInput) this.#warehouseNotesInput.value = this.#missionData.warehouseNotes || "";
 			this.#renderRows();
 			this.#updateStateUI();
 			this.#syncOutput();
@@ -204,7 +226,12 @@ class WMSMission extends HTMLElement {
 		if (!normalized) return fallback;
 		if (normalized.startsWith("it")) return "it";
 		if (normalized.startsWith("en")) return "en";
-		if (normalized.startsWith("fr")) return "fr";
+		return fallback;
+	}
+
+	#normalizeRole(rawRole, fallback = "all") {
+		const normalized = String(rawRole || "").trim().toLowerCase();
+		if (["sales", "warehouse", "all"].includes(normalized)) return normalized;
 		return fallback;
 	}
 
@@ -261,15 +288,14 @@ class WMSMission extends HTMLElement {
 				const lu = String(rawLU || "").trim();
 				const qty = Math.max(0, this.#toInt(rawQty, 0));
 				if (!lu || qty <= 0) return null;
-				return { lu, qty, leftQty: 0 };
+				return { lu, qty };
 			}
 
 			if (typeof entry !== "object") return null;
 			const lu = String(entry.lu || entry.luId || entry.code || entry.id || "").trim();
 			const qty = Math.max(0, this.#toInt(entry.qty ?? entry.quantity ?? entry.pickedQty, 0));
-			const leftQty = Math.max(0, this.#toInt(entry.leftQty ?? entry.remainingQty ?? entry.luLeftQty, 0));
 			if (!lu || qty <= 0) return null;
-			return { lu, qty, leftQty };
+			return { lu, qty };
 		};
 
 		if (Array.isArray(raw)) {
@@ -298,19 +324,10 @@ class WMSMission extends HTMLElement {
 			return `<span class="mission-lu-empty">${this.#escapeHtml(this.#t("lu_none"))}</span>`;
 		}
 
-		const tooltip = luPicks
-			.map(entry => {
-				const left = entry.leftQty > 0 ? this.#t("lu_left_suffix", { leftQty: entry.leftQty }) : "";
-				return this.#t("lu_tooltip_item", { lu: this.#escapeHtml(entry.lu), qty: entry.qty, left });
-			})
-			.join(" | ");
-
 		return luPicks
 			.map(entry => {
-				const left = Math.max(0, this.#toInt(entry.leftQty, 0));
-				const suffix = left > 0 ? this.#t("lu_left_suffix", { leftQty: left }) : "";
-				const text = this.#t("lu_tag", { lu: this.#escapeHtml(entry.lu), qty: entry.qty, left: suffix });
-				return `<span class="mission-lu-tag" title="${tooltip}">${text}</span>`;
+				const text = `${this.#escapeHtml(entry.lu)}: ${entry.qty}`;
+				return `<span class="mission-lu-tag"><span class="mission-lu-summary">${this.#t("lu_acronym")} ${text}</span><button type="button" class="mission-lu-delete" data-role="deleteLuPick" data-lu="${this.#escapeHtml(entry.lu)}" aria-label="delete"><i class="fa-solid fa-xmark"></i></button></span>`;
 			})
 			.join("");
 	}
@@ -321,7 +338,7 @@ class WMSMission extends HTMLElement {
 			.map(entry => {
 				const qty = Math.min(entry.qty, remaining);
 				remaining -= qty;
-				return { lu: entry.lu, qty, leftQty: Math.max(0, this.#toInt(entry.leftQty, 0)) };
+				return { lu: entry.lu, qty };
 			})
 			.filter(entry => entry.qty > 0);
 	}
@@ -352,11 +369,16 @@ class WMSMission extends HTMLElement {
 
 	#updateRowVisibility() {
 		if (!this.#tbody) return;
+		const isWorkingState = this.#missionData.state === "working";
 		const shouldFilterRows = ["confirmed", "picking", "closed"].includes(this.#missionData.state);
 		this.#missionData.items.forEach((item, index) => {
 			const row = this.#tbody.children[index];
 			if (!row) return;
-			row.style.display = shouldFilterRows && item.pickQty <= 0 ? "none" : "";
+			const hideByState = shouldFilterRows && item.pickQty <= 0;
+			const hideByStockNone = isWorkingState && !this.#showStockNoneRows && item.availableQty <= 0 && item.pickQty <= 0;
+			row.style.display = hideByState || hideByStockNone ? "none" : "";
+			if (row.querySelector("[name=pickQty]"))
+				row.querySelector("[name=pickQty]").disabled = shouldFilterRows;
 		});
 	}
 
@@ -391,13 +413,23 @@ class WMSMission extends HTMLElement {
 		return pickedByPart;
 	}
 
+	#sumReservedByPart() {
+		const reservedByPart = new Map();
+		this.#missionData.items.forEach(item => {
+			const key = item.partnumber || "";
+			const reservedQty = Math.max(item.pickQty, item.pickedQty);
+			reservedByPart.set(key, (reservedByPart.get(key) || 0) + reservedQty);
+		});
+		return reservedByPart;
+	}
+
 	#initializeBaseAvailability() {
-		const pickedByPart = this.#sumPickedByPart();
+		const reservedByPart = this.#sumReservedByPart();
 
 		this.#baseAvailableByPart.clear();
 		this.#missionData.items.forEach(item => {
 			const key = item.partnumber || "";
-			const candidateBase = item.availableQty + (pickedByPart.get(key) || 0);
+			const candidateBase = item.availableQty + (reservedByPart.get(key) || 0);
 			const current = this.#baseAvailableByPart.get(key) || 0;
 			if (candidateBase > current)
 				this.#baseAvailableByPart.set(key, candidateBase);
@@ -405,12 +437,12 @@ class WMSMission extends HTMLElement {
 	}
 
 	#recomputeAvailability() {
-		const pickedByPart = this.#sumPickedByPart();
+		const reservedByPart = this.#sumReservedByPart();
 
 		this.#missionData.items.forEach(item => {
 			const key = item.partnumber || "";
 			const base = this.#baseAvailableByPart.get(key) || 0;
-			const remaining = Math.max(0, base - (pickedByPart.get(key) || 0));
+			const remaining = Math.max(0, base - (reservedByPart.get(key) || 0));
 			item.availableQty = remaining;
 		});
 	}
@@ -421,27 +453,29 @@ class WMSMission extends HTMLElement {
 
 		const key = row.partnumber || "";
 		const base = this.#baseAvailableByPart.get(key) || 0;
-		const pickedByPart = this.#sumPickedByPart();
-		const othersPicked = (pickedByPart.get(key) || 0) - row.pickedQty;
-		return Math.max(0, base - othersPicked);
+		const reservedByPart = this.#sumReservedByPart();
+		const rowReserved = Math.max(row.pickQty, row.pickedQty);
+		const othersReserved = (reservedByPart.get(key) || 0) - rowReserved;
+		return Math.max(0, base - othersReserved);
 	}
 
 	#stockStatus(item) {
 		if (item.availableQty <= 0)
 			return { className: "none", title: this.#t("stock_none") };
-		if (item.availableQty >= item.requestedQty)
+		if (item.availableQty >= item.requestedQty - item.pickQty)
 			return { className: "sufficient", title: this.#t("stock_sufficient") };
 		return { className: "some", title: this.#t("stock_some") };
 	}
 
 	#normalizeMission(rawMission) {
-		const fallback = { state: "working", notes: "", items: [] };
+		const fallback = { state: "working", notes: "", warehouseNotes: "", items: [] };
 		if (!rawMission) return fallback;
 
 		if (Array.isArray(rawMission)) {
 			return {
 				state: this.#normalizeState(this.getAttribute("state") || "working"),
 				notes: "",
+				warehouseNotes: "",
 				items: rawMission.map(item => this.#normalizeItem(item))
 			};
 		}
@@ -452,6 +486,7 @@ class WMSMission extends HTMLElement {
 		return {
 			state: this.#normalizeState(rawMission.state || this.getAttribute("state") || "working"),
 			notes: String(rawMission.notes || rawMission.note || ""),
+			warehouseNotes: String(rawMission.warehouseNotes || rawMission.warehouseNote || rawMission.whNotes || ""),
 			items: Array.isArray(items) ? items.map(item => this.#normalizeItem(item)) : []
 		};
 	}
@@ -492,6 +527,60 @@ class WMSMission extends HTMLElement {
 		return this.#missionData.items && this.#missionData.items.some(item => item.pickQty > 0);
 	}
 
+	#getNextActionForState(state) {
+		const nextByRoleState = {
+			sales: {
+				working: { label: this.#t("next_confirm"), next: "confirmed" },
+				confirmed: null,
+				picking: null,
+				closed: null
+			},
+			warehouse: {
+				working: null,
+				confirmed: { label: this.#t("next_picking"), next: "picking" },
+				picking: { label: this.#t("next_close"), next: "closed" },
+				closed: null
+			},
+			all: {
+				working: { label: this.#t("next_confirm"), next: "confirmed" },
+				confirmed: { label: this.#t("next_picking"), next: "picking" },
+				picking: { label: this.#t("next_close"), next: "closed" },
+				closed: null
+			}
+		};
+
+		return (nextByRoleState[this.#role] || nextByRoleState.all)[state] || null;
+	}
+
+	#getReopenTargetForState(state) {
+		const reopenByRoleState = {
+			sales: {
+				confirmed: "working"
+			},
+			warehouse: {
+				picking: "confirmed",
+				closed: "confirmed"
+			},
+			all: {
+				confirmed: "working",
+				picking: "working",
+				closed: "working"
+			}
+		};
+
+		return reopenByRoleState[this.#role]?.[state] || null;
+	}
+
+	#canTransitionTo(nextState) {
+		if (nextState === "confirmed" && this.#missionData.state === "working" && !this.#hasPickableRows()) {
+			return false;
+		}
+		if (nextState === "picking" && !this.#hasPickableRows()) {
+			return false;
+		}
+		return true;
+	}
+
 	#getPickablePartnumbers() {
 		if (!this.#missionData.items) return [];
 		return this.#missionData.items
@@ -520,7 +609,7 @@ class WMSMission extends HTMLElement {
 	}
 
 	#applyRefmap() {
-		if (!this.#missionPick) return;
+		if (!this.#missionPick && !this.#missionPickDialog) return;
 
 		let refmap = (this.getAttribute("refmap") || "").trim();
 		let mapElement = refmap ? document.getElementById(refmap) : null;
@@ -541,18 +630,23 @@ class WMSMission extends HTMLElement {
 		}
 
 		if (refmap) {
-			this.#missionPick.setAttribute("refmap", refmap);
+			this.#missionPick?.setAttribute("refmap", refmap);
+			this.#missionPickDialog?.setAttribute("refmap", refmap);
 			(mapElement || document.getElementById(refmap))?.setAttribute("mode", "pick");
 			return;
 		}
 
-		this.#missionPick.removeAttribute("refmap");
+		this.#missionPick?.removeAttribute("refmap");
+		this.#missionPickDialog?.removeAttribute("refmap");
 	}
 
 	#render() {
 		this.innerHTML = `
 			<div class="mission-head">
-				<strong>${this.#t("mission_title")}</strong>
+				<label class="mission-stocknone-toggle">
+					<input type="checkbox" data-role="stockNoneToggle" ${this.#showStockNoneRows ? "checked" : ""}>
+					<span>${this.#t("toggle_stock_none")}</span>
+				</label>
 				<span class="mission-state" data-role="state"></span>
 			</div>
 			<label class="mission-notes">
@@ -563,6 +657,10 @@ class WMSMission extends HTMLElement {
 				<span class="mission-scan-status info" data-role="scanStatus">${this.#t("scan_initial")}</span>
 				<wms-pick data-role="missionPick" oncheck="verifyCode()"></wms-pick>
 			</div>
+			<dialog class="wms mission-pick-dialog" data-role="pickDialog">
+				<header><span data-role="pickDialogPartnumber"></span><span style="cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark" style="font-size:1.5em"></i></span></header>
+				<wms-pick data-role="missionPickDialog" oncheck="verifyCode()"></wms-pick>
+			</dialog>
 			<table>
 				<thead>
 					<tr>
@@ -578,6 +676,10 @@ class WMSMission extends HTMLElement {
 				</thead>
 				<tbody></tbody>
 			</table>
+			<label class="mission-notes">
+				<span>${this.#t("warehouse_notes_label")}</span>
+				<textarea data-role="warehouseNotes" rows="3" placeholder="${this.#t("warehouse_notes_placeholder")}"></textarea>
+			</label>
 			<div class="mission-actions">
 				<button type="button" data-role="next"></button>
 				<button type="button" data-role="reopen">${this.#t("btn_reopen")}</button>
@@ -589,10 +691,16 @@ class WMSMission extends HTMLElement {
 		this.#nextBtn = this.querySelector('[data-role="next"]');
 		this.#reopenBtn = this.querySelector('[data-role="reopen"]');
 		this.#notesInput = this.querySelector('[data-role="missionNotes"]');
+		this.#warehouseNotesInput = this.querySelector('[data-role="warehouseNotes"]');
+		this.#stockNoneToggle = this.querySelector('[data-role="stockNoneToggle"]');
 		this.#missionPick = this.querySelector('[data-role="missionPick"]');
+		this.#missionPickDialog = this.querySelector('[data-role="missionPickDialog"]');
+		this.#pickDialog = this.querySelector('[data-role="pickDialog"]');
+		this.#pickDialogPartnumber = this.querySelector('[data-role="pickDialogPartnumber"]');
 		this.#scanStatus = this.querySelector('[data-role="scanStatus"]');
 		this.#applyRefmap();
 		if (this.#notesInput) this.#notesInput.value = this.#missionData.notes || "";
+		if (this.#warehouseNotesInput) this.#warehouseNotesInput.value = this.#missionData.warehouseNotes || "";
 
 		this.#renderRows();
 		this.#updateStateUI();
@@ -610,8 +718,8 @@ class WMSMission extends HTMLElement {
 		this.#tbody.innerHTML = this.#missionData.items.map((item, index) => `
 			<tr data-docid="${item.docId}" data-docrow="${item.docRow}" data-partnumber="${item.partnumber}" data-index="${index}">
 				<td data-role="status"></td>
-				<td class="col-partnumber">${item.partnumber}<br><small>${item.description || ""}</small></td>
-				<td data-role="col-docinfo">${item.docNum}<br><small>${item.docDate}</small></td>
+				<td data-rol="col-partnumber">${item.partnumber}<br><small>${item.description || ""}</small></td>
+				<td data-role="col-docinfo">N. ${item.docNum}<br><small>${item.docDate}</small></td>
 				<td data-role="col-requested">${item.requestedQty.toLocaleString()}</td>
 				<td data-role="available">${item.availableQty.toLocaleString()}</td>
 				<td>
@@ -640,6 +748,7 @@ class WMSMission extends HTMLElement {
 			const luIndicator = row.querySelector('[data-role="luPicksIndicator"]');
 			const statusCell = row.querySelector('[data-role="status"]');
 			const status = this.#stockStatus(item);
+			const isPicked = item.pickedQty > 0 && (item.pickQty <= 0 || item.pickedQty >= item.pickQty);
 
 			if (availableCell)
 				availableCell.textContent = item.availableQty.toLocaleString();
@@ -656,7 +765,9 @@ class WMSMission extends HTMLElement {
 				luIndicator.innerHTML = this.#renderLUPicksIndicator(item.luPicks);
 
 			if (statusCell) {
-				statusCell.innerHTML = `<i class="fa-solid fa-square mission-stock ${status.className}" title="${status.title}"></i>`;
+				const iconStyle = isPicked ? "fa-solid" : "fa-regular";
+				const iconTitle = isPicked ? this.#t("row_picked") : status.title;
+				statusCell.innerHTML = `<i class="${iconStyle} fa-square mission-stock ${status.className}" title="${iconTitle}"></i>`;
 			}
 		});
 		this.#updateRowVisibility();
@@ -673,33 +784,48 @@ class WMSMission extends HTMLElement {
 		this.#stateBadge.textContent = stateLabelByState[state] || state;
 		this.#stateBadge.className = `mission-state ${state}`;
 
-		const nextByState = {
-			working: { label: this.#t("next_confirm"), next: "confirmed" },
-			confirmed: { label: this.#t("next_picking"), next: "picking" },
-			picking: { label: this.#t("next_close"), next: "closed" },
-			closed: null
-		};
-		const nextAction = nextByState[state];
+		const nextAction = this.#getNextActionForState(state);
 		if (nextAction) {
 			this.#nextBtn.style.display = "";
 			this.#nextBtn.textContent = nextAction.label;
 			this.#nextBtn.dataset.nextState = nextAction.next;
-			const isNoRowsInConfirm = state === "working" && !this.#hasPickableRows();
-			this.#nextBtn.disabled = isNoRowsInConfirm;
+			this.#nextBtn.disabled = !this.#canTransitionTo(nextAction.next);
 		} else {
 			this.#nextBtn.style.display = "none";
 			this.#nextBtn.removeAttribute("data-next-state");
 		}
 
-		this.#reopenBtn.style.display = state === "working" ? "none" : "";
+		const reopenTarget = this.#getReopenTargetForState(state);
+		if (reopenTarget) {
+			this.#reopenBtn.style.display = "";
+			this.#reopenBtn.dataset.targetState = reopenTarget;
+		} else {
+			this.#reopenBtn.style.display = "none";
+			this.#reopenBtn.removeAttribute("data-target-state");
+		}
+
+		if (this.#stockNoneToggle) {
+			const toggleWrapper = this.#stockNoneToggle.closest(".mission-stocknone-toggle");
+			const isWarehouseRole = this.#role === "warehouse";
+			const canShowStockNoneToggle = !isWarehouseRole && state === "working";
+			if (isWarehouseRole) {
+				this.#showStockNoneRows = true;
+				this.#stockNoneToggle.checked = true;
+			}
+			if (toggleWrapper) {
+				toggleWrapper.style.visibility = canShowStockNoneToggle ? "visible" : "hidden";
+			}
+		}
 
 		const canEditPick = state === "working" || state === "confirmed";
 		const canEditLUPicks = false;
 		const canScan = state === "picking";
+		const isWarehousePicking = canScan && this.#role === "warehouse";
 		const showLUPicks = state === "picking";
 		const scanPanel = this.querySelector('.mission-scan');
-		if (scanPanel) scanPanel.style.display = canScan ? "grid" : "none";
-		if (this.#missionPick) this.#missionPick.hidden = !canScan;
+		if (scanPanel) scanPanel.style.display = canScan && !isWarehousePicking ? "grid" : "none";
+		if (this.#missionPick) this.#missionPick.hidden = !(canScan && !isWarehousePicking);
+		if (!isWarehousePicking) this.#closePickDialog();
 		this.querySelectorAll('.col-lu-picks').forEach(cell => {
 			cell.style.display = showLUPicks ? "" : "none";
 		});
@@ -713,7 +839,9 @@ class WMSMission extends HTMLElement {
 			cell.style.display = canScan ? "none" : "";
 		});
 		const notesInput = this.querySelector('[data-role="missionNotes"]');
-		if (notesInput) notesInput.disabled = canScan;
+		if (notesInput) notesInput.disabled = canScan || this.#role === "warehouse";
+		const warehouseNotesInput = this.querySelector('[data-role="warehouseNotes"]');
+		if (warehouseNotesInput) warehouseNotesInput.disabled = this.#role === "sales";
 		this.querySelectorAll('input[name="pickQty"]').forEach(input => input.disabled = !canEditPick);
 		this.querySelectorAll('input[name="luPicks"]').forEach(input => input.disabled = !canEditLUPicks);
 		this.#updateRowVisibility();
@@ -730,6 +858,7 @@ class WMSMission extends HTMLElement {
 	#bindRowEvents() {
 		if (!this.#tbody) return;
 		const canSelectForMap = this.#missionData.state === "picking";
+		const isWarehouseRole = this.#role === "warehouse";
 		Array.from(this.#tbody.querySelectorAll('tr')).forEach(row => {
 			row.style.cursor = canSelectForMap ? "pointer" : "default";
 			if (canSelectForMap) {
@@ -738,19 +867,19 @@ class WMSMission extends HTMLElement {
 					const partnumber = row.dataset.partnumber;
 					const index = this.#toInt(row.dataset.index, -1);
 					if (partnumber && index >= 0) {
-						const isCurrentlyActive = this.#activeRowIndex === index;
-						if (isCurrentlyActive) {
-							this.#setActiveRow(-1);
-							this.#highlightPickLocations();
-						} else {
+						if (isWarehouseRole) {
+							if (!this.#isRowPickable(index)) return;
 							this.#setActiveRow(index);
-							const refmap = (this.getAttribute("refmap") || "").trim();
-							let mapElement = refmap ? document.getElementById(refmap) : null;
-							if (!refmap) {
-								mapElement = document.querySelector("wms-map");
-							}
-							if (mapElement) {
-								mapElement.setAttribute("highlight", `partnumber=${encodeURIComponent(partnumber)}`);
+							this.#highlightPartnumber(partnumber);
+							this.#openPickDialog(index);
+						} else {
+							const isCurrentlyActive = this.#activeRowIndex === index;
+							if (isCurrentlyActive) {
+								this.#setActiveRow(-1);
+								this.#highlightPickLocations();
+							} else {
+								this.#setActiveRow(index);
+								this.#highlightPartnumber(partnumber);
 							}
 						}
 						this.dispatchEvent(new CustomEvent("warehousemap-highlight", {
@@ -763,10 +892,69 @@ class WMSMission extends HTMLElement {
 		});
 	}
 
+	#highlightPartnumber(partnumber) {
+		const refmap = (this.getAttribute("refmap") || "").trim();
+		let mapElement = refmap ? document.getElementById(refmap) : null;
+		if (!refmap) {
+			mapElement = document.querySelector("wms-map");
+		}
+		if (mapElement)
+			mapElement.setAttribute("highlight", `partnumber=${encodeURIComponent(partnumber)}`);
+	}
+
+	#isRowPickable(index) {
+		const item = this.#missionData.items[index];
+		if (!item) return false;
+		return item.pickQty > item.pickedQty;
+	}
+
+	#openPickDialog(index) {
+		if (!this.#pickDialog || !this.#missionPickDialog) return;
+		if (!this.#isRowPickable(index)) return;
+		const item = this.#missionData.items[index];
+		if (!item) return;
+		const remainingPickQty = Math.max(0, this.#toInt(item.pickQty, 0) - this.#toInt(item.pickedQty, 0));
+
+		this.#resetMissionPickInputs(this.#missionPickDialog);
+		if (this.#pickDialogPartnumber)
+			this.#pickDialogPartnumber.textContent = String(item.partnumber || '');
+		if (item.partnumber)
+			this.#missionPickDialog.setAttribute('partnumber', item.partnumber);
+		else
+			this.#missionPickDialog.removeAttribute('partnumber');
+		if (remainingPickQty > 0)
+			this.#missionPickDialog.setAttribute('quantity', String(remainingPickQty));
+		else
+			this.#missionPickDialog.removeAttribute('quantity');
+		this.#pickDialog.dataset.rowIndex = String(index);
+		if (!this.#pickDialog.open) this.#pickDialog.showModal();
+		this.#missionPickDialog.querySelector('input[name="code"]')?.focus();
+	}
+
+	#closePickDialog() {
+		if (!this.#pickDialog) return;
+		if (this.#pickDialog.open) this.#pickDialog.close();
+		this.#pickDialog.removeAttribute("data-row-index");
+		if (this.#pickDialogPartnumber)
+			this.#pickDialogPartnumber.textContent = '';
+		this.#missionPickDialog?.removeAttribute('partnumber');
+		this.#missionPickDialog?.removeAttribute('quantity');
+	}
+
 	#bindEvents() {
 		this.#notesInput?.addEventListener("input", event => {
 			this.#missionData.notes = event.target.value;
 			this.#syncOutput();
+		});
+
+		this.#warehouseNotesInput?.addEventListener("input", event => {
+			this.#missionData.warehouseNotes = event.target.value;
+			this.#syncOutput();
+		});
+
+		this.#stockNoneToggle?.addEventListener("change", event => {
+			this.#showStockNoneRows = event.target.checked;
+			this.#updateRowVisibility();
 		});
 
 		this.#tbody.addEventListener("input", event => {
@@ -775,31 +963,47 @@ class WMSMission extends HTMLElement {
 			}
 		});
 
+		this.#tbody.addEventListener("click", event => {
+			const deleteButton = event.target.closest('[data-role="deleteLuPick"]');
+			if (!deleteButton) return;
+			event.preventDefault();
+			event.stopPropagation();
+			this.#deleteLUPick(deleteButton);
+		});
+
 		this.#missionPick?.addEventListener("wms-pick-check", event => {
+			this.#handleMissionPickCheck(event.detail);
+		});
+		this.#missionPickDialog?.addEventListener("wms-pick-check", event => {
 			this.#handleMissionPickCheck(event.detail);
 		});
 
 		this.#missionPick?.addEventListener("wms-pick-submit", event => {
-			this.#handleMissionPickSubmit(event.detail);
+			this.#handleMissionPickSubmit(event.detail, this.#missionPick);
+		});
+		this.#missionPickDialog?.addEventListener("wms-pick-submit", event => {
+			this.#handleMissionPickSubmit(event.detail, this.#missionPickDialog);
 		});
 
 		this.#nextBtn.addEventListener("click", () => {
 			const nextState = this.#nextBtn.dataset.nextState;
 			if (!nextState) return;
 
-			if (nextState === "confirmed" && !this.#hasPickableRows()) {
+			if (!this.#canTransitionTo(nextState)) {
 				return;
 			}
 
 			this.#setState(nextState);
 
-			if (nextState === "confirmed" && typeof this.#onconfirm === "function") {
-				this.#onconfirm.call(this, this.data);
+			if (nextState === "confirmed" && typeof this.#onsubmit === "function") {
+				this.#onsubmit.call(this, this.data);
 			}
 		});
 
 		this.#reopenBtn.addEventListener("click", () => {
-			this.#setState("working");
+			const targetState = this.#reopenBtn.dataset.targetState;
+			if (!targetState) return;
+			this.#setState(targetState);
 		});
 	}
 
@@ -824,7 +1028,7 @@ class WMSMission extends HTMLElement {
 		this.#setScanStatus(this.#t("scan_match_ok", { partnumber }), "success");
 	}
 
-	#handleMissionPickSubmit(detail = {}) {
+	#handleMissionPickSubmit(detail = {}, sourcePick = null) {
 		if (this.#missionData.state !== "picking") return;
 		const response = detail.response || {};
 		const partnumber = response.partnumber || detail.partnumber || "";
@@ -839,10 +1043,6 @@ class WMSMission extends HTMLElement {
 
 		const lu = String(detail.lu || response.lu || "").replace(/^0+/, "");
 		const pickedQty = Math.max(0, this.#toInt(detail.quantity, 0));
-		const totalQty = Math.max(0, this.#toInt(response.quantity ?? detail.response?.quantity, 0));
-		const leftQty = detail.leftQty !== undefined && detail.leftQty !== ""
-			? Math.max(0, this.#toInt(detail.leftQty, 0))
-			: Math.max(0, totalQty - pickedQty);
 
 		if (!lu || pickedQty <= 0) {
 			this.#setScanStatus(this.#t("picked_qty_gt_zero"), "warning");
@@ -852,9 +1052,8 @@ class WMSMission extends HTMLElement {
 		const existing = item.luPicks.find(entry => entry.lu === lu);
 		if (existing) {
 			existing.qty = pickedQty;
-			existing.leftQty = leftQty;
 		} else {
-			item.luPicks.push({ lu, qty: pickedQty, leftQty });
+			item.luPicks.push({ lu, qty: pickedQty });
 		}
 
 		item.luPicks = this.#limitLUPicks(item.luPicks, this.#getMaxPickForRow(rowIndex));
@@ -866,9 +1065,18 @@ class WMSMission extends HTMLElement {
 		this.#setScanStatus(this.#t("scan_saved", { lu }), "success");
 		this.#syncOutput();
 
-		const codeInput = this.#missionPick?.querySelector('input[name="code"]');
-		const quantityInput = this.#missionPick?.querySelector('input[name="quantity"]');
-		const leftInput = this.#missionPick?.querySelector('input[name="leftQuantity"]');
+		this.#resetMissionPickInputs(sourcePick || this.#missionPick);
+		const isRowPicked = item.pickQty > 0 && item.pickedQty >= item.pickQty;
+		if (sourcePick === this.#missionPickDialog && isRowPicked) {
+			this.#closePickDialog();
+		}
+	}
+
+	#resetMissionPickInputs(pickComponent) {
+		if (!pickComponent) return;
+		const codeInput = pickComponent.querySelector('input[name="code"]');
+		const quantityInput = pickComponent.querySelector('input[name="quantity"]');
+		const leftInput = pickComponent.querySelector('input[name="leftQuantity"]');
 		if (codeInput) {
 			codeInput.value = "";
 			codeInput.classList.remove("successBox", "warningBox");
@@ -878,7 +1086,7 @@ class WMSMission extends HTMLElement {
 			quantityInput.classList.remove("successBox", "warningBox");
 		}
 		if (leftInput) leftInput.value = "";
-		this.#missionPick?.querySelector('#sentiments')?.setAttribute('aria-disabled', 'true');
+		pickComponent.querySelector('#sentiments')?.setAttribute('aria-disabled', 'true');
 	}
 
 	#updateLUPicks(input) {
@@ -896,6 +1104,26 @@ class WMSMission extends HTMLElement {
 		this.#syncOutput();
 	}
 
+	#deleteLUPick(deleteButton) {
+		const row = deleteButton.closest("tr");
+		const rowIndex = this.#toInt(row?.dataset.index, -1);
+		if (rowIndex < 0 || rowIndex >= this.#missionData.items.length)
+			return;
+
+		const item = this.#missionData.items[rowIndex];
+		const lu = String(deleteButton.dataset.lu || "").trim();
+		if (!lu) return;
+
+		item.luPicks = item.luPicks.filter(entry => entry.lu !== lu);
+		item.pickedQty = item.luPicks.reduce((sum, entry) => sum + entry.qty, 0);
+		this.#recomputeAvailability();
+		this.#refreshRowsUI();
+		if (this.#missionData.state === "picking") {
+			this.#highlightPickLocations();
+		}
+		this.#syncOutput();
+	}
+
 	#updatePickQty(input) {
 		const rowIndex = this.#toInt(input.dataset.index, -1);
 		if (rowIndex < 0 || rowIndex >= this.#missionData.items.length)
@@ -906,6 +1134,7 @@ class WMSMission extends HTMLElement {
 		const value = Math.max(0, Math.min(max, this.#toInt(input.value, 0)));
 
 		item.pickQty = value;
+		this.#recomputeAvailability();
 		this.#refreshRowsUI();
 		this.#updateStateUI();
 		if (this.#missionData.state === "picking") {

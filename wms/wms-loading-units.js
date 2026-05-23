@@ -2,16 +2,16 @@
 class WMSLoadingUnits extends HTMLElement {
 	#lang = "en";
 	#translations = {
-		dlg_head_packages: { it: "Imballi", en: "Packages", fr: "Emballages" },
-		dlg_head_quantity: { it: "Quantita", en: "Quantity", fr: "Quantite" },
-		dlg_head_batch: { it: "Data code", en: "Batch", fr: "Lot" },
-		dlg_head_origin: { it: "Origine", en: "Origin", fr: "Origine" },
-		dlg_add_row: { it: "Aggiungi riga", en: "Add row", fr: "Ajouter ligne" },
-		dlg_save: { it: "OK", en: "Save", fr: "Enregistrer" },
-		declared_qty: { it: "Quantita dichiarata", en: "Declared quantity", fr: "Quantite declaree" },
-		actual_qty: { it: "Quantita riscontrata", en: "Actual quantity", fr: "Quantite constatee" },
-		manage_lu: { it: "Gestisci UDC", en: "Manage LU", fr: "Gerer UL" },
-		generate_labels: { it: "Genera etichette", en: "Generate labels", fr: "Generer etiquettes" }
+		dlg_head_packages: { it: "Imballi", en: "Packages" },
+		dlg_head_quantity: { it: "Quantità", en: "Quantity" },
+		dlg_head_batch: { it: "Data code", en: "Data code" },
+		dlg_head_origin: { it: "Origine", en: "Origin" },
+		dlg_add_row: { it: "Aggiungi riga", en: "Add row" },
+		dlg_save: { it: "OK", en: "Save" },
+		declared_qty: { it: "Quantità dichiarata", en: "Declared quantity" },
+		actual_qty: { it: "Quantità riscontrata", en: "Actual quantity" },
+		manage_lu: { it: "Gestisci UDC", en: "Manage LU" },
+		generate_labels: { it: "Genera etichette", en: "Generate labels" }
 	};
 
 	constructor() {
@@ -24,7 +24,6 @@ class WMSLoadingUnits extends HTMLElement {
 		if (!normalized) return fallback;
 		if (normalized.startsWith("it")) return "it";
 		if (normalized.startsWith("en")) return "en";
-		if (normalized.startsWith("fr")) return "fr";
 		return fallback;
 	}
 
@@ -104,7 +103,7 @@ class WMSLoadingUnits extends HTMLElement {
 		dialog.id = 'WMSLoadingUnitsDialog';
 		dialog.className = 'wms';
 		dialog.innerHTML = `
-			<header><span></span><span style="float: right; cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark" style="font-size:1.5em"></i></span></header>
+			<header><span></span><span style="cursor:pointer" onclick="this.closest('dialog').close()"><i class="fa-solid fa-xmark" style="font-size:1.5em"></i></span></header>
 			<form style="padding: 0.5em 0;">
 				<table>
 					<thead>
@@ -225,6 +224,7 @@ class WMSLoadingUnits extends HTMLElement {
 				default:
 					WMSLoadingUnits.#summary(dialog);
 			}
+			// WMSLoadingUnits.#saveData(dialog);
 		});
 
 		dialog.addEventListener(`close`, (_e) => {
@@ -257,7 +257,7 @@ class WMSLoadingUnits extends HTMLElement {
 		refComponent.lusData.lu = [];
 		dialog.querySelectorAll('.put').forEach(put => {
 			const lu = WMSLoadingUnits.#rowToData(put);
-			if (lu.units && lu.quantity)
+			if (lu.units && lu.quantity > 0) // Ensure quantity > 0
 				refComponent.lusData.lu.push(lu)
 		});
 

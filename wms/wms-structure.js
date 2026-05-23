@@ -2,21 +2,20 @@
 class WMSStructure extends HTMLElement {
 	#lang = "en";
 	#translations = {
-		load_error: { it: "Impossibile caricare {value}", en: "Could not load {value}", fr: "Impossible de charger {value}" },
-		empty_error: { it: "Errore caricamento wms-structure.", en: "Error loading wms-structure.", fr: "Erreur de chargement wms-structure." },
-		head_prefix: { it: "Prefisso", en: "Prefix", fr: "Prefixe" },
-		head_units: { it: "Unita", en: "Units", fr: "Unites" },
-		head_grid: { it: "Griglia", en: "Grid", fr: "Grille" },
-		head_ref: { it: "Rif.", en: "Ref.", fr: "Ref." },
-		title_print_labels: { it: "Stampa etichette", en: "Print labels", fr: "Imprimer etiquettes" },
-		title_delete_bin: { it: "Elimina UdD", en: "Delete location", fr: "Supprimer emplacement" },
-		title_storage_units: { it: "Unita di deposito", en: "Storage units", fr: "Unites de stockage" },
+		load_error: { it: "Impossibile caricare {value}", en: "Could not load {value}" },
+		empty_error: { it: "Errore caricamento wms-structure.", en: "Error loading wms-structure." },
+		head_prefix: { it: "Prefisso", en: "Prefix" },
+		head_units: { it: "Unita", en: "Units" },
+		head_grid: { it: "Griglia", en: "Grid" },
+		head_ref: { it: "Rif.", en: "Ref." },
+		title_print_labels: { it: "Stampa etichette", en: "Print labels" },
+		title_delete_bin: { it: "Elimina UdD", en: "Delete location" },
+		title_storage_units: { it: "Unita di deposito", en: "Storage units" },
 		confirm_delete_bin: {
 			it: "Sicuri di voler eliminare l'unita di deposito?",
-			en: "Are you sure you want to delete this storage unit?",
-			fr: "Voulez-vous vraiment supprimer cette unite de stockage ?"
+			en: "Are you sure you want to delete this storage unit?"
 		},
-		footer_total_locations: { it: "Ubicazioni totali: {total}", en: "Total locations: {total}", fr: "Total emplacements : {total}" }
+		footer_total_locations: { it: "Ubicazioni totali: {total}", en: "Total locations: {total}" }
 	};
 
 	constructor() {
@@ -30,7 +29,6 @@ class WMSStructure extends HTMLElement {
 		if (!normalized) return fallback;
 		if (normalized.startsWith("it")) return "it";
 		if (normalized.startsWith("en")) return "en";
-		if (normalized.startsWith("fr")) return "fr";
 		return fallback;
 	}
 

@@ -11,14 +11,14 @@ class WMSMap extends HTMLElement {
 	#map
 	#lang = "en";
 	#translations = {
-		map_sentiment_title: { it: "Ingombro UdC", en: "LU occupancy", fr: "Occupation UL" },
-		su_dialog_title: { it: "Prima ubicazione", en: "First location", fr: "Premier emplacement" },
-		su_position_label: { it: "Posizione", en: "Position", fr: "Position" },
-		su_position_ltr: { it: "In basso a sinistra", en: "Bottom-left", fr: "En bas a gauche" },
-		su_position_rtl: { it: "In basso a destra", en: "Bottom-right", fr: "En bas a droite" },
-		su_label_label: { it: "Etichetta", en: "Label", fr: "Etiquette" },
-		su_cancel: { it: "Annulla", en: "Cancel", fr: "Annuler" },
-		su_ok: { it: "OK", en: "OK", fr: "OK" }
+		map_sentiment_title: { it: "Ingombro UdC", en: "LU occupancy" },
+		su_dialog_title: { it: "Prima ubicazione", en: "First location" },
+		su_position_label: { it: "Posizione", en: "Position" },
+		su_position_ltr: { it: "In basso a sinistra", en: "Bottom-left" },
+		su_position_rtl: { it: "In basso a destra", en: "Bottom-right" },
+		su_label_label: { it: "Etichetta", en: "Label" },
+		su_cancel: { it: "Annulla", en: "Cancel" },
+		su_ok: { it: "OK", en: "OK" }
 	};
 
 	// viewBox state
@@ -99,7 +99,6 @@ class WMSMap extends HTMLElement {
 		if (!normalized) return fallback;
 		if (normalized.startsWith("it")) return "it";
 		if (normalized.startsWith("en")) return "en";
-		if (normalized.startsWith("fr")) return "fr";
 		return fallback;
 	}
 
@@ -361,7 +360,6 @@ class WMSMap extends HTMLElement {
 		svg.addEventListener("dblclick", async (event) => {
 			this.#alignSVG(true);
 		});
-
 		svg.addEventListener("click", async event => {
 			if (this._didPan || this._isPanning) {
 				this._didPan = false;
@@ -404,9 +402,8 @@ class WMSMap extends HTMLElement {
 				event.target.close();
 			}
 		});
-
 		svg.addEventListener("wheel", event => {
-			//			if (this.hasAttribute("name")) return;
+			if (!event.ctrlKey) return;
 			this._isPanning = false;
 			event.preventDefault();
 
@@ -423,9 +420,8 @@ class WMSMap extends HTMLElement {
 			this.#vh = newH;
 			svg.setAttribute("viewBox", `${this.#vx} ${this.#vy} ${this.#vw} ${this.#vh}`);
 		}, { passive: false });
-
 		svg.addEventListener("pointerdown", event => {
-			//			if (this.hasAttribute("name")) return;
+			// if (!event.ctrlKey) return;
 
 			this._pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 
@@ -456,9 +452,8 @@ class WMSMap extends HTMLElement {
 				};
 			}
 		});
-
 		svg.addEventListener("pointermove", event => {
-			//			if (this.hasAttribute("name")) return;
+			// if (!event.ctrlKey) return;
 			if (!this._pointers.has(event.pointerId)) return;
 
 			this._pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });

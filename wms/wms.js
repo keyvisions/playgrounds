@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-window
 class WMSShared {
 	static renderDescription(el, partnumber, description, batch, origin, quantity, um) {
-		el.innerHTML = `<b>${partnumber || ''}</b><span style="font-size:smaller">${description || ''}</span><span style="font-size:smaller">${batch || ''} ${origin || ''}</span><span style="font-size:smaller">${[quantity, um].filter(Boolean).join(' ')}</span>`;
+		el.innerHTML = `<b>${partnumber || ''}</b><span style="font-size:smaller">${description || ''}</span><span style="font-size:smaller">${batch || ''} ${origin || ''}</span><span style="font-size:smaller"><input type="number" name="quantity" value="${quantity}" style="border:0;padding:0;font-size:medium">${um}</span>`;
 	}
 
 	static normalizeLang(rawLang, fallback = "en") {
@@ -9,7 +9,6 @@ class WMSShared {
 		if (!normalized) return fallback;
 		if (normalized.startsWith("it")) return "it";
 		if (normalized.startsWith("en")) return "en";
-		if (normalized.startsWith("fr")) return "fr";
 		return fallback;
 	}
 
@@ -51,16 +50,12 @@ class WMSShared {
 class WMSPut extends HTMLElement {
 	#lang = "en"
 	#translations = {
-		put_lu_label: { it: "Unita di Carico (UdC)", en: "Loading Unit (LU)", fr: "Unite de Chargement (UL)" },
-		put_location_label: { it: "Ubicazione (UdD)", en: "Location", fr: "Emplacement" },
-		put_lu_placeholder: { it: "es. 123456789", en: "e.g. 123456789", fr: "ex. 123456789" },
-		put_location_placeholder: { it: "es. A01 001 01", en: "e.g. A01 001 01", fr: "ex. A01 001 01" },
-		put_code_placeholder: { it: "codice", en: "code", fr: "code" },
-		put_sentiment_hint: {
-			it: "A sentimento, quanto pieno e l'UdD?",
-			en: "How full is the location?",
-			fr: "Quel est le niveau de remplissage de l'emplacement ?"
-		}
+		put_lu_label: { it: "Unità di Carico (UdC)", en: "Loading Unit (LU)" },
+		put_location_label: { it: "Ubicazione (UdD)", en: "Location" },
+		put_lu_placeholder: { it: "es. 123456789", en: "e.g. 123456789" },
+		put_location_placeholder: { it: "es. A01 001 01", en: "e.g. A01 001 01" },
+		put_code_placeholder: { it: "codice", en: "code" },
+		put_sentiment_hint: { it: "Quanto piena e l'UdD?", en: "How full is the location?" }
 	}
 	#description
 	#codeInput
@@ -84,7 +79,7 @@ class WMSPut extends HTMLElement {
 			<div class="description"></div>
 			<label><span><i class="fa-solid fa-fw fa-barcode"></i> ${this.#t("put_lu_label")}</span><br><input form name="lu" placeholder="${this.#t("put_lu_placeholder")}" style="font-size: inherit" readonly></label>
 			<label><span><i class="fa-solid fa-fw fa-warehouse"></i> ${this.#t("put_location_label")}</span><br><input form name="location" placeholder="${this.#t("put_location_placeholder")}" style="font-size: inherit" readonly></label>
-			<input form name="code" placeholder="${this.#t("put_code_placeholder")}" style="font-size: inherit" virtualkeyboardpolicy="manual">
+			<input form name="code" placeholder="${this.#t("put_code_placeholder")}" style="font-size: inherit" virtualkeyboardpolicy="manual" autofocus>
 			<div id="sentiments" aria-disabled="true" style="display: flex; column-gap: 0.4em;">
 				<div id="S1" class="sentiment">1</div>
 				<div id="S2" class="sentiment">2</div>
@@ -140,17 +135,20 @@ class WMSPut extends HTMLElement {
 		const REGEX_LU = /^\d{1,9}$/;
 
 		el.classList.remove('failureBox');
-		if (REGEX_LOCATION.test(el.value) && response.exists) {
+		if (el.name === 'code' && REGEX_LOCATION.test(el.value) && response.exists) {
 			this.#locationInput.value = el.value.toUpperCase().replace(/^([A-Za-z])(\d{2})(\d{3})(\d{2})$/, "$1$2 $3 $4");
-			this.#locationInput.className = response.exists ? 'successBox' : 'warningBox';
+			   if (!this.#locationInput.value) {
+				   this.#locationInput.className = '';
+			   } else if (response.exists) {
+				   this.#locationInput.className = 'successBox';
+			   }
 			el.value = '';
 
-		} else if (/^[0-5]$/.test(el.value)) {
-			if (this.#locationInput.value && this.#luInput.value)
-				this.querySelector(`#S${el.value}`).click();
+		} else if (el.name !== 'code' && /^[0-5]$/.test(el.value) && this.#locationInput.value && this.#luInput.value) {
+			this.querySelector(`#S${el.value}`).click();
 			el.value = '';
 
-		} else if (REGEX_LU.test(el.value)) {
+		} else if (el.name === 'code' && REGEX_LU.test(el.value)) {
 			this.#luInput.value = el.value.replace(/^0+/, '').padStart(9, '0');
 			this.#luInput.className = response.exists ? 'successBox' : 'warningBox';
 			el.value = '';
@@ -163,13 +161,17 @@ class WMSPut extends HTMLElement {
 			this.#description.innerHTML = "";
 		if (response.partnumber) {
 			WMSShared.renderDescription(this.#description, response.partnumber, response.description, null, null, response.quantity, response.um);
-			this.#locationInput.className = response.exists ? 'successBox' : 'warningBox';
-			this.#locationInput.value = response.location || '';
+			   if (!response.location) {
+				   this.#locationInput.className = '';
+			   } else if (response.exists) {
+				   this.#locationInput.className = 'successBox';
+			   }
+			this.#locationInput.value = response.location?.replace(/^([A-Za-z])(\d{2})(\d{3})(\d{2})$/, "$1$2 $3 $4") || '';
 		} else {
 			this.#description.innerHTML = '';
 		}
 
-		console.log(response);
+		// console.log(response);
 		if (this.hasAttribute("refmap") && response.exists)
 			document.querySelector(`#${this.getAttribute("refmap")}`)?.setAttribute("highlight", `lu=${response.lu || ""}&partnumber=${response.partnumber || ""}`);
 
@@ -185,7 +187,9 @@ class WMSPut extends HTMLElement {
 		event.stopPropagation();
 		event.preventDefault();
 
-		if (this.#sentiments.getAttribute('aria-disabled') === 'true' || event.target.className !== 'sentiment')
+		const sentimentEl = event.target?.closest?.('.sentiment');
+
+		if (this.#sentiments.getAttribute('aria-disabled') === 'true' || !event.isTrusted || !sentimentEl)
 			return;
 
 		if (this.hasAttribute('onsubmit')) {
@@ -193,8 +197,9 @@ class WMSPut extends HTMLElement {
 			if (typeof window[fnName] === 'function') {
 				window[fnName].call(this, {
 					lu: this.#luInput.value.replace(/^0+/, ''),
-					location: this.#locationInput.value,
-					sentiment: Number(event.target.id[1])
+					location: this.#locationInput.value.replaceAll(' ', ''),
+					sentiment: Number(sentimentEl.id[1]),
+					quantity: Number(this.querySelector('[name=quantity]')?.value)
 				});
 			}
 		}
@@ -202,6 +207,7 @@ class WMSPut extends HTMLElement {
 		this.#luInput.classList.remove("successBox", "warningBox");
 		this.#locationInput.classList.remove("successBox", "warningBox");
 		this.#sentiments.setAttribute('aria-disabled', 'true');
+		this.#codeInput.focus();
 	}
 }
 
@@ -210,16 +216,12 @@ customElements.define('wms-put', WMSPut);
 class WMSPick extends HTMLElement {
 	#lang = "en"
 	#translations = {
-		pick_lu_label: { it: "Unita di Carico (UdC)", en: "Loading Unit (LU)", fr: "Unite de Chargement (UL)" },
-		pick_lu_placeholder: { it: "es. 123456789", en: "e.g. 123456789", fr: "ex. 123456789" },
-		pick_qty_label: { it: "Quantita prelevata", en: "Picked quantity", fr: "Quantite prelevee" },
-		pick_left_label: { it: "Quantita residua", en: "Left quantity", fr: "Quantite restante" },
-		pick_left_placeholder: { it: "residuo reale", en: "actual left", fr: "reste reel" },
-		pick_sentiment_hint: {
-			it: "A sentimento, quanto pieno e l'UdD dopo il prelievo?",
-			en: "How full is the location after picking?",
-			fr: "Quel est le niveau de remplissage apres le prelevement ?"
-		}
+		pick_lu_label: { it: "Unità di Carico (UdC)", en: "Loading Unit (LU)" },
+		pick_lu_placeholder: { it: "es. 123456789", en: "e.g. 123456789" },
+		pick_qty_label: { it: "Quantità prelevata", en: "Picked quantity" },
+		pick_left_label: { it: "Quantità residua", en: "Left quantity" },
+		pick_left_placeholder: { it: "residuo reale", en: "actual left" },
+		pick_sentiment_hint: { it: "Quanto piena è l'UdD dopo il prelievo?", en: "How full is the location after picking?" }
 	}
 	#codeInput
 	#quantityInput
@@ -227,24 +229,59 @@ class WMSPick extends HTMLElement {
 	#sentiments
 	#description
 	#lastResponse = null
+	#validLu = false
 
 	constructor() {
 		super();
 		this.classList.add("wms", "wms-place");
 	}
 
+	static get observedAttributes() {
+		return ['partnumber', 'quantity'];
+	}
+
+	attributeChangedCallback(name, oldValue, newValue) {
+		if (oldValue === newValue) return;
+		if (!this.isConnected) return;
+
+		if (name === 'quantity') {
+			const quantity = String(newValue || '');
+			if (this.#quantityInput && this.#quantityInput.value !== quantity)
+				this.#quantityInput.value = quantity;
+			this.#suggestLeftQuantity();
+			this.#updateSentimentsState();
+			return;
+		}
+
+		if (name === 'partnumber') {
+			this.#validLu = false;
+			this.#lastResponse = null;
+			if (this.#quantityInput) {
+				this.#quantityInput.value = '';
+				this.#quantityInput.removeAttribute('placeholder');
+			}
+			if (this.#leftInput) {
+				this.#leftInput.value = '';
+				this.#leftInput.dataset.auto = '0';
+			}
+			this.#syncQuantityAttribute();
+			this.#renderPickDescription();
+			this.#updateSentimentsState();
+		}
+	}
+
 	#t(key, params = null) {
 		return WMSShared.t(this.#translations, this.#lang, key, params);
 	}
 
-	async connectedCallback() {
+	connectedCallback() {
 		this.#lang = WMSShared.resolveLang(this);
 
 		this.innerHTML = `
 				<div class="description"></div>
 				<label><span><i class="fa-solid fa-fw fa-barcode"></i> ${this.#t("pick_lu_label")}</span><br><input form type="number" name="code" style="font-size: inherit" placeholder="${this.#t("pick_lu_placeholder")}" autofocus></label>
 				<label><span>${this.#t("pick_qty_label")}</span><br><input form type="number" step="any" name="quantity" style="font-size: inherit"></label>
-				<label><span>${this.#t("pick_left_label")}</span><br><input form type="number" step="any" name="leftQuantity" style="font-size: inherit" placeholder="${this.#t("pick_left_placeholder")}"></label>
+				<label><span><small>${this.#t("pick_left_label")}</small></span><br><input form type="number" step="any" name="leftQuantity" placeholder="${this.#t("pick_left_placeholder")}"></label>
 				<div id="sentiments" aria-disabled="true" style="display: flex; column-gap: 0.4em;">
 					<div id="S1" class="sentiment">1</div>
 					<div id="S2" class="sentiment">2</div>
@@ -284,30 +321,84 @@ class WMSPick extends HTMLElement {
 		this.#codeInput.addEventListener('change', async (event) => {
 			this.#check(event, this.#codeInput, await this.oncheck(this.#codeInput.value));
 		});
-		this.#quantityInput.addEventListener('input', () => this.#suggestLeftQuantity());
+		this.#quantityInput.addEventListener('input', () => {
+			this.#syncQuantityAttribute();
+			this.#suggestLeftQuantity();
+			this.#updateSentimentsState();
+		});
 		this.#leftInput.addEventListener('input', () => this.#leftInput.dataset.auto = '0');
 		this.#codeInput.addEventListener('focus', () => this.#codeInput.select());
 		this.#sentiments.addEventListener('click', (event) => this.#allocate(event));
+		if (this.hasAttribute('quantity'))
+			this.#quantityInput.value = this.getAttribute('quantity') || '';
+		this.#syncQuantityAttribute();
+		this.#renderPickDescription();
 		this.#codeInput.focus();
 	}
 
+	#syncQuantityAttribute() {
+		const quantity = this.#quantityInput?.value || '';
+		if (!quantity) {
+			if (this.hasAttribute('quantity'))
+				this.removeAttribute('quantity');
+			return;
+		}
+
+		if (this.getAttribute('quantity') !== quantity)
+			this.setAttribute('quantity', quantity);
+	}
+
+	#normalizePartnumber(value) {
+		return String(value || '').trim().toUpperCase();
+	}
+
+	#getTargetPartnumber() {
+		return this.#normalizePartnumber(this.getAttribute('partnumber'));
+	}
+
+	#renderPickDescription() {
+		if (!this.#description) return;
+		if (this.#lastResponse?.partnumber) {
+			WMSShared.renderDescription(this.#description, this.#lastResponse.partnumber, this.#lastResponse.description, '', '', this.#lastResponse.quantity, this.#lastResponse.um || "");
+			return;
+		}
+
+		this.#description.innerHTML = '';
+	}
+
 	#check(_event, el, response) {
+		const targetPartnumber = this.#getTargetPartnumber();
+		const responsePartnumber = this.#normalizePartnumber(response?.partnumber);
+		const partnumberMatches = !targetPartnumber || responsePartnumber === targetPartnumber;
+		const isAcceptedLU = response.exists && response.lu && partnumberMatches;
+
 		el.classList.remove('failureBox');
 		if (/^[0-5]$/.test(el.value)) {
 			if (this.#quantityInput.value && this.#codeInput.value)
-				this.querySelector(`#S${el.value}`).click();
+				this.querySelector(`#S${el.value}`).click(_event);
 			this.#codeInput.focus()
 
-		} else if (response.exists && response.lu) {
+		} else if (isAcceptedLU) {
+			this.#validLu = true;
 			this.#codeInput.value = el.value.padStart(9, '0');
 			this.#codeInput.className = response.exists ? 'successBox' : 'warningBox';
 			this.#quantityInput.value = "";
+			this.#syncQuantityAttribute();
 			this.#quantityInput.setAttribute("placeholder", response.quantity);
 			this.#quantityInput.focus();
+			this.#lastResponse = response;
+			this.#leftInput?.setAttribute('placeholder', response.quantity || this.#t("pick_left_placeholder"));
+			if (this.#leftInput) {
+				this.#leftInput.value = '';
+				this.#leftInput.dataset.auto = '1';
+			}
 
 		} else {
+			this.#validLu = false;
+			this.#lastResponse = null;
 			el.classList.add('failureBox');
 			this.#quantityInput.value = "";
+			this.#syncQuantityAttribute();
 			this.#quantityInput.removeAttribute("placeholder");
 			this.#codeInput.select();
 			if (/^\d{1,9}$/.test(el.value) && !response.exists) {
@@ -315,27 +406,13 @@ class WMSPick extends HTMLElement {
 			}
 		}
 
-		console.log(response);
-		if (response.partnumber) {
-			this.#lastResponse = response;
-			this.#leftInput?.setAttribute('placeholder', response.quantity || this.#t("pick_left_placeholder"));
-			if (this.#leftInput) {
-				this.#leftInput.value = '';
-				this.#leftInput.dataset.auto = '1';
-			}
-		}
+		// console.log(response);
 		if (this.hasAttribute("refmap") && response.exists)
 			document.querySelector(`#${this.getAttribute("refmap")}`)?.setAttribute("highlight", `lu=${response.lu || ""}&partnumber=${response.partnumber || ""}`);
 
-		if (response.partnumber)
-			WMSShared.renderDescription(this.#description, response.partnumber, response.description, '', '', response.quantity, response.um);
-		else
-			this.#description.innerHTML = '';
+		this.#renderPickDescription();
 
-		if (this.#quantityInput.value && this.#codeInput.value)
-			this.#sentiments.setAttribute('aria-disabled', 'false');
-		else
-			this.#sentiments.setAttribute('aria-disabled', 'true');
+		this.#updateSentimentsState();
 
 		this.dispatchEvent(new CustomEvent('wms-pick-check', {
 			detail: {
@@ -351,7 +428,7 @@ class WMSPick extends HTMLElement {
 		event.stopPropagation();
 		event.preventDefault();
 
-		if (this.#sentiments.getAttribute('aria-disabled') === 'true' || event.target.className !== 'sentiment')
+		if (this.#sentiments.getAttribute('aria-disabled') === 'true' || !event.isTrusted)
 			return;
 
 		if (this.hasAttribute('onsubmit')) {
@@ -388,6 +465,13 @@ class WMSPick extends HTMLElement {
 			sentiment,
 			response: this.#lastResponse
 		};
+	}
+
+	#updateSentimentsState() {
+		if (this.#validLu && this.#quantityInput.value !== '')
+			this.#sentiments.setAttribute('aria-disabled', 'false');
+		else
+			this.#sentiments.setAttribute('aria-disabled', 'true');
 	}
 
 	#suggestLeftQuantity() {
