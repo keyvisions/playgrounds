@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+	<style>
+		body {
+			font-family: sans-serif;
+		}
+
+		label {
+			font-weight: bold;
+		}
+
+		.stwError i {
+			color: red;
+		}
+
+		input, button, select, option, textarea {
+			padding: 0.25rem;
+			margin: 0.25rem;
+		}
+
+		.stwChoices { display: grid; }
+		.stwChoices label {
+			font-weight: normal;
+		}
+	</style>
+	<script defer type="module">
+		import { render } from './wbll.js';
+
+		document.getElementById('render').addEventListener('click', async (event) => {
+			try {
+				document.getElementById('output').innerHTML =
+					await render(null, {}, document.getElementById('WBDL').value);
+			} catch (err) {
+				document.getElementById('output').innerHTML = err.message;
+			}
+		});
+	</script>
+</head>
+
+<body>
+	<label>WBLL script</label>
+	<textarea id="WBDL" style="width:100%; height:10em;">
+\s('caption="This is a test" visible="@@visible" ')
+\A('data-id="123" ')
+t('This is a test')\a('style="color:red"')
+\r // This is a comment
+a('https://www.keyvisions.it')p('foo;fee')t('Click me!')
+b('url;Click me')
+e('number;fufi')\a('style="width: 5em" placeholder="314"')
+l('Sport')c('sports;;1;Tennis;Golf;Curling')
+</textarea><br>
+	<button id="render">Render</button>
+	<div id="output"></div>
+</body>
+
+</html>
