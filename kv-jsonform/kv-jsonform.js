@@ -5,7 +5,15 @@ class KvJsonForm extends HTMLElement {
 	#onchange = (event) => this.#stringifyDataset(event);
 
 	static get observedAttributes() {
-		return ['formid', 'for', 'content-type']; // content-type: application/json | application/xml
+		return ['formid', 'for', 'content-type', 'value']; // content-type: application/json | application/xml
+	}
+
+	attributeChangedCallback(name, _oldValue, newValue) {
+		if (name === 'value') {
+			this.#jsonField.value = newValue;
+			this.#IO();
+			this.#parseDataset(this.dataset);
+		}
 	}
 
 	constructor() {
@@ -17,8 +25,23 @@ class KvJsonForm extends HTMLElement {
 
 		this.#jsonField?.addEventListener('change', () => {
 			this.#IO();
-			this.#parseDataset(this.dataset)
+			this.#parseDataset(this.dataset);
 		});
+
+		const observer = new MutationObserver(mutations => {
+			mutations.forEach(mutation => {
+				if (mutation.type === "attributes" && mutation.attributeName === "value") {
+					mutation.target.value = mutation.target.getAttribute('value');
+					this.#stringifyDataset(mutation);
+				} else {
+					const node = mutation.target.nodeType === Node.TEXT_NODE
+						? mutation.target.parentElement
+						: mutation.target;
+					this.#stringifyDataset({ target: node.closest("[contenteditable]") });
+				}
+			});
+		});
+		observer.observe(this.#jsonField, { attributes: true, attributeFilter: ['value'] });
 
 		this.#IO();
 		this.#parseDataset(this.dataset);
@@ -26,6 +49,11 @@ class KvJsonForm extends HTMLElement {
 		const form = document.createElement('form');
 		form.setAttribute('id', this.getAttribute('formid') || 'kv-jsonform');
 		this.replaceChildren(form);
+		[...form.elements].forEach(el => observer.observe(el, { attributes: true, attributeFilter: ['value'] }));
+
+		document.querySelectorAll(`[form="${this.getAttribute('formid')}"][contenteditable]`).forEach(el =>
+			observer.observe(el, { childList: true, subtree: true, characterData: true })
+		);
 	}
 
 	#IO(action = 'r') {
@@ -33,19 +61,19 @@ class KvJsonForm extends HTMLElement {
 			try {
 				if (this.getAttribute('content-type') === 'application/xml') {
 					const xml = document.createElement('div');
-					xml.innerHTML = this.#jsonField?.value || '<dataset></dataset>';
+					xml.innerHTML = this.#jsonField?.getAttribute('value') || this.#jsonField?.value || '<dataset></dataset>';
 					Array.from(xml.firstElementChild?.children || []).forEach(node => {
 						this.dataset[node.localName] = node.textContent;
 					});
 				} else {
-					this.dataset = JSON.parse(this.#jsonField?.value || "{}");
+					this.dataset = JSON.parse(this.#jsonField?.getAttribute('value') || this.#jsonField?.value || "{}");
 				}
 			} catch {
 				this.dataset = {};
 			}
 		else {
 			if (this.getAttribute('content-type') === 'application/xml') {
-				const xml = document.createElement('root');
+				const xml = document.createElement('dataset');
 				Object.keys(this.dataset).forEach(key =>
 					xml.insertAdjacentHTML('beforeend', `<${key}>${this.dataset[key] || ''}</${key}>`)
 				);
@@ -64,7 +92,7 @@ class KvJsonForm extends HTMLElement {
 				this.#handlers.set(element, this.#onchange);
 			}
 
-			const name = element.name;
+			const name = element.getAttribute('name');
 
 			// KeyVisions eSite patch
 			const skip = (name[0] == '_' && element.type == 'checkbox') || (name[0] == '*' && element.tagName == 'SELECT');
@@ -95,9 +123,9 @@ class KvJsonForm extends HTMLElement {
 								break;
 							default:
 								if (dataset[name])
-									dataset[name] = element.value;
-								else
 									element.value = dataset[name];
+								else
+									dataset[name] = element.value;
 						}
 						break;
 					case 'SELECT': {
@@ -107,11 +135,17 @@ class KvJsonForm extends HTMLElement {
 						);
 						break;
 					}
+					case 'DIV':
+						if (dataset[name])
+							element.innerHTML = dataset[name];
+						else
+							dataset[name] = element.innerHTML;
+						break;
 					default:
 						if (dataset[name])
-							dataset[name] = element.value;
-						else
 							element.value = dataset[name];
+						else
+							dataset[name] = element.value;
 				}
 		});
 
@@ -134,9 +168,9 @@ class KvJsonForm extends HTMLElement {
 	}
 
 	#stringifyDataset(event) {
-		const formName = this.getAttribute('formid') || "kv-jsonform";
+		const formName = this.getAttribute('formid') || 'kv-jsonform';
 		const element = event.target;
-		let name = element.name;
+		let name = element.getAttribute('name');
 
 		let value;
 		switch (element.tagName) {
@@ -170,6 +204,9 @@ class KvJsonForm extends HTMLElement {
 					if (option.selected) value.push(option.value);
 				});
 				value = value.join(',');
+				break;
+			case 'DIV':
+				value = element.innerHTML;
 				break;
 			default:
 				value = element.value;

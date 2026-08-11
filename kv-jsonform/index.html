@@ -20,8 +20,9 @@
 
         <!--textarea id="dati" name="dati"
             style="display:block; width: 100%; height: 10rem;">{"text":"How are youwerwerwrwr","number":1232,"color":"#e22222","email":"name@email.it","checkbox":"","radio":"b","datetime-local":"2026-04-23T11:01","date":"2026-04-15","select":"green","multiple":"small,medium","aree":"506","bcheckbox":2}</textarea-->
-        <textarea id="dati" name="dati"
-            style="display:block; width: 100%; height: 10rem;"><dataset><text>ciao</text><number>123</number><email>erewrewr</email><bcheckbox>2</bcheckbox><checkbox>c</checkbox><multiple>small,large</multiple><aree>504,07</aree><radio>c</radio><datetime-local>2026-04-16T17:17</datetime-local><date>2026-04-15</date><range>42</range><url>asdasdads</url><select>red</select></dataset></textarea>
+        <input xtype="hidden" id="dati" name="dati">
+        <!--textarea id="xdati" name="dati"
+            style="display:block; width: 100%; height: 10rem;"><dataset><text>ciao</text><number>123</number><email>erewrewr</email><bcheckbox>2</bcheckbox><checkbox>c</checkbox><multiple>small,large</multiple><aree>504,07</aree><radio>c</radio><datetime-local>2026-04-16T17:17</datetime-local><date>2026-04-15</date><range>42</range><url>asdasdads</url><select>red</select></dataset></textarea-->
 
         <label><span>text</span> <input form="myform" name="text"></label>
         <label><span>number</span> <input form="myform" type="number" name="number"></label>
@@ -71,7 +72,24 @@
         <input form="myform" type="range" name="range">
         <input form="myform" type="url" name="url">
         <input form="myform" name="readonly" readonly>
+
+        <label><span>Content editable</span><div form="myform" contenteditable name="contenteditable"></div></label>
     </form>
+
+
+    <textarea id="json"
+        style="display:block; width: 100%; height: 10rem;"><dataset><text>ciao come stai</text><number>123</number><email>giancarlo@trevisan.it</email><bcheckbox>2</bcheckbox><checkbox>c</checkbox><multiple>small,large</multiple><aree>504,07</aree><radio>c</radio><datetime-local>2026-04-16T17:17</datetime-local><date>2026-04-15</date><range>42</range><url>https://www.keyvisions.it</url><select>red</select></dataset></textarea>
+    <button onclick="loadJSON()">Load JSON</button>
+    <button onclick="setValue()">Set value</button>
+
+    <script>
+        function loadJSON() {
+            document.querySelector('kv-jsonform').setAttribute('value', document.getElementById('json').value);
+        }
+        function setValue() {
+            document.querySelector('[name=text]').setAttribute('value', 'This is a test');
+        }
+    </script>
     <!--
     <input x-webkit-speech><br>
     <textarea x-webkit-speech></textarea>
