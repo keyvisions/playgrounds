@@ -239,7 +239,7 @@ async function buildAll() {
 		buildCSS("kv-gantt"), buildJS("kv-gantt"),
 		buildJS("kv-fringe"),
 		buildCSS("kv-jsonform"), buildJS("kv-jsonform"),
-		buildCSS("wms"), buildJS("wms", "wms-structure,wms-map,wms-loading-units", true),
+//		buildCSS("wms"), buildJS("wms", "wms-structure,wms-map,wms-loading-units,wms-mission", true),
 
 		// Not HTMLElement
 		buildCSS("kvJSONForm"), buildJS("kvJSONForm"),

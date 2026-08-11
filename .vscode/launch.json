@@ -1,197 +1,232 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug stw-element",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/stw-element/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-jsonform",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-jsonform/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug fringe",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-fringe/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug wms",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/wms/index.html?lu=36590",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-sign",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-sign/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-organogram",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-organogram/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-gantt",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-gantt/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-pair",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-pair/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-params",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-params/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-timeline",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-timeline/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-table",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-table/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-pick",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-pick/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-budget",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-budget/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-gauge",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-gauge/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kv-tags",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kv-tags/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kvTags",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kvTags/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug playgroundss",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kvImportData",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kvImportData/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kvSelect",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kvSelect/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kvJSONForm",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kvJSONForm/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        },
-        {
-            "name": "Debug kvSelections",
-            "request": "launch",
-            "type": "msedge",
-            "file": "${workspaceFolder}/kvSelections/index.html",
-            "runtimeArgs": [
-                "--disable-web-security" // Allow CORS
-            ]
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug kv-warehouse",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-warehouse/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug stw-element",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/stw-element/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-jsonform",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-jsonform/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug fringe",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-fringe/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug wms",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/wms/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-sign",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-sign/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-organogram",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-organogram/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-gantt",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-gantt/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-pair",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-pair/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-params",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-params/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-timeline",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-timeline/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-table",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-table/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-pick",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-pick/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-budget",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-budget/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-gauge",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-gauge/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kv-tags",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kv-tags/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kvTags",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kvTags/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug playgroundss",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kvImportData",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kvImportData/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kvSelect",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kvSelect/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kvJSONForm",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kvJSONForm/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug kvSelections",
+      "request": "launch",
+      "type": "msedge",
+      "file": "${workspaceFolder}/kvSelections/index.html",
+      "runtimeArgs": [
+        "--disable-web-security" // Allow CORS
+      ]
+    },
+    {
+      "name": "Debug wbll index.htm",
+      "type": "pwa-msedge",
+      "request": "launch",
+      "file": "${workspaceFolder}/wbll/index.htm",
+      "runtimeArgs": [
+        "--disable-web-security"
+      ],
+      "cwd": "${workspaceFolder}/wbll",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Debug wbll tests",
+      "type": "pwa-node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": [
+        "test",
+        "--inspect-brk",
+        "${workspaceFolder}/wbll/wbll_test.ts"
+      ],
+      "attachSimplePort": 9229,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ]
 }

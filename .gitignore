@@ -12,6 +12,7 @@ wms/.data
 stw/
 
 menu.html
+template.html
 
 # Build artifacts
 .lastbuild
